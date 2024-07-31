@@ -23,6 +23,20 @@ def test_base():
         thing = Thing()
 
 
+def test_abstract_specified():
+    @abstract
+    class Object(object):
+        
+        @abstract
+        def allocate(self):
+            pass
+    
+    class Thing(Object):
+        def allocate(self):
+            pass    
+    
+    thing = Thing()
+
 def test_overiden_with_abstract():
     """
     Verifies that the recursive check is working according to depth levels

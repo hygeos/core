@@ -50,10 +50,11 @@ def abstract(myclass_or_method):
             
             filtered_abstract_list = [key for key, value in abstract_map.items() if value[0] is True]
             
-            mess = f"Can't instantiate abstract class {self.__class__} without an implementation for abstract methods:\n"
-            for func in filtered_abstract_list:
-                mess += f"  '{func}'\n"
-            raise MethodIsAbstract(mess)
+            if len(filtered_abstract_list) > 0:
+                mess = f"Can't instantiate abstract class {self.__class__} without an implementation for abstract methods:\n"
+                for func in filtered_abstract_list:
+                    mess += f"  '{func}'\n"
+                raise MethodIsAbstract(mess)
                             
         return inner
     
