@@ -103,6 +103,8 @@ def cache_json(
         "ignore": ignore the function inputs
     """
 
+    # assert isinstance(cache_file, str) or isinstance(cache_file, Path)
+
     def reader(filename):
         with open(filename) as fp:
             return json.load(fp)

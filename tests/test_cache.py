@@ -20,7 +20,7 @@ def test_cachefunc(cache_function, var):
         cache_function(cache_file)(my_function)()
         a = cache_function(cache_file)(my_function)()
         
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             # raise an error when called with the wrong arguments
             cache_function(cache_file)(my_function)(0)
 
