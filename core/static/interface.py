@@ -1,7 +1,7 @@
 from inspect import isclass, signature, _empty
 from typing import get_origin, get_args
 
-from .Exceptions import *
+from core.static.Exceptions import WrongUsage, InterfaceException
 
 
 def interface(function):
@@ -43,7 +43,7 @@ def interface(function):
             expected_name, expected_type = expected_signature.pop(0)
             if expected_type == _empty: continue
             
-            if get_origin(expected_type) == type(int|float): # check if unions ( type(int|float) evaluate to typing.UnionType )
+            if get_origin(expected_type) is type(int|float): # check if unions ( type(int|float) evaluate to typing.UnionType )
                 expected_type = get_args(expected_type)
             
             if hasattr(expected_type, '__origin__'): # workaround for defs like list[str] → list (only check base type)
@@ -58,7 +58,7 @@ def interface(function):
             expected_type = expected_signature[param_name]
             if expected_type == _empty: continue
             
-            if get_origin(expected_type) == type(int|float): # allow unions
+            if get_origin(expected_type) is type(int|float): # allow unions
                 expected_type = get_args(expected_type)
             
             if hasattr(expected_type, '__origin__'): # workaround for defs like list[str] → list (only check base type)
@@ -72,7 +72,7 @@ def interface(function):
             mess = f'\n\tFunction \'{function.__name__}\': Wrong parameters types passed:'  
             for p in errors:
                 param, expect, actual = p
-                if type(p[1]) == tuple: # better message for unions e.g: int | float
+                if type(p[1]) is tuple: # better message for unions e.g: int | float
                     expect = " or ".join([str(i) for i in p[1]])
                 
                 mess += (f'\n\t\tParameter \'{param}\' expected: {expect} got {actual}')

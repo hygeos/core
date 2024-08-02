@@ -1,6 +1,6 @@
 from inspect import isclass
 
-from core.static.Exceptions import *
+from core.static.Exceptions import ClassIsAbstract, MethodIsAbstract
 
 
 def abstract(myclass_or_method):
