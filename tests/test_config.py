@@ -20,15 +20,12 @@ def test_config_usage():
         # go to tmpdir
         os.chdir(tmpdir)
         
-        config.init("PATH/TO/DATA_DIR") # CLI usage
+        config.init(Path.cwd()) # CLI usage
         
-        config.load() # should be implicit at package import ?
-    
-        print(config.get("data", "description"))
+        data_dir = config.get("general", "base_dir", default="/archive2/data", write=True) # default=str(tmpdir), write=True)
+        anci_dir = config.get("harp", "data_dir", default=Path(data_dir)/"ancillary")
         
-        data_dir = config.get("data", "dir")
-        anci_dir = config.get("data", "ancillary", default=Path(data_dir)/"ancillary")
-        
+
         # restore working directory
         os.chdir(cwd)
         

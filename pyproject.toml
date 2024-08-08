@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "core"
-version = "1.0.2"
+version = "1.0.3"
 description = "Common Operations for Robust Engineering"
 authors = [
       "François Steinmetz",
