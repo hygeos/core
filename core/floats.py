@@ -7,7 +7,7 @@ import math
 # sub package imports
 # ...
 
-def equal(a: float, b: float, *, tol=1e-6):
+def feq(a: float, b: float, *, tol=1e-6):
     """
     returns true if a and b are within tol of difference
     """
