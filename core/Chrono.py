@@ -1,29 +1,29 @@
 import time
 from datetime import timedelta
 
-from .static import frozen
-
-@frozen
 class Chrono:
+    """
+    - string: str
+    - unit "m" | "s" | "ms" | "us"
+    """
     
     def __init__(self, string='chrono object', unit="m"):
         assert unit in ["m", "s", "ms", "us"]
         self.unit = unit
         self.paused = False
         self.string = string
-        self.time: timedelta = None
         self.start_t: float = time.time()
         self.stop_t:  float = None
     
     def __enter__(self):
-        self.start()
+        self.restart()
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
         self.print(self.unit)
     
-    def start(self):
-        self.paused = True
+    def restart(self):
+        self.paused = False
         self.start_t = time.time()
     
     def pause(self) -> timedelta:
@@ -32,20 +32,25 @@ class Chrono:
         self.paused = True
         self.stop_t = time.time()
 
-    def get_dt(self):
-        if self.time is None:
-            self.time = timedelta(seconds=(time.time() - self.start_t))
-        return self.time
+    def elapsed(self):
+        if self.paused:
+            return timedelta(seconds=(self.stop_t - self.start_t))
+        else:
+            return timedelta(seconds=(time.time() - self.start_t))
         
     def reset(self):
         self.stop_t = time.time()
-        self.time = timedelta(seconds=(self.stop_t - self.start_t))
-        return self.time
+        dt = timedelta(seconds=(self.stop_t - self.start_t))
+        self.start_t: float = time.time()
+        self.stop_t:  float = None
+    
+    def laps(self):
+        self.reset()
         
     def stop(self):
         self.stop_t = time.time()
-        self.time = timedelta(seconds=(self.stop_t - self.start_t))
-        return self.time
+        self.paused = True
+        return timedelta(seconds=(self.stop_t - self.start_t))
     
     def isPaused(self):
         return self.paused
@@ -54,7 +59,7 @@ class Chrono:
         
         assert unit in ["m", "s", "ms", "us"]
         
-        t = self.get_dt().total_seconds()
+        t = self.elapsed().total_seconds()
         if unit == "m":
             m = int(t) // 60
             s = int(t) % 60
