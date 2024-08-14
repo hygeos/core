@@ -47,7 +47,7 @@ class Chrono:
         return dt
     
     def laps(self) -> timedelta:
-        self.reset()
+        return self.reset()
         
     def stop(self) -> timedelta:
         self.stop_t = time.time()
