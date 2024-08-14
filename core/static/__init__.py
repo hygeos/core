@@ -1,5 +1,4 @@
 
-from .frozen import frozen
 from .interface import interface
 from .parametrized import parametrized
 from .singleton import singleton

@@ -1,9 +1,6 @@
 class WrongUsage(Exception):
     pass
 
-class ClassIsFrozen(Exception):
-    pass
-
 class ClassIsAbstract(Exception):
     pass
 
