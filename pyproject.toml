@@ -8,7 +8,7 @@ authors = [
       "Nathan Capon",
 ]
 
-Homepage = "https://github.com/hygeos/core"
+# Homepage = "https://github.com/hygeos/core"
 
 classifiers = [
     "Programming Language :: Python :: 3",
