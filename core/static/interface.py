@@ -23,7 +23,7 @@ def interface(function):
         unnamed_params = [type(i) for i in args] 
         named_params  = [(i, type(kwargs[i])) for i in kwargs] # named parameters can only be lasts 
         default_params = function.__defaults__ or []
-
+        full_default_values = [v.default for k, v in signature(function).parameters.items()]
         # DEBUG
         # print(expected_signature)
         # print(unnamed_params)
@@ -41,6 +41,8 @@ def interface(function):
         # check unnamed parameters
         for param_type in unnamed_params:
             expected_name, expected_type = expected_signature.pop(0)
+            default_value = full_default_values.pop(0)
+            
             if expected_type == _empty: continue
             
             if get_origin(expected_type) is type(int|float): # check if unions ( type(int|float) evaluate to typing.UnionType )
@@ -50,12 +52,16 @@ def interface(function):
                 expected_type = expected_type.__origin__
                 
             if not issubclass(param_type, expected_type):
-                errors.append((expected_name, expected_type, param_type))
+                explicit_none_passing = (param_type is type(None)) and (type(default_value) is type(None))
+                if not explicit_none_passing: # no error if explicitly passed None, when None is the default, otherwise error
+                    errors.append((expected_name, expected_type, param_type))
         
         expected_signature = {i[0]: i[1] for i in expected_signature}
         # check named parameters
         for param_name, param_type in named_params:
             expected_type = expected_signature[param_name]
+            default_value = full_default_values.pop(0)
+            
             if expected_type == _empty: continue
             
             if get_origin(expected_type) is type(int|float): # allow unions
@@ -65,7 +71,9 @@ def interface(function):
                 expected_type = expected_type.__origin__
                 
             if not issubclass(param_type, expected_type):
-                errors.append((param_name, expected_type, param_type))
+                explicit_none_passing = (param_type is type(None)) and (type(default_value) is type(None))
+                if not explicit_none_passing: # no error if explicitly passed None, when None is the default, otherwise error
+                    errors.append((param_name, expected_type, param_type))
     
         # raise error if at least one mismatch
         if len(errors) != 0: # error on at least one parameter

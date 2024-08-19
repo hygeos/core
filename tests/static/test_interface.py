@@ -12,6 +12,22 @@ def test_base():
     
     with pytest.raises(Exception):
         function("a")
+
+def test_default_none():
+    
+    @interface
+    def function(a: int=None): return
+    
+    function(123)
+    function()
+    
+    class obj:
+        @interface
+        def __init__(self, name:str=None): return
+        
+    a = obj("a")
+    b = obj()
+    
         
 
 def test_mix():
@@ -118,3 +134,26 @@ def test_enable_false():
     def function(a: int): return
     
     function(3.14)
+    
+
+def test_explicit_nonepassing():
+    
+    @interface
+    def function(b, a: int=None, c: float=None): return
+    
+    a = function(1, None, c=None)
+    
+    
+def test_unallowed_explicit_nonepassing():
+    
+    with pytest.raises(Exception):
+    
+        @interface
+        def function(a: int): return
+        a = function(None)
+    
+    with pytest.raises(Exception):
+        
+        @interface
+        def function2(a: int, b: int): return
+        a = function2(None)
