@@ -23,7 +23,8 @@ def interface(function):
         unnamed_params = [type(i) for i in args] 
         named_params  = [(i, type(kwargs[i])) for i in kwargs] # named parameters can only be lasts 
         default_params = function.__defaults__ or []
-        full_default_values = [v.default for k, v in signature(function).parameters.items()]
+        full_default_values = [(k, v.default) for k, v in signature(function).parameters.items()]
+        
         # DEBUG
         # print(expected_signature)
         # print(unnamed_params)
@@ -41,7 +42,7 @@ def interface(function):
         # check unnamed parameters
         for param_type in unnamed_params:
             expected_name, expected_type = expected_signature.pop(0)
-            default_value = full_default_values.pop(0)
+            param_name, default_value = full_default_values.pop(0)
             
             if expected_type == _empty: continue
             
@@ -56,11 +57,14 @@ def interface(function):
                 if not explicit_none_passing: # no error if explicitly passed None, when None is the default, otherwise error
                     errors.append((expected_name, expected_type, param_type))
         
-        expected_signature = {i[0]: i[1] for i in expected_signature}
+        
+        expected_signature  = {i[0]: i[1] for i in expected_signature}
+        full_default_values = {i[0]: i[1] for i in full_default_values}
+        
         # check named parameters
         for param_name, param_type in named_params:
-            expected_type = expected_signature[param_name]
-            default_value = full_default_values.pop(0)
+            expected_type = expected_signature.pop(param_name)
+            default_value = full_default_values.pop(param_name) # only check in case of error: exempt None if default
             
             if expected_type == _empty: continue
             
@@ -74,6 +78,16 @@ def interface(function):
                 explicit_none_passing = (param_type is type(None)) and (type(default_value) is type(None))
                 if not explicit_none_passing: # no error if explicitly passed None, when None is the default, otherwise error
                     errors.append((param_name, expected_type, param_type))
+        
+        for param_name, param_value in full_default_values.items():
+            param_type = type(param_value)
+            
+            expected_type = expected_signature.pop(param_name)
+            
+            if (param_type is type(None)): continue # no need to specify that None is a possible value if it is the default value
+            
+            if not issubclass(param_type, expected_type):
+                errors.append((param_name, expected_type, param_type))
     
         # raise error if at least one mismatch
         if len(errors) != 0: # error on at least one parameter
@@ -86,6 +100,11 @@ def interface(function):
                 mess += (f'\n\t\tParameter \'{param}\' expected: {expect} got {actual}')
             raise InterfaceException(mess)
 
+        # check if some arguments haven't been checked        
+        if len(expected_signature) != 0:
+            mess = [f"Parameter \'{p}\' still unchecked after interface call, module error." for p in expected_signature]
+            raise InterfaceException(mess)
+            
         return function(*args, **kwargs)
     return wrapper
 

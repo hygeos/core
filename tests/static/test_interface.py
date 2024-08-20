@@ -1,6 +1,7 @@
 import pytest
 
 from core.static import interface
+from core.static.Exceptions import InterfaceException
 
 
 def test_base():
@@ -10,7 +11,7 @@ def test_base():
     
     function(123)
     
-    with pytest.raises(Exception):
+    with pytest.raises(InterfaceException):
         function("a")
 
 def test_default_none():
@@ -36,7 +37,7 @@ def test_mix():
     
     function("a", 123, 3.14, "test")    
     
-    with pytest.raises(Exception): 
+    with pytest.raises(InterfaceException): 
         function("a", "b", 3.14, "test")   # invalid second parameter
         function("a", 123, 3.14, 1234)     # invalid fourth parameter
         
@@ -47,7 +48,7 @@ def test_unpack():
     l = [123, 3.14, "test"]
     function(True, *l)
     
-    with pytest.raises(Exception):
+    with pytest.raises(InterfaceException):
         function(*l, True)
     
 def test_named():
@@ -105,7 +106,7 @@ def test_subclass():
     def function2(dt: datetime): return
     
     # invalid call (date is not a subclass of datetime)
-    with pytest.raises(Exception):
+    with pytest.raises(InterfaceException):
         function2(date(1999, 8, 24))
 
 
@@ -118,12 +119,13 @@ def test_kwargs_default():
     kw = dict(b=123, c=3.14)
     function(True, **kw, e=True)
     
-    with pytest.raises(Exception):
+    with pytest.raises(InterfaceException):
+        kw2 = dict(b=123, c=3)      
         function(True, **kw2, e=3.14) # e isn't bool, should fail
     
-    with pytest.raises(Exception): # check that types are checked from unpacked kwargs
-        kw2 = dict(b=123, c=3)      
-        function(True, **kw2, e=False) # c isn't float, should fail
+    with pytest.raises(InterfaceException): # check that types are checked from unpacked kwargs
+        kw3 = dict(b=123, c=3)      
+        function(True, **kw3, e=False) # c isn't float, should fail
 
 
 def test_enable_false():
@@ -146,14 +148,24 @@ def test_explicit_nonepassing():
     
 def test_unallowed_explicit_nonepassing():
     
-    with pytest.raises(Exception):
+    with pytest.raises(InterfaceException):
     
         @interface
         def function(a: int): return
-        a = function(None)
-    
-    with pytest.raises(Exception):
+        a = function(None) 
         
+def test_unallowed_explicit_nonepassing_with_default():
+    
+    with pytest.raises(InterfaceException):    
         @interface
-        def function2(a: int, b: int): return
+        def function2(a: int, b: int=None): return
         a = function2(None)
+
+
+def test_wrong_default():
+    
+    with pytest.raises(InterfaceException):
+        @interface
+        def function(a: int=3.14): return
+        a = function()
+    
