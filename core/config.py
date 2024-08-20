@@ -35,6 +35,8 @@ def load():
         # parse and store new config
         _store.loaded_config, _store.config_path = _load()
         
+    return _store.loaded_config, _store.config_path
+        
 
 def reload():
     """
@@ -42,22 +44,25 @@ def reload():
     """
     # parse and store new config
     _store.loaded_config,  _store.config_path = _load()
+    return _store.loaded_config, _store.config_path
 
 
 def _load_for_test_only(_overriden_path: Path=None):
     
     _overriden_path = Path(_overriden_path)
     _store.loaded_config, _store.config_path = _load(_overriden_path)
+    return _store.loaded_config, _store.config_path
     
     
 def _load(_overriden_path: Path=None):
     
-    _overriden_path = Path(_overriden_path)
+    if _overriden_path is not None: 
+        _overriden_path = Path(_overriden_path)
     
     local_config_file = Path.cwd() / config_file_name
     global_config_file = Path.home() / ".config/core/" / config_file_name
     
-    if _overriden_path.is_file():
+    if _overriden_path is not None and _overriden_path.is_file():
         local_config_file = _overriden_path
         
     config_file = None

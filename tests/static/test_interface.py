@@ -29,7 +29,10 @@ def test_default_none():
     a = obj("a")
     b = obj()
     
-        
+def test_default_unused():
+    from core.floats import feq
+    
+    feq(3.14, 3.1399999999)        
 
 def test_mix():
     @interface # define function with typed parameters

@@ -22,8 +22,8 @@ def interface(function):
         expected_signature = [(i.name, i.annotation) for i in signature(function).parameters.values()]
         unnamed_params = [type(i) for i in args] 
         named_params  = [(i, type(kwargs[i])) for i in kwargs] # named parameters can only be lasts 
-        default_params = function.__defaults__ or []
         full_default_values = [(k, v.default) for k, v in signature(function).parameters.items()]
+        default_params = [item for item in full_default_values if item[1] is not _empty]
         
         # DEBUG
         # print(expected_signature)
