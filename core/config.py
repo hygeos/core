@@ -14,15 +14,52 @@ from core.output import rgb, error, disp
 from core.static import interface
 
 
+class _store:
 
-
+    loaded_config, config_path = None, None
+    
 config_file_name = "core-config.toml"
 
-def _load():
+def load():
+    """
+    load core.config config from local file (has priority) or from ~/.config/core
+    returns parsed results if already loaded once
+    """
+    
+    cfg = _store.loaded_config
+    cfp = _store.config_path
+    
+    if cfg is not None and cfp is not None: # if already present return current config
+        return cfg, cfp
+    else:
+        # parse and store new config
+        _store.loaded_config, _store.config_path = _load()
+        
+
+def reload():
+    """
+    force reload of core.config parsed config from local file or from ~/.config/core (local file has priority)
+    """
+    # parse and store new config
+    _store.loaded_config,  _store.config_path = _load()
+
+
+def _load_for_test_only(_overriden_path: Path=None):
+    
+    _overriden_path = Path(_overriden_path)
+    _store.loaded_config, _store.config_path = _load(_overriden_path)
+    
+    
+def _load(_overriden_path: Path=None):
+    
+    _overriden_path = Path(_overriden_path)
     
     local_config_file = Path.cwd() / config_file_name
     global_config_file = Path.home() / ".config/core/" / config_file_name
     
+    if _overriden_path.is_file():
+        local_config_file = _overriden_path
+        
     config_file = None
     
     # if config is present locally it takes priority
@@ -41,10 +78,12 @@ def _load():
 
 @interface
 def _write_key(config_file: Path, section: str, key: str, value, comment: str = ""):
-        
+    
+    original_type = type(value)
+    
     section = dedent(section.strip())
     key = dedent(key.strip())
-    value = dedent(value.strip())
+    value = dedent(str(value).strip())
     comment = dedent(comment.strip())
     
     if not comment.startswith('#') and len(comment) > 0:
@@ -53,7 +92,7 @@ def _write_key(config_file: Path, section: str, key: str, value, comment: str = 
     found_section = False
     wait_for_next_line = False
     
-    if type(value) is str:
+    if original_type is str:
         if "\n" in value:
             if not value.startswith('\n'):
                 value = '\n' + value
@@ -106,9 +145,7 @@ def get(section, key, *, default=None, write: bool=False, comment: str=""):
     Returns the key if present in coreconfig.toml
     """
     
-    loaded_config, config_path = _load()
-    
-    print(loaded_config)
+    loaded_config, config_path = load() # load if not already done, cache result in _store class
     
     if section not in loaded_config and not write:
         raise KeyError(f"Missing section [{section}] in file {config_path}")
@@ -119,6 +156,8 @@ def get(section, key, *, default=None, write: bool=False, comment: str=""):
         else:
             if write:
                 _write_key(config_path, section, key, default, comment)
+                _store.loaded_config, _store.config_path = _load(config_path) # force reload (compatible with tests)
+                
             return default
     
     return loaded_config[section][key]

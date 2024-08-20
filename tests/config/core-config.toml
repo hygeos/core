@@ -1,0 +1,8 @@
+[general]
+base_dir = "test/path/data"
+
+[harp]
+anci_dir = "path/to/somewhere/else"
+
+[harp.merra2]
+merra2_specific = 12983412

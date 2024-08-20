@@ -114,7 +114,7 @@ def test_kwargs_default():
     
     @interface # define function with typed parameters
     def function(a, b: int, c: float=3.14, d: list=[], e: bool=True): 
-        print(a,b,c,d); return
+        return
         
     kw = dict(b=123, c=3.14)
     function(True, **kw, e=True)
@@ -126,6 +126,17 @@ def test_kwargs_default():
     with pytest.raises(InterfaceException): # check that types are checked from unpacked kwargs
         kw3 = dict(b=123, c=3)      
         function(True, **kw3, e=False) # c isn't float, should fail
+
+
+def test_kwargs_wrong_missed_default():
+    
+    @interface # define function with typed parameters
+    def function(a, b: int, c: float=3.14, d: list={}, e: bool=True): 
+        return
+    
+    with pytest.raises(InterfaceException):
+        kw = dict(b=123, c=3.14)
+        function(True, **kw, e=True)
 
 
 def test_enable_false():
