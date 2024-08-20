@@ -18,23 +18,14 @@ from core.static import interface
 
 config_file_name = "core-config.toml"
 
-def _load(config_path: Path=None):
+def _load():
     
     local_config_file = Path.cwd() / config_file_name
-    global_config_file = Path.home() / config_file_name
+    global_config_file = Path.home() / ".config/core/" / config_file_name
     
     config_file = None
     
-    # when file path is overriden (usefull for tests)
-    if config_path is not None:
-        if config_path.is_dir():
-            config_path = config_path / config_file_name
-        
-        if not config_path.is_file():
-            raise FileNotFoundError(f"Could not find {config_file_name} file at {config_path}")
-        local_config_file = config_path
-    
-    # default behavior
+    # if config is present locally it takes priority
     if local_config_file.is_file():
         config_file = local_config_file
     elif global_config_file.is_file():
@@ -174,21 +165,24 @@ def init_cmd(args=None):
     
     parser = argparse.ArgumentParser(description='Command to instantiate a default core-config.toml file in the working directory')
     parser.add_argument('path', help="path where to create config file, defaults to home folder", nargs='?', default=Path.home())
-    parser.add_argument('--from-home',  action="store_true", help="Use the core-config.toml file from the home folder as template for the init")
+    parser.add_argument('--copy',  action="store_true", help="Copy core-config.toml file from the home/.config/core in the current working directory")
     args = parser.parse_args()
     
     dest = Path.cwd() / config_file_name
     
-    if args.from_home:
-        source = Path.home() / config_file_name
+    if args.copy:
+        source = Path.home() / ".config/core/" / config_file_name
         
         if not source.is_file():
             error(f"Error: could not find file {source}")    
         
         shutil.copy(source, dest)
-        disp(rgb.blue, "Created file ", rgb.default, str(dest.name))
+        disp(rgb.blue, "Created file ", rgb.default, str(dest.name), " in current working directory")
+        
     else:
-        init(Path(args.path))
+        home_config_folder = Path.home() / ".config/core/"
+        if not home_config_folder.is_dir(): home_config_folder.mkdir()
+        init(home_config_folder)
     
     # simplify path if file is in current directory
     if Path(args.path).resolve() == Path.cwd():
