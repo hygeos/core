@@ -1,44 +1,12 @@
 from ftplib import FTP, error_perm
 from typing import Union, Dict
 from pathlib import Path
-from netrc import netrc
 import threading
 import fnmatch
 
 from tqdm import tqdm
 from core.fileutils import filegen
-
-
-
-def get_auth(name):
-    """
-    Returns a dictionary with credentials, using .netrc
-
-    `name` is the identifier (= `machine` in .netrc). This allows for several accounts
-    on a single machine.
-    The url is returned as `account`
-    """
-    ret = netrc().authenticators(name)
-    if ret is None:
-        raise ValueError(
-            f'Please provide entry "{name}" in ~/.netrc ; '
-            f'example: machine {name} login <login> password <passwd> account <url>')
-    (login, account, password) = ret
-
-    return {'user': login,
-            'password': password,
-            'url': account}
-
-
-def get_auth_dhus(name):
-    auth = get_auth(name)
-    api_url = auth['url'] or {
-        'scihub': 'https://scihub.copernicus.eu/dhus/',
-        'coda': 'https://coda.eumetsat.int',
-    }[name]
-    return {'user': auth['user'],
-            'password': auth['password'],
-            'api_url': api_url}
+from core.auth import get_auth
 
 
 def get_auth_ftp(name) -> Dict:
