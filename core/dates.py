@@ -24,7 +24,7 @@ def closest(date, h):
         return d0 + timedelta(hours=h)
 
 
-def day_range(date_start: date, date_end: date) -> list[date]:
+def date_range(date_start: date, date_end: date) -> list[date]:
     """
     Returns a list of days starting from date_start, up to date_end included
     """
