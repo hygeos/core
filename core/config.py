@@ -128,15 +128,20 @@ class Config:
                     assert section is not None
                     self._write_key(config_path, section, key, default, comment)
                 return default
+                
+        value = current_config[key]
+        
+        # auto convert value to path if its key starts with 'dir_'
+        if type(value) is str and key.startswith("dir_"):
+            value = Path(value)
 
-        return current_config[key]
+        return value 
 
     @interface
     def _write_key(config_file: Path, section: str, key: str, value, comment: str = ""):
 
         section = dedent(section.strip())
         key = dedent(key.strip())
-        value = dedent(value.strip())
         comment = dedent(comment.strip())
 
         if not comment.startswith("#") and len(comment) > 0:
@@ -146,6 +151,8 @@ class Config:
         wait_for_next_line = False
 
         if type(value) is str:
+            value = dedent(value.strip())
+            
             if "\n" in value:
                 if not value.startswith("\n"):
                     value = "\n" + value
@@ -272,6 +279,7 @@ def get(
         config.get('dir_samples')  # returns the sample directory in either local or
                                    # global configuration file
     """
+    
     if cfg is None:
         raise configfilenotfound
 
