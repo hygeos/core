@@ -10,9 +10,6 @@ def interface(function):
     Raise an error if types passed do not match definition
     """
     
-    if not interface.enabled:
-        return function
-    
     if isclass(function):
         raise WrongUsage(f'\n\tCannot declare class \'{function.__name__}\' as an interface, only functions or methods can be')
         
@@ -24,12 +21,6 @@ def interface(function):
         named_params  = [(i, type(kwargs[i])) for i in kwargs] # named parameters can only be lasts 
         full_default_values = [(k, v.default) for k, v in signature(function).parameters.items()]
         default_params = [item for item in full_default_values if item[1] is not _empty]
-        
-        # DEBUG
-        # print(expected_signature)
-        # print(unnamed_params)
-        # print(named_params)
-        # print(default_params)
         
         # checknumber of parameters
         exp_nargs = len(expected_signature)
@@ -107,6 +98,3 @@ def interface(function):
             
         return function(*args, **kwargs)
     return wrapper
-
-
-interface.enabled = True

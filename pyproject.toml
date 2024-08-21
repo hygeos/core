@@ -1,14 +1,12 @@
 [tool.poetry]
 name = "core"
-version = "1.0.11"
+version = "1.0.12"
 description = "Common Operations for Robust Engineering"
 authors = [
       "François Steinmetz",
       "Joackim Orcière",
       "Nathan Capon",
 ]
-
-# Homepage = "https://github.com/hygeos/core"
 
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -24,6 +22,7 @@ exclude = [
 python = "^3.10"
 xarray = "*"
 numpy = "*"
+click = "*"
 toml = "*"
 tqdm = "*" # tqdm itself doesn't have any dependencies
 

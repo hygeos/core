@@ -142,16 +142,6 @@ def test_kwargs_wrong_missed_default():
         function(True, **kw, e=True)
 
 
-def test_enable_false():
-    
-    interface.enabled = False
-    
-    @interface
-    def function(a: int): return
-    
-    function(3.14)
-    
-
 def test_explicit_nonepassing():
     
     @interface
@@ -172,8 +162,8 @@ def test_unallowed_explicit_nonepassing_with_default():
     
     with pytest.raises(InterfaceException):    
         @interface
-        def function2(a: int, b: int=None): return
-        a = function2(None)
+        def function(a: int, b: int=None): return
+        a = function(None)
 
 
 def test_wrong_default():
