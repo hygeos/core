@@ -27,9 +27,6 @@ numpy = "*"
 toml = "*"
 tqdm = "*" # tqdm itself doesn't have any dependencies
 
-[tool.poetry.scripts]
-core-config-init = "core.config:init_cmd"
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

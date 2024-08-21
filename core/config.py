@@ -1,237 +1,284 @@
-# standard library imports
-from textwrap import dedent
-from pathlib import Path
-import argparse
-import tempfile
-import shutil
 import os
+from pathlib import Path
+from textwrap import dedent
+from typing import Literal, Optional
 
-# third party imports
+import click
 import toml
-        
-# sub package imports
-from core.output import rgb, error, disp
+
+from core.output import error, rgb
 from core.static import interface
 
+"""
+General configuration module located in file `core-config.toml`, either in local
+directory or in ~/.config/
+This configuration file is designed to store common configuration values for Hygeos
+software.
 
-class _store:
+Typical use:
+    from core import config
+    dir_ancillary = config.get('dir_ancillary')
+"""
 
-    loaded_config, config_path = None, None
-    
+
 config_file_name = "core-config.toml"
 
-def load():
-    """
-    load core.config config from local file (has priority) or from ~/.config/core
-    returns parsed results if already loaded once
-    """
-    
-    cfg = _store.loaded_config
-    cfp = _store.config_path
-    
-    if cfg is not None and cfp is not None: # if already present return current config
-        return cfg, cfp
-    else:
-        # parse and store new config
-        _store.loaded_config, _store.config_path = _load()
-        
-    return _store.loaded_config, _store.config_path
-        
-
-def reload():
-    """
-    force reload of core.config parsed config from local file or from ~/.config/core (local file has priority)
-    """
-    # parse and store new config
-    _store.loaded_config,  _store.config_path = _load()
-    return _store.loaded_config, _store.config_path
+configfilenotfound = FileNotFoundError(
+    f"Could not find {config_file_name} file.\n"
+    + " -> Please initiate it with the command:\n"
+    + "    python -m core.config <base_dir>"
+)
 
 
-def _load_for_test_only(_overriden_path: Path=None):
-    
-    _overriden_path = Path(_overriden_path)
-    _store.loaded_config, _store.config_path = _load(_overriden_path)
-    return _store.loaded_config, _store.config_path
-    
-    
-def _load(_overriden_path: Path=None):
-    
-    if _overriden_path is not None: 
-        _overriden_path = Path(_overriden_path)
-    
+def get_config_file(mode: Literal["global", "local", "auto"]) -> Path:
+    """
+    Returns the config file name
+
+    Args:
+        mode ('global', 'local', 'auto'). If 'auto', returns the first existing file
+            starting with local then global. If none exist, returns an error.
+
+    Returns:
+        Path: path to the config file
+    """
+
     local_config_file = Path.cwd() / config_file_name
-    global_config_file = Path.home() / ".config/core/" / config_file_name
-    
-    if _overriden_path is not None and _overriden_path.is_file():
-        local_config_file = _overriden_path
-        
-    config_file = None
-    
-    # if config is present locally it takes priority
-    if local_config_file.is_file():
-        config_file = local_config_file
-    elif global_config_file.is_file():
-        config_file = global_config_file
-    else:
-        raise FileNotFoundError(f"Could not find {config_file_name} file.\n" +
-                                " -> Please initiate it with the command:\n" +
-                                "   core-config-init")
-    
-    # read
-    return toml.load(config_file), config_file
+    global_config_file = Path.home() / ".config" / config_file_name
+
+    global_config_file_old = Path.home() / config_file_name
+    if global_config_file_old.exists():
+        raise DeprecationWarning(
+            "global core-config file has moved from "
+            f"{global_config_file_old} to {global_config_file}"
+        )
+
+    # default behavior
+    if mode == "global":
+        return global_config_file
+    elif mode == "local":
+        return local_config_file
+    elif mode == "auto":
+        if local_config_file.is_file():
+            return local_config_file
+        elif global_config_file.is_file():
+            return global_config_file
+        else:
+            raise configfilenotfound
 
 
-@interface
-def _write_key(config_file: Path, section: str, key: str, value, comment: str = ""):
-    
-    original_type = type(value)
-    
-    section = dedent(section.strip())
-    key = dedent(key.strip())
-    value = dedent(str(value).strip())
-    comment = dedent(comment.strip())
-    
-    if not comment.startswith('#') and len(comment) > 0:
-        comment = f"# {comment} "
+class Config:
+    def __init__(self):
+        f"""
+        Read and initialize the configuration provided in {config_file_name}
+        """
 
-    found_section = False
-    wait_for_next_line = False
-    
-    if original_type is str:
-        if "\n" in value:
-            if not value.startswith('\n'):
-                value = '\n' + value
-            if not value.endswith('\n'):
-                value = value + '\n'
-            value =  '\"\"' + value + '\"\"'
-        value =  f"\"{value}\""
-    
+        # read config
+        self.config_file = get_config_file("auto")
+        self.config = toml.load(self.config_file)
 
-    new_config_file = config_file
-    config_file = config_file.rename(config_file.parent / (str(config_file.name) + ".old"))
+        # Initialize directories in the root section
+        for k in self.config:
+            if k.startswith("dir_"):
+                self.config[k] = Path(self.config[k])
 
-    # Open the input file for reading and a new file for writing
-    with open(config_file, 'r') as infile, open(new_config_file, 'w+') as outfile:
-        
-            # helpers functions
-        def write_section():
+                if k == "dir_data":
+                    # check that dir_data is defined as absolute
+                    assert self.config[k].is_absolute()
+                    if not self.config[k].exists():
+                        raise NotADirectoryError(
+                            f"base_dir {self.config[k]} does not exist. Please create it."
+                        )
+                else:
+                    # all other directories in the root section (starting with 'dir_'),
+                    # if defined as relative, are considered relative to `dir_data`
+                    if not self.config[k].is_absolute():
+                        self.config[k] = self.config["dir_data"] / self.config[k]
+                    self.config[k].mkdir(exist_ok=True)
+
+    def get(
+        self,
+        key: str,
+        section: Optional[str] = None,
+        *,
+        default=None,
+        write: bool = False,
+        comment: str = "",
+    ):
+        """
+        Returns the key if present in core-config.toml
+        """
+
+        config_path = self.config_file
+
+        if section is None:
+            current_config = self.config
+        else:
+            if (section not in self.config) and (not write):
+                raise KeyError(f"Missing section [{section}] in file {config_path}")
+            current_config = self.config[section]
+
+        if key not in current_config:
+            if default is None:
+                raise KeyError(
+                    f"Missing key {key} in section [{section}] of "
+                    f"file {config_path} and no defaults provided"
+                )
+            else:
+                if write:
+                    assert section is not None
+                    self._write_key(config_path, section, key, default, comment)
+                return default
+
+        return current_config[key]
+
+    @interface
+    def _write_key(config_file: Path, section: str, key: str, value, comment: str = ""):
+
+        section = dedent(section.strip())
+        key = dedent(key.strip())
+        value = dedent(value.strip())
+        comment = dedent(comment.strip())
+
+        if not comment.startswith("#") and len(comment) > 0:
+            comment = f"# {comment} "
+
+        found_section = False
+        wait_for_next_line = False
+
+        if type(value) is str:
+            if "\n" in value:
+                if not value.startswith("\n"):
+                    value = "\n" + value
+                if not value.endswith("\n"):
+                    value = value + "\n"
+                value = '""' + value + '""'
+            value = f'"{value}"'
+
+        new_config_file = config_file
+        config_file = config_file.rename(
+            config_file.parent / (str(config_file.name) + ".old")
+        )
+
+        # Open the input file for reading and a new file for writing
+        with open(config_file, "r") as infile, open(new_config_file, "w+") as outfile:
+
+            # helper functions
+            def write_section():
                 outfile.write(f"\n[{section}] # (inserted by core.config)\n")
-        def write_key():
+
+            def write_key():
                 outfile.write(f"{key} = {value} {comment}# (inserted by core.config)\n")
-            
-        
-        for line in infile:
-            
+
+            for line in infile:
+
+                if wait_for_next_line:
+                    write_key()
+                    wait_for_next_line = False
+
+                if f"[{section}]" in line:
+                    wait_for_next_line = True
+                    found_section = True
+
+                # Write the modified or unmodified line to the output file
+                outfile.write(line)
+
+            if not found_section:
+                write_section()
+                write_key()
+
             if wait_for_next_line:
                 write_key()
-                wait_for_next_line = False
-            
-            if f"[{section}]" in line:
-                wait_for_next_line = True
-                found_section = True
-                
-            # Write the modified or unmodified line to the output file
-            outfile.write(line)
-        
-        if not found_section:
-            write_section() 
-            write_key()
-            
-        if wait_for_next_line:
-            write_key()
-            
-    # Path(config_file).unlink()
 
-    os.system(f"cat {new_config_file}")
+        # Path(config_file).unlink()
+
+        os.system(f"cat {new_config_file}")
 
 
-def get(section, key, *, default=None, write: bool=False, comment: str=""):
-    """
-    Returns the key if present in coreconfig.toml
-    """
-    
-    loaded_config, config_path = load() # load if not already done, cache result in _store class
-    
-    if section not in loaded_config and not write:
-        raise KeyError(f"Missing section [{section}] in file {config_path}")
-    
-    if key not in loaded_config[section]:
-        if default is None:
-            raise KeyError(f"Missing key {key} in section [{section}] in file {config_path} and no defaults provided")
-        else:
-            if write:
-                _write_key(config_path, section, key, default, comment)
-                _store.loaded_config, _store.config_path = _load(config_path) # force reload (compatible with tests)
-                
-            return default
-    
-    return loaded_config[section][key]
-    
-@interface
-def init(install_folder: Path|str):
-    
-    # str to Path
-    install_folder = Path(install_folder)
-    
-    if not install_folder.is_dir():
-        error(f"Invalid path argument: {install_folder}", rgb.orange," Please provide a valid folder path")
-    
-    config_file = install_folder / config_file_name
-    
-    if config_file.is_file():
-        error(rgb.orange, f'Configuration file {config_file} already exists')
-        
+# single Config instance
+try:
+    cfg = Config()
+except FileNotFoundError:
+    # don't fail if config file was not initialized yet
+    cfg = None
+
+
+@click.command()
+@click.argument("dir_data")
+@click.option("--local", is_flag=True, default=False)
+def initialize(dir_data: Path, local: bool):
+
+    mode = "local" if local else "global"
+    config_file = get_config_file(mode)
+
+    if config_file.exists():
+        error(
+            rgb.orange,
+            f'{mode} configuration file "{config_file}" is already initialized',
+        )
     else:
         # Initialize default config file
-        content = dedent("""
-            # HYGEOS genral configuration file
-            # This file has been generated by core.config.init
+        content = dedent(
+            f"""
+            # HYGEOS general configuration file
+            # This file has been initialized by `python -m core.config`
 
-            [general]
-            # base_dir = "PATH/TO/DATA_DIR"
+            # Note: all variables starting with 'dir_' are directories. If specified as
+            # non-absolute, these directories are assumed relative to `dir_data`
+            # => "static" == "<dir_data>/static"
 
-            [harp]
-            # data_dir = "PATH/TO/DATA_DIR/ancillary"
+            # Root of the data directory
+            # All data in this directory are assumed disposable, and should be
+            # downloaded on the fly
+            dir_data = "{dir_data}"
 
-            [samples]
-            # data_dir = "PATH/TO/DATA_DIR/sample_products"
+            # static data files, required for processing
+            dir_static = "static"
 
-            # EOF
-            """
+            # sample products, used for testing
+            dir_samples = "sample_products"
+
+            # ancillary data (downloaded on the fly)
+            dir_ancillary = "ancillary"
+
+        """
         )
-        
         with open(config_file, "w") as fp:
-            disp(rgb.blue, "Created ", rgb.default, config_file.name)
+            print("Created configuration file", config_file)
             fp.writelines(content)
 
 
-def init_cmd(args=None):
-    
-    parser = argparse.ArgumentParser(description='Command to instantiate a default core-config.toml file in the working directory')
-    parser.add_argument('path', help="path where to create config file, defaults to home folder", nargs='?', default=Path.home())
-    parser.add_argument('--copy',  action="store_true", help="Copy core-config.toml file from the home/.config/core in the current working directory")
-    args = parser.parse_args()
-    
-    dest = Path.cwd() / config_file_name
-    
-    if args.copy:
-        source = Path.home() / ".config/core/" / config_file_name
-        
-        if not source.is_file():
-            error(f"Error: could not find file {source}")    
-        
-        shutil.copy(source, dest)
-        disp(rgb.blue, "Created file ", rgb.default, str(dest.name), " in current working directory")
-        
-    else:
-        home_config_folder = Path.home() / ".config/core/"
-        if not home_config_folder.is_dir(): home_config_folder.mkdir()
-        init(home_config_folder)
-    
-    # simplify path if file is in current directory
-    if Path(args.path).resolve() == Path.cwd():
-        dest = Path(f"./{config_file_name}") 
-    
-    disp(rgb.orange,   "You can configure it using the command:")
-    disp(rgb.default, f"    code {dest}")
-    
+def get(
+    key: str,
+    section=None,
+    *,
+    default=None,
+    write: bool = False,
+    comment: str = "",
+):
+    """Returns a key from the default module-wide configuration instance
+
+    Args:
+        key (str): key name
+        section (str, optional): Optional section name. Otherwise the key is taken at
+            root level.
+        default (optional): Optional default value.
+        write (bool, optional): whether to write the default value in the config file.
+            Defaults to False.
+        comment (str, optional): a comment string to write alongside default value if
+            write mode is activated.
+
+    Example:
+        from core import config
+        config.get('dir_samples')  # returns the sample directory in either local or
+                                   # global configuration file
+    """
+    if cfg is None:
+        raise configfilenotfound
+
+    return cfg.get(
+        key=key, section=section, default=default, write=write, comment=comment
+    )
+
+
+if __name__ == "__main__":
+    initialize()
