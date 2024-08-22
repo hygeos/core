@@ -28,7 +28,7 @@ def date_range(date_start: date, date_end: date) -> list[date]:
     """
     Returns a list of days starting from date_start, up to date_end included
     """
-    days_list = [date_start + i*timedelta(days=1) for i in range((date_end - date_start).days)]
+    days_list = [date_start + i*timedelta(days=1) for i in range((date_end - date_start).days + 1)]
     return days_list
 
 
