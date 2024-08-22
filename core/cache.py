@@ -1,11 +1,15 @@
 import json
 import pickle
+import pandas as pd
+import xarray as xr
 
 from functools import wraps
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Callable, Literal, Optional
+from pandas.testing import assert_frame_equal
 
+from .save import to_netcdf
 from .fileutils import filegen, safe_move
 
 
@@ -90,6 +94,15 @@ def cachefunc(cache_file: Path|str,
     return decorator
 
 
+def cache_dataframe(cache_file: Path | str):
+    return cachefunc(
+        cache_file,
+        writer=lambda filename, df, args, kwargs: df.to_csv(filename, index=False),
+        reader=lambda filename: {"output": pd.read_csv(filename, parse_dates=["time"])},
+        check_out=lambda x, y: assert_frame_equal,
+    )
+
+
 def cache_json(
     cache_file: Path | str,
     inputs: Literal["check", "store", "ignore"] = "check",
@@ -145,4 +158,37 @@ def cache_pickle(
         reader=reader,
         writer=writer,
         check_in=(lambda x, y : x == y) if (inputs == 'check') else None,
+    )
+
+
+def cache_dataset(cache_file: Path|str,
+                  attrs=None,
+                  **kwargs):
+    """
+    A decorator that caches the dataset returned by a function in a netcdf file
+
+    The attribute dictionary `attrs` is stored in the file, and verified upon
+    reading.
+
+    Other kwargs (ex: chunks) are passed to xr.open_dataset
+    """
+    def reader(filename):
+        ds = xr.open_dataset(filename, **kwargs)
+
+        # check attributes in loaded file
+        if attrs is not None:
+            for k, v in attrs.items():
+                assert ds.attrs[k] == v, \
+                    f'Error when checking attribute {k}: {ds.attrs[k]} != {v}'
+        return {'output': ds}
+
+    def writer(filename, ds_out, input_args, input_kwargs):
+        if attrs is not None:
+            ds_out.attrs.update(attrs)
+        to_netcdf(ds_out, filename=filename)
+
+    return cachefunc(
+        cache_file,
+        reader=reader,
+        writer=writer,
     )
