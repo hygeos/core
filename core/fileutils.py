@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from contextlib import contextmanager
+import getpass
+import inspect
+import json
 import os
 import shutil
-import json
-import getpass
 import subprocess
-import inspect
-
-from typing import Optional, Union
+from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from time import sleep
-from pathlib import Path
+from typing import Literal, Optional, Union
+
 from eoread.utils.uncompress import uncompress as uncomp
 
 
@@ -199,7 +199,7 @@ class filegen:
                  arg: Union[int, str]=0,
                  tmpdir: Optional[Path] = None,
                  lock_timeout: int = 0,
-                 if_exists: str = 'skip',
+                 if_exists: Literal['skip', 'overwrite', 'backup', 'error'] = 'error',
                  uncompress: Optional[str] = None,
                  verbose: bool = True,
                  ):
