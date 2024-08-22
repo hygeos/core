@@ -16,7 +16,7 @@ from zipfile import ZipFile
 from datetime import datetime, timedelta
 from tempfile import TemporaryDirectory, gettempdir, mkdtemp
 
-from .fileutils import LockFile
+from core.lock import LockFile
 
 class ErrorUncompressed(Exception):
     """
@@ -24,7 +24,7 @@ class ErrorUncompressed(Exception):
     """
 
 
-def uncompress_decorator(filename='.eoread_uncompress_mapping',
+def uncompress_decorator(filename='.core_uncompress_mapping',
                          verbose=True):
     """
     A decorator that uncompresses the result of function `f`

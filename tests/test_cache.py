@@ -1,7 +1,6 @@
 from pathlib import Path
 import pytest
-from eoread.utils.cache import cache_dataset
-from eoread.utils import cache
+from core import cache
 from xarray.tutorial import open_dataset
 from tempfile import TemporaryDirectory
 
@@ -33,10 +32,10 @@ def test_cache_dataset():
         return open_dataset('air_temperature')
     with TemporaryDirectory() as tmpdir:
         cache_file = Path(tmpdir)/'cache.nc'
-        cache_dataset(cache_file,
+        cache.cache_dataset(cache_file,
                       attrs={'a': 1}
                       )(my_function)()
-        a = cache_dataset(
+        a = cache.cache_dataset(
             cache_file,
             chunks={'lat': 10, 'lon': 10},
         )(my_function)()

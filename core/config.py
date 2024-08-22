@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from textwrap import dedent
-from typing import Literal, Optional
+from typing import Literal, Optional, Any
 
 import click
 import toml
@@ -103,7 +103,7 @@ class Config:
         default=None,
         write: bool = False,
         comment: str = "",
-    ):
+    ) -> Any:
         """
         Returns the key if present in core-config.toml
         """
@@ -261,7 +261,7 @@ def get(
     default=None,
     write: bool = False,
     comment: str = "",
-):
+) -> Any:
     """Returns a key from the default module-wide configuration instance
 
     Args:
