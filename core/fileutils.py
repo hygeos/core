@@ -1,28 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from contextlib import contextmanager
 import os
 import shutil
 import json
-import fcntl
 import getpass
 import subprocess
 import inspect
 
-from os import remove
-from typing import Union
+from typing import Optional, Union
 from datetime import datetime
 from functools import wraps
 from tempfile import TemporaryDirectory
 from time import sleep
 from pathlib import Path
-
-cfg = {
-    # module-wide configuration
-    'lock_timeout': 0,
-    'tmpdir': None,
-    'if_exists': 'skip',
-}
+from eoread.utils.uncompress import uncompress as uncomp
 
 
 def safe_move(src, dst, makedirs=True):
@@ -51,60 +44,51 @@ def safe_move(src, dst, makedirs=True):
     assert pdst.exists()
 
 
-class LockFile:
+@contextmanager
+def LockFile(locked_file: Path,
+             ext='.lock',
+             interval=1,
+             timeout=0,
+             create_dir=True,
+             ):
     """
     Create a blocking context with a lock file
 
     timeout: timeout in seconds, waiting to the lock to be released.
         If negative, disable lock files entirely.
+    
+    interval: interval in seconds
 
-    Ex:
-    with LockFile('/dir/to/file.txt'):
-        # create a file '/dir/to/file.txt.lock' including a filesystem lock
-        # the context will enter once the lock is released
+    Example:
+        with LockFile('/dir/to/file.txt'):
+            # create a file '/dir/to/file.txt.lock' including a filesystem lock
+            # the context will enter once the lock is released
     """
-    def __init__(self,
-                 lock_file,
-                 ext='.lock',
-                 interval=1,
-                 timeout=0,
-                 create_dir=True,
-                ):
-        self.lock_file = Path(str(lock_file)+ext)
-        if create_dir and (timeout >= 0):
-            self.lock_file.parent.mkdir(exist_ok=True, parents=True)
-        self.fd = None
-        self.interval = interval
-        self.timeout = timeout
-        self.disable = timeout < 0
-
-    def __enter__(self):
-        if self.disable:
-            return
+    lock_file = Path(str(locked_file)+ext)
+    disable = timeout < 0
+    if create_dir and not disable:
+        lock_file.parent.mkdir(exist_ok=True, parents=True)
+    
+    if disable:
+        yield lock_file
+    else:
+        # wait untile the lock file does not exist anymore
         i = 0
-        while True:
-            self.fd = open(self.lock_file, 'w')
-            try:
-                fcntl.flock(self.fd, fcntl.LOCK_EX|fcntl.LOCK_NB)
-                self.fd.flush()
-                break
-            except (BlockingIOError, FileNotFoundError):
-                self.fd.close()
-                sleep(self.interval)
-                i += 1
-                if i > self.timeout:
-                    raise TimeoutError(f'Timeout on Lockfile "{self.lock_file}"')
+        while lock_file.exists():
+            if i > timeout:
+                raise TimeoutError(f'Timeout on Lockfile "{lock_file}"')
+            sleep(interval)
+            i += 1
 
-    def __exit__(self, type, value, traceback):
-        if self.disable:
-            return
+        # create the lock file
+        with open(lock_file, 'w') as fd:
+            fd.write('')
+
         try:
-            fcntl.flock(self.fd, fcntl.LOCK_UN)
-            self.fd.flush()
-            self.fd.close()
-            remove(self.lock_file)
-        except FileNotFoundError:
-            pass
+            yield lock_file
+        finally:
+            # remove the lock file
+            lock_file.unlink()
 
 
 class PersistentList(list):
@@ -210,85 +194,116 @@ def skip(filename: Path,
         return False
 
 
-def filegen(arg: Union[int, str]=0,
-            check_return_none=True,
-            **fg_kwargs
-            ):
-    """
-    A decorator for functions generating an output file.
-    The path to this output file should is defined through `arg`.
+class filegen:
+    def __init__(self,
+                 arg: Union[int, str]=0,
+                 tmpdir: Optional[Path] = None,
+                 lock_timeout: int = 0,
+                 if_exists: str = 'skip',
+                 uncompress: Optional[str] = None,
+                 verbose: bool = True,
+                 ):
+        """
+        A decorator for functions generating an output file.
+        The path to this output file should is defined through `arg`.
 
-    This decorator adds the following features to the function:
-    - Use temporary file in a configurable directory, moved afterwards to final location
-    - Detect existing file (if_exists='skip', 'overwrite', 'backup' or 'error')
-    - Use output file lock when multiple functions may produce the same file
-      The timeout for this lock is determined by argument `lock_timeout`.
-    
-    arg: int ot str (default 0)
-        if int, defines the position of the positional argument defining the output file
-            (warning, starts at 1 for methods)
-        if str, defines the argname of the keyword argument defining the output file
 
-    Example:
-        @filegen()
-        def f(path):
-            open(path, 'w').write('test')
-        f(path='/path/to/file.txt')
-    
-    Configuration arguments can be passed to filegen(), or to the wrapped function,
-    or modified module-wise through the 'cfg' dictionary.
-    """
-    def decorator(f):
+        This decorator adds the following features to the function:
+        - Use temporary file in a configurable directory, moved afterwards to final location
+        - Detect existing file (if_exists='skip', 'overwrite', 'backup' or 'error')
+        - Use output file lock when multiple functions may produce the same file
+        The timeout for this lock is determined by argument `lock_timeout`.
+        - Optional decompression
+        
+        Args:
+            arg: int ot str (default 0)
+                if int, defines the position of the positional argument defining the output file
+                    (warning, starts at 1 for methods)
+                if str, defines the argname of the keyword argument defining the output file
+            tmpdir: which temporary directory to use
+            lock_timeout (int): timeout in case of existing lock file
+            if_exists (str): what to do in case of existing file
+            uncompress (str): if specified, the wrapped function produces a file with the
+                specified extension, typically '.zip'. This file is then uncompressed.
+            verbose (bool): verbosity control
+
+        Example:
+            @filegen(arg=0)
+            def f(path):
+                open(path, 'w').write('test')
+            f('/path/to/file.txt')
+
+        Note:
+            The arguments can be modified at runtime.
+            Example:
+                f.if_exists = 'overwrite'
+                f.verbose = False
+        """
+        self._arg = arg
+        self.tmpdir = tmpdir
+        self.lock_timeout = lock_timeout
+        self.if_exists = if_exists
+        self.uncompress = uncompress
+        self.verbose = verbose
+        
+    def __call__(self, f):
         @wraps(f)
-        def wrapper(*args, filegen_kwargs=None, **kwargs):
-            # configuration: take first module_wide configuration,
-            # then filegen_kwargs
-            config = {**cfg,
-                      **fg_kwargs,
-                      **(filegen_kwargs or {})}
-            if isinstance(arg, int):
+        def wrapper(*args, **kwargs):
+            if isinstance(self._arg, int):
                 assert args, 'Error, no positional argument have been provided'
-                assert (arg >= 0) and (arg < len(args))
-                path = args[arg]
-            elif isinstance(arg, str):
-                assert arg in kwargs, \
-                    f'Error, function should have keyword argument "{arg}"'
-                path = kwargs[arg]
+                assert (self._arg >= 0) and (self._arg < len(args))
+                path = args[self._arg]
+            elif isinstance(self._arg, str):
+                assert self._arg in kwargs, \
+                    f'Error, function should have keyword argument "{self._arg}"'
+                path = kwargs[self._arg]
             else:
-                raise ValueError(f'Invalid argumnt {arg}')
+                raise TypeError(f'Invalid argumnt {self._arg}')
                 
             ofile = Path(path)
 
-            if skip(ofile, config['if_exists']):
+            if skip(ofile, self.if_exists):
+                if self.verbose:
+                    print(f'Skipping existing file {ofile.name}')
                 return
             
-            with TemporaryDirectory(dir=config['tmpdir']) as tmpd:
-                tfile = Path(tmpd)/ofile.name
+            with TemporaryDirectory(dir=self.tmpdir) as tmpd:
+                
+                # target (intermediary) file
+                if self.uncompress:
+                    tfile = Path(tmpd)/(ofile.name+self.uncompress)
+                else:
+                    tfile = Path(tmpd)/ofile.name
+
                 with LockFile(ofile,
-                              timeout=config['lock_timeout'],
-                              ):
-                    if skip(ofile, config['if_exists']):
+                            timeout=self.lock_timeout,
+                            ):
+                    if skip(ofile, self.if_exists):
                         return
-                    if isinstance(arg, int):
+                    if isinstance(self._arg, int):
                         updated_args = list(args)
-                        updated_args[arg] = tfile
+                        updated_args[self._arg] = tfile
                         updated_kwargs = kwargs
-                    elif isinstance(arg, str):
+                    elif isinstance(self._arg, str):
                         updated_args = args
-                        updated_kwargs = {**kwargs, arg: tfile}
+                        updated_kwargs = {**kwargs, self._arg: tfile}
                     else:
-                        raise ValueError(f'Invalid argumnt {arg}')
+                        raise ValueError(f'Invalid argumnt {self._arg}')
                         
                     ret = f(*updated_args, **updated_kwargs)
                     assert tfile.exists()
-                    if check_return_none:
-                        # the function should not return anything,
-                        # because it may be skipped
-                        assert ret is None
-                    safe_move(tfile, ofile)
+
+                    # check that the function does not return anything,
+                    # because the function call may be skipped upon existing file
+                    assert ret is None
+
+                    if self.uncompress:
+                        uncompressed = uncomp(tfile, Path(tmpd))
+                        safe_move(uncompressed, ofile)
+                    else:
+                        safe_move(tfile, ofile)
             return
         return wrapper
-    return decorator
 
 
 def get_git_commit():
