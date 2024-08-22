@@ -16,8 +16,17 @@ from shapely.geometry import Point, Polygon
 from collections import OrderedDict
 from dateutil.parser import parse
 
-from .naming import naming
+from core.naming import names
 
+
+flags          = 'flags'
+flags_dtype    = 'uint16'
+flags_meanings = 'flag_meanings'
+flags_masks    = 'flag_masks'
+flags_meanings_separator = ' '
+
+footprint_lat = 'footprint_lat'
+footprint_lon = 'footprint_lon'
 
 def datetime(ds: xr.Dataset):
     '''
@@ -81,8 +90,8 @@ def locate(lat, lon, lat0, lon0,
 def contains(ds: xr.Dataset, lat: float, lon: float):
     pt = Point(lat, lon)
     area = Polygon(zip(
-        ds.attrs[naming.footprint_lat],
-        ds.attrs[naming.footprint_lon]
+        ds.attrs[footprint_lat],
+        ds.attrs[footprint_lon]
     ))
     # TODO: proper inclusion test
     # TODO: make it work with arrays
@@ -173,8 +182,8 @@ def sub_pt(ds: xr.Dataset, pt_lat, pt_lon, rad,
     int_default_value, int
         for DataArrays of type int, this value is assigned on non-valid pixels
     '''
-    lat = ds[naming.lat].compute()
-    lon = ds[naming.lon].compute()
+    lat = ds[str(names.latitude)].compute()
+    lon = ds[str(names.longitude)].compute()
     cond = haversine(lat, lon, pt_lat, pt_lon) < rad
     cond = cond.compute()
 
@@ -302,9 +311,9 @@ def getflags(A=None, meanings=None, masks=None, sep=None):
         sep: string separator
     """
     try:
-        meanings = meanings if (meanings is not None) else A.attrs[naming.flags_meanings]
-        masks = masks if (masks is not None) else A.attrs[naming.flags_masks]
-        sep = sep or naming.flags_meanings_separator
+        meanings = meanings if (meanings is not None) else A.attrs[flags_meanings]
+        masks = masks if (masks is not None) else A.attrs[flags_masks]
+        sep = sep or flags_meanings_separator
     except KeyError:
         return OrderedDict()
     return OrderedDict(zip(meanings.split(sep), masks))
@@ -345,10 +354,10 @@ def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition):
     flags = getflags(A)
     dtype_flag_masks = 'uint16'
 
-    if naming.flags_meanings not in A.attrs:
-        A.attrs[naming.flags_meanings] = ''
-    if naming.flags_masks not in A.attrs:
-        A.attrs[naming.flags_masks] = np.array([], dtype=dtype_flag_masks)
+    if flags_meanings not in A.attrs:
+        A.attrs[flags_meanings] = ''
+    if flags_masks not in A.attrs:
+        A.attrs[flags_masks] = np.array([], dtype=dtype_flag_masks)
 
     # update the attributes if necessary
     if flag_name in flags:
@@ -364,11 +373,11 @@ def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition):
         # sort the flags by values
         keys, values = zip(*sorted(flags.items(), key=lambda y: y[1]))
 
-        A.attrs[naming.flags_meanings] = naming.flags_meanings_separator.join(keys)
-        A.attrs[naming.flags_masks] = np.array(values, dtype=dtype_flag_masks)
+        A.attrs[flags_meanings] = flags_meanings_separator.join(keys)
+        A.attrs[flags_masks] = np.array(values, dtype=dtype_flag_masks)
 
     notraised = (A & flag_value) == 0
-    A += flag_value * ((condition != 0) & notraised).astype(naming.flags_dtype)
+    A += flag_value * ((condition != 0) & notraised).astype(flags_dtype)
 
 
 def wrap(ds: xr.Dataset, dim: str, vmin: float, vmax: float):
