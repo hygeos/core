@@ -1,14 +1,19 @@
 import subprocess
 from pathlib import Path
+from typing import Literal
 
 from core.fileutils import filegen
 
 
-def download_url(url, dirname, wget_opts='',
-                 check_function=None,
-                 verbose=True,
-                 **kwargs
-                 ) -> Path:
+def download_url(
+    url: str,
+    dirname: Path,
+    wget_opts="",
+    check_function=None,
+    verbose=True,
+    if_exists: Literal['skip', 'overwrite', 'backup', 'error'] = 'skip',
+    **kwargs
+) -> Path:
     """
     Download `url` to `dirname` with wget
 
@@ -19,7 +24,7 @@ def download_url(url, dirname, wget_opts='',
     Returns the path to the downloaded file
     """
     target = Path(dirname)/(Path(url).name)
-    @filegen(**kwargs)
+    @filegen(if_exists=if_exists, **kwargs)
     def download_target(path):
         if verbose:
             print('Downloading:', url)
