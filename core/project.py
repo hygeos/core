@@ -35,7 +35,7 @@ class Config:
     def get(
         self,
         key: str,
-        section: Optional[str] = None,
+        section: str = None,
         *,
         default=None,
     ) -> Any:
@@ -62,8 +62,9 @@ class Config:
             if default is not None:
                 return default
             else:
-                raise KeyError( f"Missing key {key} in section [{section}] of "
-                    f"file {config_path} and no defaults provided"
+                mess = "root section" if section is None else f"section [{section}]"
+                raise KeyError( f"Missing key {key} in {mess} of "
+                    f"file {config_path} and no defaults is provided"
                 )
                 
         # get value
