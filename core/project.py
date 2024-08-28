@@ -20,7 +20,7 @@ cfg.get("key", default=-1)
 
 class Config:
     @interface
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path, section=None):
         """
         Read and initialize the configuration provided
         """
@@ -31,6 +31,16 @@ class Config:
         # read config
         self.config_file = config_path
         self.config = toml.load(self.config_file)
+
+        if section is not None:
+            sections = section.split('.')
+            
+            # find subsection
+            for sub in sections:
+                if sub in self.config:
+                    self.config = self.config[sub]
+                else:
+                    raise KeyError(f"Missing section [{section}] in file {config_path}")
 
     def get(
         self,
@@ -49,13 +59,21 @@ class Config:
 
         config_path = self.config_file
 
-        # optional section managing
+        # Base section
         if section is None:
             current_config = self.config # get config content
-        else:
-            if section not in self.config:
-                raise KeyError(f"Missing section [{section}] in file {config_path}")
-            current_config = self.config[section] # get config section content
+        
+        # Section or nested subsection
+        else: 
+            sections = section.split('.')
+            current_config = self.config
+            
+            # find subsection
+            for sub in sections:
+                if sub in current_config:
+                    current_config = current_config[sub]
+                else:
+                    raise KeyError(f"Missing section [{section}] in file {config_path}")
             
         # key managing
         if key not in current_config:
