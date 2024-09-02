@@ -13,7 +13,7 @@ def interp(
     sel: Optional[Dict[str, xr.DataArray]] = None,
     interp: Optional[Dict[str, xr.DataArray]] = None,
     options: Optional[Dict[str, Any]] = None,
-):
+) -> xr.DataArray:
     """Interpolate or select a DataArray onto new coordinates
 
     This function is similar to xr.interp and xr.sel, but:
@@ -34,8 +34,11 @@ def interp(
         A dict mapping dimension names to a dictionary of options to use for
         the current sel or interp.
         For sel dimensions, the options are passed to `pandas.Index.get_indexer`. In
-        particular, method={None [default, raises an error if values not in index],
-        "pad"/"ffill", "backfill"/"bfill", "nearest"}
+        particular, 'method' can be one of:
+            - None [default, raises an error if values not in index]
+            - "pad"/"ffill"
+            - "backfill"/"bfill"
+            - "nearest"
         For interp dimensions:
             `bounds`: behaviour in case of out-of-bounds values (default "error")
                 - "error": raise an error
@@ -178,7 +181,8 @@ def index_block(
         )
         if ((keys[idim]) < 0).any():  # type: ignore
             raise ValueError(
-                f"Error in selection of dimension {dim} with options={opt}"
+                f"Error in selection of dimension {dim} with options={opt} in "
+                f'interpolation of DataArray "{data.name}"'
             )
 
     # determine bracketing values and interpolation ratio
