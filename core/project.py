@@ -93,3 +93,26 @@ class Config:
             value = Path(value)
 
         return value 
+    
+    @interface
+    def ingest(self, cfg: dict, section: str):
+        """
+        Injects a dictionnary as a subsection config
+        Usefull to merge differents configs and to propagate them easily
+        """
+        
+        config = self.config
+        sections = section.split('.')
+        last_section = sections.pop(-1) # pop last element
+        
+        for sub in sections: # iterate in-between subsections
+            if not sub in config:
+                config[sub] = {}        # instantiate empty dictionnary
+                config = config[sub]    # go one level deeper
+        
+        if last_section in self.config:
+            raise RuntimeError(f"Section '{section}' already in config. Cannot ingest.")
+
+        config[last_section] = cfg # append passed config to deepest section 
+        
+        return
