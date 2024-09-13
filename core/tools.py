@@ -335,7 +335,7 @@ def getflag(A: xr.DataArray, name: str):
     return (A & flags[name]) != 0
 
 
-def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition):
+def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition=None):
     """
     Raise a flag in DataArray `A` with name `flag_name`, value `flag_value` and `condition`
     The name and value of the flag is recorded in the attributes of `A`
@@ -349,7 +349,9 @@ def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition):
     flag_value: int
         Value of the flag
     condition: boolean array-like of same shape as `A`
-        Condition to raise flag
+        Condition to raise flag.
+        If None, the flag values are unchanged ; the flag is simple registered in the
+        attributes.
     """
     flags = getflags(A)
     dtype_flag_masks = 'uint16'
@@ -376,8 +378,9 @@ def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition):
         A.attrs[flags_meanings] = flags_meanings_separator.join(keys)
         A.attrs[flags_masks] = np.array(values, dtype=dtype_flag_masks)
 
-    notraised = (A & flag_value) == 0
-    A += flag_value * ((condition != 0) & notraised).astype(flags_dtype)
+    if condition is not None:
+        notraised = (A & flag_value) == 0
+        A += flag_value * ((condition != 0) & notraised).astype(flags_dtype)
 
 
 def wrap(ds: xr.Dataset, dim: str, vmin: float, vmax: float):
