@@ -17,6 +17,8 @@
 # standard library imports
 from enum import Enum
 import inspect
+from tqdm import tqdm
+
 
 # third party imports
 # ...
@@ -42,29 +44,83 @@ lvl.CRITICAL.color  = rgb.red
 
 # Log storage class
 class Log:
-    
     _min_global_level = lvl.DEBUG
-    blacklist = []
+    
+    #wrtiting to terminal by default
+    _format_msg_func = None
+    _loading_bar_func = tqdm
+    
+    blacklist = {}
+    
     
     # filters = ...
     def set_lvl(lvl: lvl):
         Log._min_global_level = lvl
 
-    def format_msg(level, msg, mod):
-        return f"{level.color}[{level.name}]: ({mod}.py){rgb.default} {msg}"
+    def _format_msg(level: lvl, msg: str, mod):
+        return f"{level.color}[{level.name}]: ({mod.__name__}.py){rgb.default} {msg}"
     
-    def silence(*modules):  # TODO blacklist only below certain level ? e.g Log.silence("core.filegen", below=lvl.ERROR)
-        for mod in modules:
-            Log.blacklist.append(mod)
+    def _format_msg_no_color(level: lvl, msg: str, mod):
+        return f"[{level.name}]: ({mod.__name__}.py) {msg}"
+       
     
-    def _log(lvl: lvl, msg: str, mod: str):
+    #here so that function are visible in order
+    _format_msg_func = _format_msg
+    
+    
+    def _no_loading_bar(iterable=None, desc=None, total=None, leave=True, file=None,
+         ncols=None, mininterval=0.1, maxinterval=10.0, miniters=None,
+         ascii=None, disable=False, unit='it', unit_scale=False,
+         dynamic_ncols=False, smoothing=0.3, bar_format=None, initial=0,
+         position=None, postfix=None, unit_divisor=1000, write_bytes=False,
+         lock_args=None, nrows=None, colour=None, delay=0, gui=False,
+         **kwargs):
+        return iterable
+    
+    
+    def set_to_file_output() :
+        Log._format_msg_func = Log._format_msg_no_color
+        Log._loading_bar_func = Log._no_loading_bar
+
+    
+    def set_to_terminal_output():
+        Log._format_msg_func = Log._format_msg
+        Log._loading_bar_func = tqdm
         
-        for blacklisted_domain in Log.blacklist:
-            if mod.startswith(blacklisted_domain):
+    
+
+
+    
+    #interface tqdm please go to https://tqdm.github.io/docs/tqdm/ for documentation
+    def loading_bar(iterable=None, desc=None, total=None, leave=True, file=None,
+         ncols=None, mininterval=0.1, maxinterval=10.0, miniters=None,
+         ascii=None, disable=False, unit='it', unit_scale=False,
+         dynamic_ncols=False, smoothing=0.3, bar_format=None, initial=0,
+         position=None, postfix=None, unit_divisor=1000, write_bytes=False,
+         lock_args=None, nrows=None, colour=None, delay=0, gui=False,
+         **kwargs):
+        
+        
+        return Log._loading_bar_func(iterable, desc, total, leave, file, ncols, mininterval,
+                         maxinterval, miniters, ascii, disable, unit, unit_scale,
+                         dynamic_ncols, smoothing, bar_format, initial, position,
+                         postfix, unit_divisor, write_bytes, lock_args, nrows,
+                         colour, delay, gui, **kwargs)
+    
+    
+    def silence(module, bellow_level : lvl = lvl.CRITICAL):  # blacklist only below certain level ? e.g Log.silence("core.filegen", bellow_level=lvl.ERROR)
+            Log.blacklist[module] = bellow_level
+    
+    def _log(lvl: lvl, msg: str, mod):
+        
+        if mod in Log.blacklist:
+            if Log.blacklist[mod].value >= lvl.value :
                 return
+            
         
+
         if lvl.value >= Log._min_global_level.value: # and section not in LOG.filters:
-           print(Log.format_msg(lvl, msg, mod))
+           print(Log._format_msg_func(lvl, msg, mod))
 
 # proxy
 def log(lvl: lvl, msg: str):
@@ -74,7 +130,7 @@ def log(lvl: lvl, msg: str):
     
     # get calling module full name
     stk = inspect.stack()[1]
-    mod = inspect.getmodule(stk[0]).__name__
+    mod = inspect.getmodule(stk[0])
     
     Log._log(lvl, msg, mod)
 
