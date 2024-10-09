@@ -15,6 +15,6 @@ def convert_latlon(lat, lon):
     new_lat = lat[:,np.newaxis]
     new_lat = np.repeat(new_lat, size[1], axis=1)
     new_lon = np.repeat(lon, size[0], axis=0)
-    new_lon = new_lon.reshape(size)
+    new_lon = new_lon.reshape(size).T
     
     return new_lat, new_lon
