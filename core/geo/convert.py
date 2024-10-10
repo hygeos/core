@@ -13,8 +13,8 @@ def convert_latlon(lat, lon):
     
     size = (lat_size[0], lon_size[0])
     new_lat = lat[:,np.newaxis]
+    new_lon = lon[:,np.newaxis]
     new_lat = np.repeat(new_lat, size[1], axis=1)
-    new_lon = np.repeat(lon, size[0], axis=0)
-    new_lon = new_lon.reshape(size).T
+    new_lon = np.repeat(new_lon, size[0], axis=1)
     
-    return new_lat, new_lon
+    return new_lat, new_lon.T
