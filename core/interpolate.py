@@ -134,6 +134,24 @@ def broadcast_shapes(ds: xr.Dataset, dims) -> Dict:
     return result
 
 
+def determine_output_dimensions(data, ds, dims_sel_interp):
+    """
+    determine output dimensions
+    based on numpy's advanced indexing rules
+    """
+    out_dims = []
+    dims_added = False
+    for dim in data.dims:
+        if dim in dims_sel_interp:
+            if not dims_added:
+                out_dims.extend(list(ds.dims))
+                dims_added = True
+        else:
+            out_dims.append(dim)
+    
+    return out_dims
+
+
 def index_block(
     ds: xr.Dataset,
     data: xr.DataArray,
@@ -142,25 +160,13 @@ def index_block(
     options: Optional[Dict] = None,
 ) -> xr.DataArray:
     """
-    This function is called by map_blocks in function `index`, and performs the
+    This function is called by map_blocks in function `interp`, and performs the
     indexing and interpolation at the numpy level.
     """
     dims_sel_interp = list(dims_sel) + list(dims_interp)
     options = options or {}
 
-    # determine output dimensions based on numpy's advanced indexing rules
-    out_dims = []
-    out_shape = []
-    dims_added = False
-    for dim in data.dims:
-        if dim in dims_sel_interp:
-            if not dims_added:
-                out_dims.extend(list(ds.dims))
-                out_shape.extend(list(ds.dims.values()))
-                dims_added = True
-        else:
-            out_dims.append(dim)
-            out_shape.append(data[dim].size)
+    out_dims = determine_output_dimensions(data, ds, dims_sel_interp)
 
     # get broadcasted data from ds (all with the same number of dimensions)
     np_indexers = broadcast_numpy(ds, ds.dims)
@@ -318,6 +324,10 @@ def selinterp(
 
     This interpolates `auxdata` along dimensions 'lat' and 'lon', by chunks,
     with values defined in ds.latitude and ds.longitude.
+
+    Caveats:
+        - Returns float64
+        - Cannot specify options per dimension
     """
     warnings.warn(
         "Deprecated function: use function `interp` instead", DeprecationWarning
