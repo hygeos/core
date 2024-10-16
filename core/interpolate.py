@@ -1,13 +1,309 @@
 import warnings
-from typing import Any, Dict, List, Literal, Optional
-from packaging import version
+from functools import reduce
+from itertools import product
+from typing import Any, Dict, Iterable, List, Literal, Optional
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from numpy.typing import NDArray
+from packaging import version
+from scipy.interpolate._rgi_cython import find_indices
 
 
-def interp(
+def interp(da: xr.DataArray, **kwargs):
+    """
+    Interpolate/select a DataArray onto new coordinates.
+
+    This function is similar to xr.interp and xr.sel, but:
+        - Supports dask-based coordinates inputs without triggering immediate
+          computation as is done by xr.interp
+        - Supports combinations of selection and interpolation. This is faster and more
+          memory efficient than performing independently the selection and interpolation.
+        - Supports pointwise indexing/interpolation using dask arrays
+          (see https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing)
+        - Supports per-dimension options (nearest neighbour selection, interpolation,
+          out-of-bounds behaviour...)
+
+    Args:
+        da (xr.DataArray): The input DataArray
+        **kwargs: definition of the selection/interpolation coordinates for each
+            dimension, using the following classes:
+                - Linear: linear interpolation (like xr.DataArray.interp)
+                - Select: index labels selection (like xr.DataArray.sel)
+                - Index: integer index selection (like xr.DataArray.isel)
+            These classes store the coordinate data in their `.values` attribute and have
+            a `.get_indexer` method which returns an indexer for the passed coordinates.
+
+    Example:
+        >>> interp(
+        ...     data,  # input DataArray with dimensions (a, b, c)
+        ...     a = Linear(           # perform linear interpolation along dimension `a`
+        ...          a_values,        # `a_values` is a DataArray with dimension (x, y);
+        ...          bounds='clip'),  # clip out of bounds values to the axis min/max.
+        ...     b = Select(b_values,   # perform nearest neighbour selection along
+        ...          method='nearest', # dimension `a`; `b_values` is a DataArray
+        ...          ),                # with dimension (x, y)
+        ... ) # returns a DataArray with dimensions (x, y, c)
+        No interpolation or selection is performed along dimension `c` thus it is
+        left as-is.
+
+    Returns:
+        xr.DataArray: DataArray on the new coordinates.
+    """
+    if set(kwargs).issubset(set(['sel', 'interp', 'options'])):
+        # interp version 1
+        warnings.warn('This is a backward comparible version of the interp function. '
+                      'Please use the updated API (see interp docstring).')
+        return interp_v1(da, **kwargs)
+    else:
+        # interp version 2
+        return interp_v2(da, **kwargs)
+
+
+def interp_v2(da: xr.DataArray, **kwargs) -> xr.DataArray:
+    assert (da.chunks is None) or (
+        len(da.chunks) == 0
+    ), "Input DataArray should not be dask-based"
+
+    # merge all indexing DataArrays in a single Dataset
+    ds = xr.Dataset({k: v.values for k, v in kwargs.items()})
+
+    # get interpolators along all dimensions
+    indexers = {k: v.get_indexer(da[k]) for k, v in kwargs.items()}
+
+    # prevent common dimensions between da and sel+interp
+    assert not set(ds.dims).intersection(da.dims)
+
+    # transpose them to ds.dims
+    ds = ds.transpose(*ds.dims)
+    
+    out_dims = determine_output_dimensions(da, ds, kwargs.keys())
+
+    ret = xr.map_blocks(
+        interp_block_v2,
+        ds,
+        kwargs={
+            "da": da,
+            "out_dims": out_dims,
+            "indexers": indexers,
+        },
+    )
+
+    return ret
+
+
+def product_dict(**kwargs) -> Iterable[Dict]:
+    """
+    Cartesian product of a dictionary of lists
+    """
+    # https://stackoverflow.com/questions/5228158/
+    keys = kwargs.keys()
+    for instance in product(*kwargs.values()):
+        yield dict(zip(keys, instance))
+
+
+def interp_block_v2(
+    ds: xr.Dataset, da: xr.DataArray, out_dims, indexers: Dict
+) -> xr.DataArray:
+    """
+    This function is called by map_blocks in function `interp`, and performs the
+    indexing and interpolation at the numpy level.
+
+    It relies on the indexers to perform index searching and weight calculation, and
+    performs a linear combination of the sub-arrays.
+    """
+    # get broadcasted data from ds (all with the same number of dimensions)
+    np_indexers = broadcast_numpy(ds)
+    
+    # get the shapes for broadcasting each weight against the output dimensions
+    w_shape = broadcast_shapes(ds, out_dims)
+
+    # apply index searching over all dimensions (ie, v(values))
+    indices_weights = {k: v(np_indexers[k]) for k, v in indexers.items()}
+
+    # cartesian product of the combination of lower and upper indices (in case of
+    # linear interpolation) for each dimension
+    result = 0
+    data_values = da.values
+    for iw in product_dict(**indices_weights):
+        weights = [
+            1 if iw[dim][1] is None else iw[dim][1].reshape(w_shape[dim])
+            for dim in iw
+        ]
+        w = reduce(lambda x, y: x*y, weights)
+        keys = [(iw[dim][0] if dim in iw else slice(None)) for dim in da.dims]
+        result += data_values[tuple(keys)] * w
+    
+    # determine output coords
+    coords = {}
+    for dim in out_dims:
+        if dim in da.coords:
+            coords[dim] = da.coords[dim]
+        elif dim in ds.coords:
+            coords[dim] = ds.coords[dim]
+
+    # create output DataArray
+    ret = xr.DataArray(
+        result,
+        dims=out_dims,
+        coords=coords,
+    )
+
+    return ret
+
+
+class Linear:
+    def __init__(
+        self,
+        values: xr.DataArray,
+        bounds: Literal["error", "nan", "clip"] = "error",
+        regular: Literal["yes", "no", "auto"] = "auto",
+    ):
+        """
+        A proxy class for Linear indexing.
+
+        The purpose of this class is to provide a convenient interface to the
+        interp function, by initializing an indexer class.
+
+        Args:
+            bounds (str): how to deal with out-of-bounds values:
+                - error: raise a ValueError
+                - nan: replace by NaNs
+                - clip: clip values to the extrema
+        """
+        self.values = values
+        self.regular = regular
+        self.bounds = bounds
+    
+    def get_indexer(self, coords: xr.DataArray):
+        # regular grid detection
+        if self.regular in ['yes', 'auto']:
+            cval = coords.values
+            diff = np.diff(cval)
+            regular = np.allclose(diff[0], diff)
+            if self.regular == 'yes':
+                assert regular
+        else:
+            regular = False
+
+        if regular:
+            # use an indexer that is optimized for regular indexers
+            return Linear_Indexer_Regular(
+                cval[0], cval[-1], len(cval), bounds=self.bounds
+            )
+        else:
+            return Linear_Indexer(cval, self.bounds)
+
+
+class Linear_Indexer:
+    def __init__(self, coords: NDArray, bounds: str):
+        self.coords = coords
+        self.bounds = bounds
+
+        # assumes that coords are sorted in ascending order
+        assert (np.diff(coords) > 0).all()
+        # TODO: support descending order
+
+    def __call__(self, values: NDArray) -> List:
+        """
+        Find indices of `values` for linear interpolation in self.coords
+
+        Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
+        """
+        shp = values.shape
+        indices, dist = find_indices((self.coords,), values.ravel()[None, :])
+        indices = indices.reshape(shp)
+        dist = dist.reshape(shp)
+        if self.bounds == "error":
+            if not ((dist >= 0) & (dist <= 1)).all():
+                raise ValueError
+        else:
+            # 'nan', 'clip'
+            raise NotImplementedError
+
+        return [(indices, 1-dist), (indices+1, dist)]
+
+
+class Linear_Indexer_Regular:
+    def __init__(self, vstart: float, vend: float, N: int, bounds: str):
+        """
+        An indexer for regularly spaced values
+        """
+        self.vstart = vstart
+        self.vend = vend
+        self.N = N
+        self.scal = (N - 1) / (vend - vstart)
+        self.bounds = bounds  # 'error', 'nan', 'clip'
+
+    def __call__(self, values: NDArray):
+        """
+        Find indices of values for linear interpolation in self.coords
+
+        Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
+        """
+        # floating index (scale to [0, N-1])
+        x = (values - self.vstart) * self.scal
+
+        # out of bounds management
+        if self.bounds == "clip":
+            x = x.clip(0, self.N - 1)
+        else:
+            oob = (x < 0) | (x > self.N - 1)
+
+        iinf = np.floor(x).astype('int').clip(0, None)
+        isup = (iinf + 1).clip(None, self.N - 1)
+        w = x - iinf
+
+        if self.bounds != 'clip':
+            if self.bounds == 'error':
+                if oob.any():
+                    raise ValueError
+            elif self.bounds == "nan":
+                w[oob] = np.NaN
+
+        return [(iinf, 1-w), (isup, w)]
+
+
+class Index:
+    def __init__(self):
+        """
+        Proxy class for integer index-based selection (isel)
+        """
+        raise NotImplementedError
+
+class Select:
+    def __init__(
+        self, values: xr.DataArray, method: Literal["nearest", "exact"] = "exact"
+    ):
+        """
+        Proxy class for value selection (sel)
+        """
+        self.values = values
+        self.method = method
+    
+    def get_indexer(self, coords: xr.DataArray):
+        return Nearest_Indexer(coords.values, self.method)
+
+class Nearest_Indexer:
+    def __init__(self, coords: NDArray, method: str):
+        self.coords = coords.astype('double')
+        self.method = method
+    
+    def __call__(self, values: NDArray):
+        shp = values.shape
+        indices, dist = find_indices(
+            (self.coords,), values.astype("double").ravel()[None, :]
+        )
+        indices = indices.reshape(shp)
+        dist = dist.reshape(shp)
+
+        # Should be checked
+        raise NotImplementedError
+        return [(indices, None)]
+
+
+def interp_v1(
     da: xr.DataArray,
     *,
     sel: Optional[Dict[str, xr.DataArray]] = None,
@@ -48,7 +344,7 @@ def interp(
 
     Example
     -------
-    >>> index(
+    >>> interp(
     ...     data,  # input DataArray with dimensions (a, b, c)
     ...     interp={ # interpolation dimensions
     ...         'a': a_values, # `a_values` is a DataArray with dimension (x, y)
@@ -167,6 +463,8 @@ def index_block(
     """
     This function is called by map_blocks in function `interp`, and performs the
     indexing and interpolation at the numpy level.
+
+    NOTE: to be deprecated in favour of interp_v2 and interp_block_v2
     """
     options = options or {}
 
@@ -289,11 +587,6 @@ def index_block(
     )
 
     return ret
-
-
-def index(*args, **kwargs):
-    warnings.warn("This function has been renamed to `interp`", DeprecationWarning)
-    return interp(*args, **kwargs)
 
 
 def selinterp(
