@@ -106,10 +106,10 @@ def interp(
     return ret
 
 
-def broadcast_numpy(ds: xr.Dataset, dims) -> Dict:
+def broadcast_numpy(ds: xr.Dataset) -> Dict:
     """
     Returns all data variables in `ds` as numpy arrays
-    broadcastable against the dimensions defined by dims
+    broadcastable against each other
     (with new single-element dimensions)
 
     This requires the input to be broadcasted to common dimensions.
@@ -117,7 +117,7 @@ def broadcast_numpy(ds: xr.Dataset, dims) -> Dict:
     result = {}
     for var in ds:
         result[var] = ds[var].data[
-            tuple([slice(None) if d in ds[var].dims else None for d in dims])
+            tuple([slice(None) if d in ds[var].dims else None for d in ds.dims])
         ]
     return result
 
@@ -171,7 +171,7 @@ def index_block(
     options = options or {}
 
     # get broadcasted data from ds (all with the same number of dimensions)
-    np_indexers = broadcast_numpy(ds, ds.dims)
+    np_indexers = broadcast_numpy(ds)
     x_indexers = broadcast_shapes(ds, out_dims)
 
     keys = [slice(None)] * data.ndim
