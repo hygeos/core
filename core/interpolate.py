@@ -87,6 +87,9 @@ def interp(
     # transpose them to ds.dims
     ds = ds.transpose(*ds.dims)
 
+    dims_sel_interp = list(sel.keys()) + list(interp.keys())
+    out_dims = determine_output_dimensions(da, ds, dims_sel_interp)
+
     ret = xr.map_blocks(
         index_block,
         ds,
@@ -95,6 +98,7 @@ def interp(
             "dims_sel": sel.keys(),
             "dims_interp": interp.keys(),
             "options": options,
+            "out_dims": out_dims,
         },
     )
     ret.attrs.update(da.attrs)
@@ -157,16 +161,14 @@ def index_block(
     data: xr.DataArray,
     dims_sel: List,
     dims_interp: List,
+    out_dims: List,
     options: Optional[Dict] = None,
 ) -> xr.DataArray:
     """
     This function is called by map_blocks in function `interp`, and performs the
     indexing and interpolation at the numpy level.
     """
-    dims_sel_interp = list(dims_sel) + list(dims_interp)
     options = options or {}
-
-    out_dims = determine_output_dimensions(data, ds, dims_sel_interp)
 
     # get broadcasted data from ds (all with the same number of dimensions)
     np_indexers = broadcast_numpy(ds, ds.dims)
