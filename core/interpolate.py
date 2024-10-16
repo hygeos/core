@@ -30,7 +30,7 @@ def interp(da: xr.DataArray, **kwargs):
         **kwargs: definition of the selection/interpolation coordinates for each
             dimension, using the following classes:
                 - Linear: linear interpolation (like xr.DataArray.interp)
-                - Select: index labels selection (like xr.DataArray.sel)
+                - Nearest: nearest neighbour selection (like xr.DataArray.sel)
                 - Index: integer index selection (like xr.DataArray.isel)
             These classes store the coordinate data in their `.values` attribute and have
             a `.get_indexer` method which returns an indexer for the passed coordinates.
@@ -41,7 +41,7 @@ def interp(da: xr.DataArray, **kwargs):
         ...     a = Linear(           # perform linear interpolation along dimension `a`
         ...          a_values,        # `a_values` is a DataArray with dimension (x, y);
         ...          bounds='clip'),  # clip out of bounds values to the axis min/max.
-        ...     b = Select(b_values,   # perform nearest neighbour selection along
+        ...     b = Nearest(b_values,  # perform nearest neighbour selection along
         ...          method='nearest', # dimension `a`; `b_values` is a DataArray
         ...          ),                # with dimension (x, y)
         ... ) # returns a DataArray with dimensions (x, y, c)
