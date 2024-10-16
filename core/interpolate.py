@@ -240,7 +240,7 @@ class Linear_Indexer:
         else:
             return [
                 (self.N - 1 - indices, 1 - dist),
-                (self.N - 1 - (indices + 1), dist),
+                (self.N - 2 - indices, dist),
             ]
 
 
@@ -285,11 +285,23 @@ class Linear_Indexer_Regular:
 
 
 class Index:
-    def __init__(self):
+    def __init__(self, values):
         """
         Proxy class for integer index-based selection (isel)
+
+        Does not require a separate Indexer class, since the coords are not used;
+        the values are returned as-is, they are already integer indices.
         """
-        raise NotImplementedError
+        self.values = values
+    
+    def get_indexer(self, coords):
+        # We can simply return self to avoid another class, since coords are not used.
+        # The __call__ method of the Indexer is implemented in this class.
+        return self
+        
+    def __call__(self, values: NDArray):
+        return [(values, None)]
+
 
 class Nearest:
     def __init__(
