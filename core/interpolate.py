@@ -290,7 +290,7 @@ class Index:
         """
         raise NotImplementedError
 
-class Select:
+class Nearest:
     def __init__(
         self, values: xr.DataArray, tolerance: float|None = 1e-8,
     ):

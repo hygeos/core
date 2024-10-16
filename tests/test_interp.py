@@ -7,14 +7,12 @@ from core.interpolate import (
     interp_v1,
     selinterp,
     Linear,
-    Select,
+    Nearest,
 )
 from luts import luts
 from core import conftest
 import xarray as xr
 from core.pytest_utils import parametrize_dict
-
-
 
 
 list_interp_functions = {
@@ -175,12 +173,12 @@ def test_interp_v1(kwargs):
             "c": Linear(sample(101, 105, ["x", "y"])),
         },
         {  # mixed dimensions
-            "a": Select(sample(1, 3, ["z"]), tolerance=1.),
+            "a": Nearest(sample(1, 3, ["z"]), tolerance=1.),
             "b": Linear(sample(11, 14, ["x", "y"])),
             "c": Linear(sample(101, 105, ["x", "z"])),
         },
         {  # scalar selection
-            "a": Select(2),
+            "a": Nearest(2),
             "b": Linear(sample(11, 14, ["x", "y"])),
             "c": Linear(sample(101, 105, ["x", "z"])),
         },
@@ -276,7 +274,7 @@ def test_oob_sel(fixed_sample, interp_version):
         else:
             interp(
                 fixed_sample,
-                b = Select(xr.DataArray([-2])),
+                b = Nearest(xr.DataArray([-2])),
             )
 
 
@@ -294,7 +292,7 @@ def test_oob_sel_nearest(fixed_sample, interp_version):
     else:
         interp(
             fixed_sample,
-            b = Select(xr.DataArray([-2]), tolerance=None)
+            b = Nearest(xr.DataArray([-2]), tolerance=None)
         )
 
 
