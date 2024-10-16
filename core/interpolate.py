@@ -204,6 +204,7 @@ class Linear_Indexer:
     def __init__(self, coords: NDArray, bounds: str):
         self.bounds = bounds
         self.N = len(coords)
+        coords = coords.astype('double')  # for passing to find_indices
 
         #check ascending/descending order
         if (np.diff(coords) > 0).all():
@@ -269,8 +270,8 @@ class Linear_Indexer_Regular:
         else:
             oob = (x < 0) | (x > self.N - 1)
 
-        iinf = np.floor(x).astype('int').clip(0, None)
-        isup = (iinf + 1).clip(None, self.N - 1)
+        iinf = np.floor(x).astype("int").clip(0, self.N - 1)
+        isup = (iinf + 1).clip(0, self.N - 1)
         w = x - iinf
 
         if self.bounds != 'clip':

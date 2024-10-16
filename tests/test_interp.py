@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 from eoread.common import timeit
@@ -384,3 +385,28 @@ def test_nearest_indexer(A):
     assert (indexer(A+0.05)[0][0] == np.array([0, 1, 2])).all()
     assert (indexer(A-0.05)[0][0] == np.array([0, 1, 2])).all()
     
+
+@pytest.mark.parametrize('regular', ['no', 'yes'])
+def test_interp_2D(request, regular):
+    
+    A = xr.DataArray(np.eye(3), dims=['x', 'y'])
+    N = 100
+
+    interpolated = interp(
+        A,
+        x=Linear(
+            xr.DataArray(np.linspace(-1, 3, N), dims=["new_x"]),
+            bounds="clip",
+            regular=regular,
+        ),
+        y=Linear(
+            xr.DataArray(np.linspace(-1, 3, N), dims=["new_Y"]),
+            bounds="nan",
+            regular=regular,
+        ),
+    )
+
+    plt.imshow(interpolated)
+    conftest.savefig(request)
+
+
