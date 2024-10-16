@@ -198,12 +198,18 @@ class Linear:
 
 class Linear_Indexer:
     def __init__(self, coords: NDArray, bounds: str):
-        self.coords = coords
         self.bounds = bounds
+        self.N = len(coords)
 
-        # assumes that coords are sorted in ascending order
-        assert (np.diff(coords) > 0).all()
-        # TODO: support descending order
+        #check ascending/descending order
+        if (np.diff(coords) > 0).all():
+            self.ascending = True
+            self.coords = coords
+        elif (np.diff(coords) < 0).all():
+            self.ascending = False
+            self.coords = coords[::-1].copy()
+        else:
+            raise ValueError('Input coords should be monotonous.')
 
     def __call__(self, values: NDArray) -> List:
         """
@@ -222,7 +228,13 @@ class Linear_Indexer:
             # 'nan', 'clip'
             raise NotImplementedError
 
-        return [(indices, 1-dist), (indices+1, dist)]
+        if self.ascending:
+            return [(indices, 1 - dist), (indices + 1, dist)]
+        else:
+            return [
+                (self.N - 1 - indices, 1 - dist),
+                (self.N - 1 - (indices + 1), dist),
+            ]
 
 
 class Linear_Indexer_Regular:
@@ -291,10 +303,15 @@ class Select:
 
 class Nearest_Indexer:
     def __init__(self, coords: NDArray, tolerance: float|None):
-        self.coords = coords
         self.tolerance = tolerance
-        assert (np.diff(self.coords) > 0).all()
-        # TODO: support descending order
+        if (np.diff(coords) > 0).all():
+            self.ascending = True
+            self.coords = coords
+        elif (np.diff(coords) < 0).all():
+            self.ascending = False
+            self.coords = coords[::-1]
+        else:
+            raise ValueError('Input coords should be monotonous.')
     
     def __call__(self, values: NDArray):
         idx = np.searchsorted(self.coords, values).clip(0, len(self.coords) - 1)
@@ -309,7 +326,12 @@ class Nearest_Indexer:
             raise ValueError
 
         idx_closest = np.where(dist_inf < dist_sup, idx-1, idx)
-        return [(idx_closest, None)]
+
+        if self.ascending:
+            return [(idx_closest, None)]
+        else:
+            return [(len(self.coords) - 1 - idx_closest, None)]
+
 
 
 def interp_v1(

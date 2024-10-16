@@ -242,12 +242,16 @@ def test_decreasing(request, regular, interp_version):
 
 @pytest.fixture(params=[1, 2])
 def fixed_sample(request) -> xr.DataArray:
+    A = np.arange(10)
+    if request.param == 2:
+        # irregular grid
+        A[1] += 0.1
     return xr.DataArray(
         np.eye(10),
         dims=["a", "b"],
         coords={
-            "a": np.arange(10)**request.param,
-            "b": np.arange(10)**request.param,
+            "a": A,
+            "b": A,
         },
     )
 
@@ -288,7 +292,10 @@ def test_oob_sel_nearest(fixed_sample, interp_version):
         )
 
 
-@pytest.mark.parametrize("interp_version", [1, 2])
+@pytest.mark.parametrize("interp_version", **parametrize_dict({
+    'interp_v1': 1,
+    'interp_v2': 2,
+}))
 def test_oob_interp(fixed_sample, interp_version):
     # Interpolation failing because of out of bounds
     with pytest.raises(ValueError):
@@ -352,10 +359,15 @@ def test_oob_interp_clip(fixed_sample, interp_version):
         )
 
 
-def test_nearest_indexer():
+
+@pytest.mark.parametrize("A", **parametrize_dict({
+    'float_array': np.array([1., 2., 4.]), 
+    'int_array': np.array([1, 2, 4]), 
+    'int_decreasing': np.array([1, 2, 4])[::-1], 
+}))
+def test_nearest_indexer(A):
     
     # basic exact indexing
-    A = np.array([1., 2., 4.])
     indexer = Nearest_Indexer(A, 1e-8)
     assert (indexer(A)[0][0] == np.array([0, 1, 2])).all()
 
