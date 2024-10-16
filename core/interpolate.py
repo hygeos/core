@@ -72,10 +72,10 @@ def interp_v2(da: xr.DataArray, **kwargs) -> xr.DataArray:
     # get interpolators along all dimensions
     indexers = {k: v.get_indexer(da[k]) for k, v in kwargs.items()}
 
-    # prevent common dimensions between da and sel+interp
+    # prevent common dimensions between da and the pointwise indexing dimensions
     assert not set(ds.dims).intersection(da.dims)
 
-    # transpose them to ds.dims
+    # transpose ds to get fixed dimension ordering
     ds = ds.transpose(*ds.dims)
     
     out_dims = determine_output_dimensions(da, ds, kwargs.keys())
@@ -171,6 +171,10 @@ class Linear:
                 - error: raise a ValueError
                 - nan: replace by NaNs
                 - clip: clip values to the extrema
+            regular (str): how to deal with regular grids
+                - yes: raise an error in case of non-regular grid
+                - no: disable regular grid detection
+                - auto: detect if grid is regular or not
         """
         self.values = values
         self.regular = regular
@@ -178,8 +182,8 @@ class Linear:
     
     def get_indexer(self, coords: xr.DataArray):
         # regular grid detection
+        cval = coords.values
         if self.regular in ['yes', 'auto']:
-            cval = coords.values
             diff = np.diff(cval)
             regular = np.allclose(diff[0], diff)
             if self.regular == 'yes':

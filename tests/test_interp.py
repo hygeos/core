@@ -47,6 +47,12 @@ list_interp_functions = {
         lat=Linear(l1.latitude),
         lon=Linear(l1.longitude),
     ),
+    "interp_v2_non_regular": lambda data, l1: interp(
+        # interp_v2
+        data,
+        lat=Linear(l1.latitude, regular='no'),
+        lon=Linear(l1.longitude, regular='no'),
+    ),
 }
 
 
