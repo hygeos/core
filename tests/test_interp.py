@@ -1,7 +1,14 @@
 import numpy as np
 import pytest
 from eoread.common import timeit
-from core.interpolate import interp, interp_v1, selinterp, Linear, Select
+from core.interpolate import (
+    Nearest_Indexer,
+    interp,
+    interp_v1,
+    selinterp,
+    Linear,
+    Select,
+)
 from luts import luts
 from core import conftest
 import xarray as xr
@@ -162,7 +169,7 @@ def test_interp_v1(kwargs):
             "c": Linear(sample(101, 105, ["x", "y"])),
         },
         {  # mixed dimensions
-            "a": Select(sample(1, 3, ["z"]), method="nearest"),
+            "a": Select(sample(1, 3, ["z"]), tolerance=1.),
             "b": Linear(sample(11, 14, ["x", "y"])),
             "c": Linear(sample(101, 105, ["x", "z"])),
         },
@@ -277,7 +284,7 @@ def test_oob_sel_nearest(fixed_sample, interp_version):
     else:
         interp(
             fixed_sample,
-            b = Select(xr.DataArray([-2]), method="nearest")
+            b = Select(xr.DataArray([-2]), tolerance=None)
         )
 
 
@@ -343,3 +350,21 @@ def test_oob_interp_clip(fixed_sample, interp_version):
             fixed_sample,
             b=Linear(xr.DataArray([-2]), bounds="clip"),
         )
+
+
+def test_nearest_indexer():
+    
+    # basic exact indexing
+    A = np.array([1., 2., 4.])
+    indexer = Nearest_Indexer(A, 1e-8)
+    assert (indexer(A)[0][0] == np.array([0, 1, 2])).all()
+
+    for value in [0, 1.5 , 5.]:
+        with pytest.raises(ValueError):
+            indexer(value)
+
+    # inexact indexing
+    indexer = Nearest_Indexer(A, 0.1)
+    assert (indexer(A+0.05)[0][0] == np.array([0, 1, 2])).all()
+    assert (indexer(A-0.05)[0][0] == np.array([0, 1, 2])).all()
+    

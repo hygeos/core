@@ -274,33 +274,42 @@ class Index:
 
 class Select:
     def __init__(
-        self, values: xr.DataArray, method: Literal["nearest", "exact"] = "exact"
+        self, values: xr.DataArray, tolerance: float|None = 1e-8,
     ):
         """
         Proxy class for value selection (sel)
+
+        Args:
+            values (xr.DataArray): values for selection
+            tolerance (float, optional): absolute tolerance for inexact search
         """
         self.values = values
-        self.method = method
+        self.tolerance = tolerance
     
     def get_indexer(self, coords: xr.DataArray):
-        return Nearest_Indexer(coords.values, self.method)
+        return Nearest_Indexer(coords.values, self.tolerance)
 
 class Nearest_Indexer:
-    def __init__(self, coords: NDArray, method: str):
-        self.coords = coords.astype('double')
-        self.method = method
+    def __init__(self, coords: NDArray, tolerance: float|None):
+        self.coords = coords
+        self.tolerance = tolerance
+        assert (np.diff(self.coords) > 0).all()
+        # TODO: support descending order
     
     def __call__(self, values: NDArray):
-        shp = values.shape
-        indices, dist = find_indices(
-            (self.coords,), values.astype("double").ravel()[None, :]
-        )
-        indices = indices.reshape(shp)
-        dist = dist.reshape(shp)
+        idx = np.searchsorted(self.coords, values).clip(0, len(self.coords) - 1)
 
-        # Should be checked
-        raise NotImplementedError
-        return [(indices, None)]
+        # distance to the inf/sup bounds
+        dist_inf = np.abs(values - self.coords[idx-1])
+        dist_sup = np.abs(self.coords[idx] - values)
+
+        if (self.tolerance is not None) and (
+            np.minimum(dist_inf, dist_sup) > self.tolerance
+        ).any():
+            raise ValueError
+
+        idx_closest = np.where(dist_inf < dist_sup, idx-1, idx)
+        return [(idx_closest, None)]
 
 
 def interp_v1(
