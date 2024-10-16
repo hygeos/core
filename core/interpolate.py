@@ -221,12 +221,14 @@ class Linear_Indexer:
         indices, dist = find_indices((self.coords,), values.ravel()[None, :])
         indices = indices.reshape(shp)
         dist = dist.reshape(shp)
-        if self.bounds == "error":
-            if not ((dist >= 0) & (dist <= 1)).all():
-                raise ValueError
+        if self.bounds == "clip":
+            dist = dist.clip(0, 1)
         else:
-            # 'nan', 'clip'
-            raise NotImplementedError
+            oob = (dist < 0) | (dist > 1)
+            if self.bounds == "error" and oob.any():
+                raise ValueError
+            elif self.bounds == "nan":
+                dist[oob] = np.NaN
 
         if self.ascending:
             return [(indices, 1 - dist), (indices + 1, dist)]
