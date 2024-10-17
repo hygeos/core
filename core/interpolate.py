@@ -89,6 +89,7 @@ def interp_v2(da: xr.DataArray, **kwargs) -> xr.DataArray:
             "indexers": indexers,
         },
     )
+    ret.attrs.update(da.attrs)
 
     return ret
 
@@ -223,7 +224,9 @@ class Linear_Indexer:
         Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
         """
         shp = values.shape
-        indices, dist = find_indices((self.coords,), values.ravel()[None, :])
+        indices, dist = find_indices(
+            (self.coords,), values.astype("double").ravel()[None, :]
+        )
         indices = indices.reshape(shp)
         dist = dist.reshape(shp)
         if self.bounds == "clip":
