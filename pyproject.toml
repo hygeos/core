@@ -27,6 +27,7 @@ pandas = "*"
 click = "*"
 toml = "*"
 tqdm = "*" # tqdm itself doesn't have any dependencies
+python-dotenv = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
