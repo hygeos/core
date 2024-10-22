@@ -6,6 +6,7 @@ Various utility functions for modifying xarray object
 '''
 
 import re
+from pathlib import Path
 from typing import Union, overload
 import xarray as xr
 import numpy as np
@@ -536,6 +537,14 @@ def only(iterable):
         raise ValueError
     return x[0] 
 
+def reglob(path: Path|str, regexp: str):
+    files = []
+    assert regexp[0] != '*', 'Avoid using wildcard in regular expression'
+    for p in Path(path).iterdir(): 
+        a = re.search(regexp, str(p))
+        if a is not None:
+            files.append(a.group())
+    return files
 
 @overload
 def xrcrop(A: xr.Dataset, **kwargs) -> xr.Dataset: ...
