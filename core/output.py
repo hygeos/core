@@ -22,7 +22,7 @@ def disp(*args):
 
     message = ""
     for arg in args:
-         message += arg
+         message += str(arg)
     print(message + rgb.default)
     
 def error(*args):
