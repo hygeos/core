@@ -154,6 +154,255 @@ def interp_block_v2(
     return ret
 
 
+class Locator:
+    def __init__(self, coords: NDArray, bounds: str):
+        self.coords = coords.astype("double")
+        self.bounds = bounds
+        pass
+    
+    #For Linear and Spline
+    def locate_index_weight(self, values):
+        """
+        Find indices and dist of values for linear and spline interpolation in self.coords
+
+        Returns a list of indices, dist (float 0 to 1) and oob
+        """
+        shp = values.shape
+        indices, dist = find_indices(
+            (self.coords,), values.astype("double").ravel()[None, :]
+        )
+        indices = indices.reshape(shp)
+        dist = dist.reshape(shp)
+        oob = None
+        if self.bounds == "clip":
+            dist = dist.clip(0, 1)
+        else:
+            oob = (dist < 0) | (dist > 1)
+            if self.bounds == "error" and oob.any():
+                raise ValueError
+            elif self.bounds == "nan":
+                dist[oob] = np.NaN
+        
+        return indices, dist, oob
+
+    
+    #For Nearest
+    def locate_index(values):
+        raise NotImplementedError
+        
+    
+    
+class Locator_Regular(Locator):
+    def __init__(self, vmin: float, vmax: float, N: int, bounds: str):
+        self.vmin = vmin
+        self.vmax = vmax
+        self.N = N
+        self.bounds = bounds
+        self.scal = (self.N - 1) / (self.vmax - self.vmin)
+        pass
+    
+    #For Linear and Spline
+    def locate_index_weight(self, values):
+        # floating index (scale to [0, N-1])
+        x = (values - self.vmin) * self.scal
+        oob = None
+        # out of bounds management
+        if self.bounds == "clip":
+            x = x.clip(0, self.N - 1)
+        else:
+            oob = (x < 0) | (x > self.N - 1)
+            
+            
+        i_inf = np.floor(x).astype("int").clip(0, self.N - 1)
+        dist = x - i_inf
+        
+        if np.isscalar(x): #made to handle scalars
+            # Apply mask condition if `i_inf == N - 1` for scalar
+            if i_inf == self.N - 1:
+                i_inf -= 1
+                dist = 1
+        else:
+            # Apply mask condition for array
+            mask_idk = i_inf == self.N - 1
+            i_inf[mask_idk] -= 1
+            dist[mask_idk] = 1
+        
+        return i_inf, dist, oob
+    
+    #For Nearest ?
+    def locate_index(values):
+        raise NotImplementedError
+
+
+def create_locator(coords, bounds: str, regular: str) -> Locator:
+    # factory pour Locator ou Locator_Regular
+    
+    # regular grid detection
+    cval = coords
+    if regular in ['yes', 'auto']:
+        diff = np.diff(cval)
+        regular = np.allclose(diff[0], diff)
+        if regular == 'yes':
+            assert regular
+    else:
+        regular = False
+        
+    if regular:
+        return Locator_Regular(cval[0], cval[-1], len(cval), bounds)
+    else:
+        return Locator(cval, bounds)
+
+
+class Spline:
+    def __init__(self, values, tension = 0.5, bounds: Literal["error", "nan", "clip"] = "error", regular: Literal["yes", "no", "auto"] = "auto",):
+        self.values = values
+        self.bounds = bounds
+        self.tension = tension
+        self.regular = regular
+    """
+        A proxy class for Spline indeting.
+
+        The purpose of this class is to provide a convenient interface to the
+        interp function, by initializing an indexer class.
+
+        Args:
+            tension (float [0, 1]): tension of the spline between N+1 and N-1
+            bounds (str): how to deal with out-of-bounds values:
+                - error: raise a ValueError
+                - nan: replace by NaNs
+                - clip: clip values to the extrema
+            regular (str): how to deal with regular grids
+                - yes: raise an error in case of non-regular grid
+                - no: disable regular grid detection
+                - auto: detect if grid is regular or not
+        """
+    def get_indexer(self, coords: xr.DataArray):
+        
+        cval = coords.values
+        if len(cval) < 3 : #2 1 0
+            raise ValueError("You need to have at least 3 points to spline in between") #AJOUTER LA BONNE ERREUR
+        return Spline_Indexer(cval, self.bounds, self.regular, self.tension)
+
+
+class Spline_Indexer:
+    def __init__(self, coords: NDArray, bounds: str, regular: str, tension: float):
+        self.coords = coords
+        self.regular = regular
+        self.bounds = bounds
+
+        self.tension_matrix_full = np.array([
+            [0,             1,              0,                  0],
+            [-tension,      0,              tension,            0],
+            [2 * tension,   -5 * tension,   4 * tension,        -tension],
+            [-tension,      3 * tension,    -3 * tension,       tension],
+        ])
+        
+        self.tension_matrix_early = np.array([
+            [1, 0, 0, 0],
+            [-1.5, 2, -0.5, 0],
+            [0.5, -1, 0.5, 0],
+            [0, 0, 0, 0],
+        ])
+        
+        self.tension_matrix_late = np.array([
+            [0, 1, 0, 0],
+            [-0.5, 0, 0.5, 0],
+            [0.5, -1, 0.5, 0],
+            [0, 0, 0, 0],
+        ])
+        
+        """
+        A proxy class for Spline indeting.
+
+        The purpose of this class is to provide a convenient interface to the
+        interp function, by initializing an indexer class.
+
+        Args:
+            bounds (str): how to deal with out-of-bounds values:
+                - error: raise a ValueError
+                - nan: replace by NaNs
+                - clip: clip values to the extrema
+            regular (str): how to deal with regular grids
+                - yes: raise an error in case of non-regular grid
+                - no: disable regular grid detection
+                - auto: detect if grid is regular or not
+        """
+        
+    def __call__(self, values):
+        """
+        Find indices of values for linear interpolation in self.coords
+
+        Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
+        """
+        
+        locator = create_locator(self.coords, self.bounds, self.regular)
+        
+        N_min_1, dist, oob = locator.locate_index_weight(values)
+        
+        if self.bounds == "clip":
+            dist = dist.clip(0, 1)
+        else:
+            oob = (dist < 0) | (dist > 1)
+            if self.bounds == "error" and oob.any():
+                raise ValueError
+            elif self.bounds == "nan":
+                dist[oob] = np.NaN
+        
+        N = len(self.coords)
+        
+        #init indices (-2 -1 +1 +2)
+        indices = np.array([
+            np.clip(N_min_1 - 1, -1, N), 
+            N_min_1,
+            np.clip(N_min_1 + 1, 0, N),
+            np.clip(N_min_1 + 2, 0, N),
+        ])
+        
+        mask_first_negative = indices[0] < 0 #early (-1 +1 +2)
+        
+        mask_last_oob = indices[3] > (N - 1) #late (-2 -1 +1)
+
+        mask_normal = ~(mask_first_negative | mask_last_oob) #middle (-2 -1 +1 +2)
+        
+        
+        # Initialize weights matrix
+        weights = np.zeros((self.tension_matrix_full.shape[1], *dist.shape))
+        # Calculate and assign weights based on masks
+        if mask_normal.any():
+            t_normal = dist[mask_normal]
+            x_vector_full = np.vstack((np.ones_like(t_normal), t_normal, t_normal ** 2, t_normal ** 3)).T
+            weights[:, mask_normal] = np.dot(self.tension_matrix_full.T, x_vector_full.T)
+        
+        if mask_first_negative.any():
+            t_early = dist[mask_first_negative]
+            x_vector_half_early = np.vstack((np.ones_like(t_early), t_early, t_early ** 2, np.zeros_like(t_early))).T
+            weights[:, mask_first_negative] = np.dot(self.tension_matrix_early.T, x_vector_half_early.T)
+        
+        if mask_last_oob.any():
+            t_late = dist[mask_last_oob]
+            x_vector_half_late = np.vstack((np.ones_like(t_late), t_late, t_late ** 2, np.zeros_like(t_late))).T
+            weights[:, mask_last_oob] = np.dot(self.tension_matrix_late.T, x_vector_half_late.T)
+
+        
+        #we change indices like we changed the weights
+        for i in range(1, 4):
+            indices[i - 1][mask_first_negative] = indices[i][mask_first_negative]
+        indices[3][mask_last_oob] = 0
+        
+        
+        
+        if self.bounds != 'clip':
+            if self.bounds == 'error':
+                if oob.any():
+                    raise ValueError
+            elif self.bounds == "nan":
+                for i in range(len(weights)) :
+                    weights[i][oob] = np.NaN
+            
+        return [(indices[i], weights[i]) for i in range(len(weights))]
+    
+        
+
 class Linear:
     def __init__(
         self,
@@ -162,7 +411,7 @@ class Linear:
         regular: Literal["yes", "no", "auto"] = "auto",
     ):
         """
-        A proxy class for Linear indexing.
+        A proxy class for Linear indeting.
 
         The purpose of this class is to provide a convenient interface to the
         interp function, by initializing an indexer class.
@@ -182,30 +431,18 @@ class Linear:
         self.bounds = bounds
     
     def get_indexer(self, coords: xr.DataArray):
-        # regular grid detection
         cval = coords.values
-        if self.regular in ['yes', 'auto']:
-            diff = np.diff(cval)
-            regular = np.allclose(diff[0], diff)
-            if self.regular == 'yes':
-                assert regular
-        else:
-            regular = False
-
-        if regular:
-            # use an indexer that is optimized for regular indexers
-            return Linear_Indexer_Regular(
-                cval[0], cval[-1], len(cval), bounds=self.bounds
-            )
-        else:
-            return Linear_Indexer(cval, self.bounds)
+        if len(cval) < 2 :
+            raise ValueError("Linear needs at least 2 point to index properly") #AJOUTER LA BONNE ERREUR
+        return Linear_Indexer(cval, self.bounds, self.regular)
 
 
 class Linear_Indexer:
-    def __init__(self, coords: NDArray, bounds: str):
+    def __init__(self, coords: NDArray, bounds: str, regular: str):
         self.bounds = bounds
         self.N = len(coords)
-        coords = coords.astype('double')  # for passing to find_indices
+        self.coords = coords
+        self.regular = regular
 
         #check ascending/descending order
         if (np.diff(coords) > 0).all():
@@ -223,21 +460,19 @@ class Linear_Indexer:
 
         Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
         """
-        shp = values.shape
-        indices, dist = find_indices(
-            (self.coords,), values.astype("double").ravel()[None, :]
-        )
-        indices = indices.reshape(shp)
-        dist = dist.reshape(shp)
-        if self.bounds == "clip":
-            dist = dist.clip(0, 1)
-        else:
-            oob = (dist < 0) | (dist > 1)
-            if self.bounds == "error" and oob.any():
-                raise ValueError
-            elif self.bounds == "nan":
-                dist[oob] = np.NaN
+        locator = create_locator(self.coords, self.bounds, self.regular)
+        
+        indices, dist, oob = locator.locate_index_weight(values)
 
+        
+        if self.bounds != 'clip':
+            if self.bounds == 'error':
+                if oob.any():
+                    raise ValueError
+            elif self.bounds == "nan":
+                for i in range(len(dist)) :
+                    dist[oob] = np.NaN
+                    
         if self.ascending:
             return [(indices, 1 - dist), (indices + 1, dist)]
         else:
@@ -245,46 +480,6 @@ class Linear_Indexer:
                 (self.N - 1 - indices, 1 - dist),
                 (self.N - 2 - indices, dist),
             ]
-
-
-class Linear_Indexer_Regular:
-    def __init__(self, vstart: float, vend: float, N: int, bounds: str):
-        """
-        An indexer for regularly spaced values
-        """
-        self.vstart = vstart
-        self.vend = vend
-        self.N = N
-        self.scal = (N - 1) / (vend - vstart)
-        self.bounds = bounds  # 'error', 'nan', 'clip'
-
-    def __call__(self, values: NDArray):
-        """
-        Find indices of values for linear interpolation in self.coords
-
-        Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
-        """
-        # floating index (scale to [0, N-1])
-        x = (values - self.vstart) * self.scal
-
-        # out of bounds management
-        if self.bounds == "clip":
-            x = x.clip(0, self.N - 1)
-        else:
-            oob = (x < 0) | (x > self.N - 1)
-
-        iinf = np.floor(x).astype("int").clip(0, self.N - 1)
-        isup = (iinf + 1).clip(0, self.N - 1)
-        w = x - iinf
-
-        if self.bounds != 'clip':
-            if self.bounds == 'error':
-                if oob.any():
-                    raise ValueError
-            elif self.bounds == "nan":
-                w[oob] = np.NaN
-
-        return [(iinf, 1-w), (isup, w)]
 
 
 class Index:
