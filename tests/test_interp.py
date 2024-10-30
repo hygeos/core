@@ -243,7 +243,7 @@ def test_interp_v2(kwargs):
 
     res.compute()
 
-#Did not add test for spline yet as == is hard to predict for me -Nicolas
+
 @pytest.mark.parametrize('regular', [True, False])
 @pytest.mark.parametrize("interp_version", [1, 2])
 def test_decreasing(request, regular, interp_version):
