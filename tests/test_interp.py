@@ -491,3 +491,25 @@ def test_inverse_func(request, type):
     plt.plot(linspace, YsInv, 'g-')
     plt.grid()
     conftest.savefig(request)
+    
+@pytest.mark.parametrize('spacing', ["auto", lambda x: np.sqrt(x)])
+def test_nearest_func(request, spacing):
+    Y = xr.DataArray([1.0, 1.0, 1.0, 2.0], dims=["X"], coords=[np.array([0,1,4,16])])
+    lp = np.linspace(0, 16, 1000)
+    Ys = interp(Y, X=Nearest(xr.DataArray(lp), tolerance=None, spacing=spacing))
+    plt.plot(Y.X, Y, 'ro')
+    plt.plot(lp,Ys, 'b-')
+    plt.grid()
+    plt.show()
+    conftest.savefig(request)
+    plt.clf()
+    
+    
+def test_nearest_func_values_invert(request):
+    Y = xr.DataArray([1.0, 1.0, 1.0, 2.0], dims=["X"], coords=[np.array([0,1,4,16])])
+    assert interp(Y, X=Nearest(xr.DataArray([8.9]), tolerance=None, spacing=lambda x: np.sqrt(x))) == 1.0
+    assert interp(Y, X=Nearest(xr.DataArray([9.1]), tolerance=None, spacing=lambda x: np.sqrt(x))) == 2.0
+    
+    Y = xr.DataArray([1.0, 1.0, 1.0, 2.0], dims=["X"], coords=[np.array([0,1,4,16])])
+    assert interp(Y, X=Nearest(xr.DataArray([9.9]), tolerance=None, spacing="auto")) == 1.0
+    assert interp(Y, X=Nearest(xr.DataArray([10.1]), tolerance=None, spacing="auto")) == 2.0

@@ -299,7 +299,7 @@ def create_locator(coords, bounds: str, regular: str, inversion_func) -> Locator
     """
     # factory pour Locator ou Locator_Regular
     
-    if inversion_func != None :
+    if inversion_func is not None :
         return Locator_Inversed_Func(coords, bounds, inversion_func)
     
     # regular grid detection
@@ -339,7 +339,7 @@ class Spline:
         elif isinstance(spacing, Callable):
             self.inversion_func = spacing
         
-        if self.regular == None and self.inversion_func == None:
+        if self.regular is None and self.inversion_func is None:
             TypeError("spacing should either be a str or a Callable")
             
     """
@@ -535,7 +535,7 @@ class Linear:
         elif isinstance(spacing, Callable):
             self.inversion_func = spacing
         
-        if self.regular == None and self.inversion_func == None:
+        if self.regular is None and self.inversion_func is None:
             TypeError("spacing should either be a str or a Callable")
     
     def get_indexer(self, coords: xr.DataArray):
@@ -612,7 +612,7 @@ class Index:
 
 class Nearest:
     def __init__(
-        self, values: xr.DataArray, tolerance: float|None = 1e-8,
+        self, values: xr.DataArray, tolerance: float|None = 1e-8, spacing: Literal["auto"]|Callable[[float], float] = "auto"
     ):
         """
         Proxy class for value selection (sel)
@@ -620,16 +620,25 @@ class Nearest:
         Args:
             values (xr.DataArray): values for selection
             tolerance (float, optional): absolute tolerance for inexact search
+            spacing(str | Callable): 
+                                    -"auto" : will take the value of the nearest valid value
+                                    -lambda x: f(x) : will take the value of the nearest valid value after inversing the x axis values based on lambda
         """
         self.values = values
         self.tolerance = tolerance
+        self.spacing = spacing
     
     def get_indexer(self, coords: xr.DataArray):
-        return Nearest_Indexer(coords.values, self.tolerance)
+        return Nearest_Indexer(coords.values, self.tolerance, self.spacing)
 
 class Nearest_Indexer:
-    def __init__(self, coords: NDArray, tolerance: float|None):
+    def __init__(self, coords: NDArray, tolerance: float|None, spacing: str|Callable = "auto"):
         self.tolerance = tolerance
+        
+        if isinstance(spacing, str) or isinstance(spacing, Callable) :
+            TypeError("Spacing is of the wrong type, waiting for str or Callable")
+            
+        self.spacing = spacing
         if (np.diff(coords) > 0).all():
             self.ascending = True
             self.coords = coords
@@ -640,11 +649,23 @@ class Nearest_Indexer:
             raise ValueError('Input coords should be monotonous.')
     
     def __call__(self, values: NDArray):
-        idx = np.searchsorted(self.coords, values).clip(0, len(self.coords) - 1)
+        mvalues = None
+        if self.spacing == "auto":
+            mvalues = values
+            coords = self.coords
+        elif isinstance(self.spacing, Callable):
+            mvalues = self.spacing(values)
+            coords = self.spacing(self.coords)
+        else:
+            ValueError("spacing isn't 'auto' or a Callable, something is wrong")
+        
+        
+        idx = np.searchsorted(coords, mvalues)
+        idx = idx.clip(0, len(coords) - 1)
 
         # distance to the inf/sup bounds
-        dist_inf = np.abs(values - self.coords[idx-1])
-        dist_sup = np.abs(self.coords[idx] - values)
+        dist_inf = np.abs(mvalues - coords[idx-1])
+        dist_sup = np.abs(coords[idx] - mvalues)
 
         if (self.tolerance is not None) and (
             np.minimum(dist_inf, dist_sup) > self.tolerance
@@ -656,7 +677,7 @@ class Nearest_Indexer:
         if self.ascending:
             return [(idx_closest, None)]
         else:
-            return [(len(self.coords) - 1 - idx_closest, None)]
+            return [(len(coords) - 1 - idx_closest, None)]
 
 
 
