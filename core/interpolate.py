@@ -1,3 +1,4 @@
+from datetime import datetime
 import warnings
 from functools import reduce
 from itertools import product
@@ -40,9 +41,9 @@ def interp(da: xr.DataArray, **kwargs):
         ...     data,  # input DataArray with dimensions (a, b, c)
         ...     a = Linear(           # perform linear interpolation along dimension `a`
         ...          a_values,        # `a_values` is a DataArray with dimension (x, y);
-        ...          bounds='clip'),  # clip out of bounds values to the axis min/max.
+        ...          bounds='clip'),  # clip out-of-bounds values to the axis min/max.
         ...     b = Nearest(b_values), # perform nearest neighbour selection along
-        ...                            # dimension `a`; `b_values` is a DataArray
+        ...                            # dimension `b`; `b_values` is a DataArray
         ...                            # with dimension (x, y)
         ... ) # returns a DataArray with dimensions (x, y, c)
         No interpolation or selection is performed along dimension `c` thus it is
@@ -121,10 +122,13 @@ def interp_block_v2(
     w_shape = broadcast_shapes(ds, out_dims)
 
     # apply index searching over all dimensions (ie, v(values))
+    t0 = datetime.now()
     indices_weights = {k: v(np_indexers[k]) for k, v in indexers.items()}
+    time_find_index = datetime.now() - t0
 
     # cartesian product of the combination of lower and upper indices (in case of
     # linear interpolation) for each dimension
+    t0 = datetime.now()
     result = 0
     data_values = da.values
     for iw in product_dict(**indices_weights):
@@ -135,6 +139,7 @@ def interp_block_v2(
         w = reduce(lambda x, y: x*y, weights)
         keys = [(iw[dim][0] if dim in iw else slice(None)) for dim in da.dims]
         result += data_values[tuple(keys)] * w
+    time_interp = datetime.now() - t0
     
     # determine output coords
     coords = {}
@@ -149,6 +154,13 @@ def interp_block_v2(
         result,
         dims=out_dims,
         coords=coords,
+    )
+
+    ret.attrs.update(
+        {
+            "time_find_index": time_find_index,
+            "time_interp": time_interp,
+        }
     )
 
     return ret
