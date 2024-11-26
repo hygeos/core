@@ -13,7 +13,10 @@ import numpy as np
 
 from numpy import arcsin as asin
 from numpy import cos, radians, sin, sqrt, where
-from shapely.geometry import Point, Polygon
+try:
+    from shapely.geometry import Point, Polygon
+except:
+    pass
 from collections import OrderedDict
 from dateutil.parser import parse
 

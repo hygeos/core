@@ -1,7 +1,11 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import pytest
-from eoread.common import timeit
+
+
+from core import Chrono
+
+
 from core.interpolate import (
     Nearest_Indexer,
     interp,
@@ -82,10 +86,10 @@ def test_perf_interp(mode: str, apply_function: callable, request):
         },
     )
 
-    with timeit("INST"):
+    with Chrono("INST"):
         interpolated = apply_function(data, l1)
 
-    with timeit("COMP"):
+    with Chrono("COMP"):
         interpolated.compute()
 
 
