@@ -7,6 +7,7 @@
     
 """
 # standard library imports
+from datetime import datetime
 from enum import Enum
 import inspect
 
@@ -17,6 +18,13 @@ import inspect
 # ...
 
 
+class config:
+    show_level = True
+    show_namespace = False
+    show_time = True
+    show_color = True
+
+
 class _color:
     silenced = False
     
@@ -24,7 +32,8 @@ class _color:
         self.string = value
 
     def __str__(self):
-        return self.string if not _color.silenced else ""
+        return self.string if config.show_color else ""
+
 
 class rgb:
     purple      = _color('\033[95m')
@@ -37,12 +46,6 @@ class rgb:
     underline   = _color('\033[4m')
     default     = _color('\033[0m')
     
-    def silence(): # Disable all color variables by replacing them with an empty string
-        _color.silenced = True
-
-    def restore(): # Restore all the default colors of the class, opposite of silence
-        _color.silenced = False
-
 # set levels enums
 class lvl(Enum):
     DEBUG = 1
@@ -57,23 +60,22 @@ lvl.INFO.color      = rgb.blue
 lvl.WARNING.color   = rgb.orange
 lvl.ERROR.color     = rgb.red
 lvl.CRITICAL.color  = rgb.red
-
+    
 class _internal:
     min_global_level = lvl.DEBUG
     blacklist = {}
     
-    display_namespaces = False
-    display_level = True
-    
     def format_msg(level: lvl, msg: str, mod):
         
-        # TODO possibly automatically restore rgb afterward (could be costly while not exceptionally usefull)
-    
-        msg_prefixes = "" # construct prefixes depending on options
-        if _internal.display_level:       msg_prefixes += f"[{level.name}] "
-        if _internal.display_namespaces:  msg_prefixes += f"({mod.__name__}):"
+        lvl_prefix = "" # construct prefixes depending on options
+        namespace_prefix = ""
+        time_prefix = ""
         
-        string = f"{level.color}{msg_prefixes}{rgb.default}{msg}"
+        if config.show_level:       lvl_prefix          += f"[{level.name}] "
+        if config.show_namespace:   namespace_prefix    += f"({mod.__name__}) "
+        if config.show_time:        time_prefix         += f"{datetime.now().strftime("%H:%M:%S")} "
+        
+        string = f"{level.color}{lvl_prefix}{rgb.orange}{namespace_prefix}{rgb.green}{time_prefix}{rgb.default}{msg}"
         
         return string
         
@@ -89,12 +91,15 @@ class _internal:
         stk = inspect.stack()[1]
         mod = inspect.getmodule(stk[0])
         
-        if mod in _internal.blacklist: # apply filters (modules and level)
-            if _internal.blacklist[mod].value >= lvl.value :
-                return
-
-        if lvl.value >= _internal.min_global_level.value: # and section not in LOG.filters:
-            print(_internal.format_msg(lvl, msg, mod))
+        if lvl.value < _internal.min_global_level.value: # and section not in LOG.filters:
+            return
+        
+        for blmod in _internal.blacklist: # blacklisted module
+            blname = blmod.__name__
+            if blname in mod.__name__ and lvl.value <= _internal.blacklist[blmod].value:
+                return 
+                
+        print(_internal.format_msg(lvl, msg, mod))
     
     def concat_mess(*args):
         message = ""
@@ -106,13 +111,6 @@ class _internal:
 def set_lvl(lvl: lvl):
     _internal.min_global_level = lvl
 
-def disable_colors():
-    rgb.silence()
-    
-def enable_colors():
-    rgb.restore()
-
-    
 # def _no_loading_bar(iterable=None, desc=None, total=None, leave=True, file=None,
 #         ncols=None, mininterval=0.1, maxinterval=10.0, miniters=None,
 #         ascii=None, disable=False, unit='it', unit_scale=False,
