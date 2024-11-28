@@ -1,9 +1,9 @@
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from os import environ
 from pathlib import Path
 from typing import Optional
 
-load_dotenv() 
+load_dotenv(dotenv_path=find_dotenv(usecwd=True)) 
 
 def getdir(
     envvar: str,
@@ -77,3 +77,7 @@ def getdir(
                 f"with the following command: 'mkdir {dirname}'")
 
     return dirname
+
+
+if __name__ == "__main__":
+    print(f"dotenv file is: {find_dotenv(usecwd=True)}")
