@@ -73,7 +73,7 @@ class _internal:
         
         if config.show_level:       lvl_prefix          += f"[{level.name}] "
         if config.show_namespace:   namespace_prefix    += f"({mod.__name__}) "
-        if config.show_time:        time_prefix         += f"{datetime.now().strftime("%H:%M:%S")} "
+        if config.show_time:        time_prefix         += f"{datetime.now().strftime('%H:%M:%S')} "
         
         string = f"{level.color}{lvl_prefix}{rgb.orange}{namespace_prefix}{rgb.green}{time_prefix}{rgb.default}{msg}"
         
