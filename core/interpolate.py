@@ -41,9 +41,9 @@ def interp(da: xr.DataArray, **kwargs):
         ...     a = Linear(           # perform linear interpolation along dimension `a`
         ...          a_values,        # `a_values` is a DataArray with dimension (x, y);
         ...          bounds='clip'),  # clip out of bounds values to the axis min/max.
-        ...     b = Nearest(b_values,  # perform nearest neighbour selection along
-        ...          method='nearest', # dimension `a`; `b_values` is a DataArray
-        ...          ),                # with dimension (x, y)
+        ...     b = Nearest(b_values), # perform nearest neighbour selection along
+        ...                            # dimension `a`; `b_values` is a DataArray
+        ...                            # with dimension (x, y)
         ... ) # returns a DataArray with dimensions (x, y, c)
         No interpolation or selection is performed along dimension `c` thus it is
         left as-is.
