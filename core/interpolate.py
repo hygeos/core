@@ -167,6 +167,9 @@ def interp_block_v2(
 
 
 class Locator:
+    """
+    The propose of these classes is to locate values in coordinate axes.
+    """
     def __init__(self, coords: NDArray, bounds: str):
         self.coords = coords.astype("double")
         self.bounds = bounds
@@ -246,7 +249,7 @@ class Locator_Regular(Locator):
         raise NotImplementedError
 
 
-class Locator_Inversed_Func:
+class Locator_Inversed_Func:  # TODO: merge with Locator_Regular ?
     def __init__(self, coords: NDArray, bounds: str, inversion_func):
         self.coords = coords.astype("double")
         self.bounds = bounds
@@ -295,7 +298,10 @@ class Locator_Inversed_Func:
 
 def create_locator(coords, bounds: str, regular: str, inversion_func) -> Locator:
     """
-        The purpose of this methode is to generate the correct Locator based on the coords, the bounds, if it's regular and the inversion func
+        Locator factory    
+    
+        The purpose of this method is to generate the correct Locator based on the
+        coords, the bounds, if it's regular and the inversion func
         so far it can produce a Locator, a Locator_Regular and a Locator_Inversed_Func
 
         Args:
@@ -413,7 +419,7 @@ class Spline_Indexer:
         ])
         
         """
-        A proxy class for Spline indeting.
+        A proxy class for Spline indexing.
 
         The purpose of this class is to provide a convenient interface to the
         interp function, by initializing an indexer class.
@@ -441,8 +447,13 @@ class Spline_Indexer:
 
         Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
         """
-        
-        locator = create_locator(coords=self.coords, bounds=self.bounds, regular=self.regular, inversion_func=self.inversion_func)
+
+        locator = create_locator(
+            coords=self.coords,
+            bounds=self.bounds,
+            regular=self.regular,
+            inversion_func=self.inversion_func,
+        )
         
         N_min_1, dist, oob = locator.locate_index_weight(values)
         
@@ -532,7 +543,9 @@ class Linear:
                 - yes: raise an error in case of non-regular grid
                 - no: disable regular grid detection
                 - auto: detect if grid is regular or not
-            inversion_fun: is the inverse of the function the indexes uses (for example if indexes follow x² you need to feed sqrt(x)) in a lambda form : lambda x: np.sqrt(x) 
+            inversion_fun: is the inverse of the function the indexes uses
+                (for example if indexes follow x² you need to feed sqrt(x)) in a lambda
+                form : lambda x: np.sqrt(x))
         """
         self.values = values
         self.bounds = bounds
@@ -581,7 +594,12 @@ class Linear_Indexer:
 
         Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
         """
-        locator = create_locator(coords=self.coords, bounds=self.bounds, regular=self.regular, inversion_func=self.inversion_func)
+        locator = create_locator(
+            coords=self.coords,
+            bounds=self.bounds,
+            regular=self.regular,
+            inversion_func=self.inversion_func,
+        )
         
         indices, dist, oob = locator.locate_index_weight(values)
 
@@ -592,7 +610,7 @@ class Linear_Indexer:
                     raise ValueError
             elif self.bounds == "nan":
                 for i in range(len(dist)) :
-                    dist[oob] = np.NaN
+                    dist[oob] = np.NaN  # FIXME: problem here, does not depend on i
                     
         if self.ascending:
             return [(indices, 1 - dist), (indices + 1, dist)]
