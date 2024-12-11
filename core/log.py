@@ -71,8 +71,10 @@ class _internal:
         namespace_prefix = ""
         time_prefix = ""
         
+        mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # if calling from main mod is None
+        
         if config.show_level:       lvl_prefix          += f"[{level.name}] "
-        if config.show_namespace:   namespace_prefix    += f"({mod.__name__}) "
+        if config.show_namespace:   namespace_prefix    += f"({mod_name}) "
         if config.show_time:        time_prefix         += f"{datetime.now().strftime('%H:%M:%S')} "
         
         string = f"{level.color}{lvl_prefix}{rgb.orange}{namespace_prefix}{rgb.green}{time_prefix}{rgb.default}{msg}"
@@ -85,11 +87,11 @@ class _internal:
         log with selected lvl
         """
         
-        msg = _internal.concat_mess(*args)
-        
         # get calling module full name
-        stk = inspect.stack()[1]
-        mod = inspect.getmodule(stk[0])
+        frame  = inspect.currentframe().f_back.f_back
+        mod    = inspect.getmodule(frame)
+        
+        msg = _internal.concat_mess(*args)
         
         if lvl.value < _internal.min_global_level.value: # and section not in LOG.filters:
             return
@@ -151,10 +153,11 @@ def silence(module, level_and_below : lvl = lvl.CRITICAL):  # blacklist only bel
         _internal.blacklist[module] = level_and_below
 
 
-def __call__(lvl: lvl, *args):
+def log(lvl: lvl, *args):
     """
     log with specified level
     """
+    
     _internal.log(lvl, *args)
 
 def critical(*args):
