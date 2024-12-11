@@ -24,7 +24,7 @@ def download_url(
     Returns the path to the downloaded file
     """
     target = Path(dirname)/(Path(url).name)
-    @filegen(if_exists=if_exists, **kwargs)
+    @filegen(if_exists=if_exists, verbose=verbose, **kwargs)
     def download_target(path):
         if verbose:
             print('Downloading:', url)
