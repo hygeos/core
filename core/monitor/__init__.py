@@ -1,3 +1,3 @@
-from monitor import Monitor
-from chrono import Chrono
-from ram import RAM
+from core.monitor.monitor import Monitor
+from core.monitor.chrono import Chrono
+from core.monitor.ram import RAM

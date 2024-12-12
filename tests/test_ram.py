@@ -5,7 +5,7 @@ import numpy as np
 import pytest
         
 # sub package imports
-from core import RAM
+from core.monitor import RAM
 
 
 def test_base():
