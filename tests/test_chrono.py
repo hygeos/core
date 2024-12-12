@@ -5,7 +5,7 @@ import time
 import pytest
         
 # sub package imports
-from core import Chrono
+from core.monitor import Chrono
 
 
 def test_base():

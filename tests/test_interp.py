@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 
-from core import Chrono
+from core.monitor import Chrono
 
 
 from core.interpolate import (

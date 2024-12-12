@@ -1,3 +1,3 @@
-from Monitor import Monitor
-from Chrono import Chrono
-from RAM import RAM
+from monitor import Monitor
+from chrono import Chrono
+from ram import RAM

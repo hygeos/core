@@ -1,5 +1,5 @@
-from Chrono import Chrono
-from core.monitor.RAM import RAM
+from core.monitor.chrono import Chrono
+from core.monitor.ram import RAM
 
 class Monitor:
     
