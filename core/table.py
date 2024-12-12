@@ -21,8 +21,8 @@ def select_one(table, where:tuple, col:str = None):
         cols (str | list): 
     """  
     df = select(table, where, col)
-    assert len(df) == 1, 'Expected to return only one values'
-    return df[0] 
+    assert len(df) == 1, f'Expected to return only one values (got {len(df)})'
+    return df.values[0] 
 
 op_map = {"=": lambda a, b: a == b,
           ">": lambda a, b: a > b,
