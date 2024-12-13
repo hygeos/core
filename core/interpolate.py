@@ -657,15 +657,23 @@ class Nearest_Indexer:
             mvalues = self.spacing(values)
             coords = self.spacing(self.coords)
         else:
-            ValueError("spacing isn't 'auto' or a Callable, something is wrong")
+            ValueError("spacing isn't 'auto' or a Callable (lambda x: f(x))")
         
         
         idx = np.searchsorted(coords, mvalues)
         idx = idx.clip(0, len(coords) - 1)
 
         # distance to the inf/sup bounds
-        dist_inf = np.abs(mvalues - coords[idx-1])
+        dist_inf = np.abs(mvalues - coords[idx-1]) # EDGE CASE TO BE HANDLED ? [idx = 0]
         dist_sup = np.abs(coords[idx] - mvalues)
+        
+        #EDGE CASE HANDLING ?
+        mask_idx_neg = (idx -1) < 0
+        if not np.isscalar(mvalues): 
+            dist_inf[mask_idx_neg] = dist_sup[mask_idx_neg] + 1
+        else:
+            if(mask_idx_neg):
+                dist_inf = dist_sup + 1
 
         if (self.tolerance is not None) and (
             np.minimum(dist_inf, dist_sup) > self.tolerance
