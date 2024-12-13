@@ -168,27 +168,28 @@ def interp_block_v2(
 
 class Locator:
     """
-    The propose of these classes is to locate values in coordinate axes.
+    The purpose of these classes is to locate values in coordinate axes.
     """
     def __init__(self, coords: NDArray, bounds: str):
         self.coords = coords.astype("double")
         self.bounds = bounds
         pass
 
-    def handle_oob(self, values):
-            values = values.astype(np.float32)
-            min_val = min(self.coords)
-            max_val = max(self.coords)
-            oob = None
-            if self.bounds == "clip":
-                values = values.clip(min_val, max_val)
-            else:
-                oob = (values < min_val) | (values > max_val)
-                if self.bounds == "error" and oob.any():
-                    raise ValueError
-                elif self.bounds == "nan":
-                    values[oob] = np.nan
-            return oob, values
+    def handle_oob(self, values: np.ndarray):
+        min_val = min(self.coords)
+        max_val = max(self.coords)
+        oob = None
+        if self.bounds == "clip":
+            # FIXME: manage the case where coords and values
+            # have incompatible types (eg, int and float)
+            values = values.clip(min_val, max_val)
+        else:
+            oob = (values < min_val) | (values > max_val)
+            if self.bounds == "error" and oob.any():
+                raise ValueError
+        
+        return oob, values
+        
     
     #For Linear and Spline
     def locate_index_weight(self, values):
@@ -206,17 +207,11 @@ class Locator:
         indices = indices.reshape(shp).clip(0, None) # Note: a clip is performed because
                                                      # -1 is obtained in presence of NaN
         dist = dist.reshape(shp)
-        # oob = None
-        # if self.bounds == "clip":
-        #     dist = dist.clip(0, 1)
-        # else:
-        #     oob = (dist < 0) | (dist > 1)
-        #     if self.bounds == "error" and oob.any():
-        #         raise ValueError
-        #     elif self.bounds == "nan":
-        #         dist[oob] = np.nan
+
+        if self.bounds == 'nan':
+            dist = np.where(oob, np.nan, dist)
         
-        return indices, dist, oob
+        return indices, dist
 
         
     
@@ -242,15 +237,12 @@ class Locator_Regular(Locator):
         oob, values = self.handle_oob(values)
 
         x = (values - self.vmin) * self.scal
-        # oob = None
-        # # out of bounds management
-        # if self.bounds == "clip":
-        #     x = x.clip(0, self.N - 1)
-        # else:
-        #     oob = (x < 0) | (x > self.N - 1)
-            
+
         i_inf = np.floor(x).astype("int").clip(0, self.N - 1)
         dist = x - i_inf
+        
+        if self.bounds == 'nan':
+            dist = np.where(oob, np.nan, dist)
         
         if np.isscalar(x): #made to handle scalars
             # Apply mask condition if `i_inf == N - 1` for scalar
@@ -263,7 +255,7 @@ class Locator_Regular(Locator):
             i_inf[mask_idk] -= 1
             dist[mask_idk] = np.int64(1)
         
-        return i_inf, dist, oob
+        return i_inf, dist
     
     #For Nearest ?
     def locate_index(values):
@@ -288,13 +280,6 @@ class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
 
         x = self.inversion_func(values)
         N = len(self.coords)
-        
-        # oob = None
-        # # out of bounds management
-        # if self.bounds == "clip":
-        #     x = x.clip(0, N - 1)
-        # else:
-        #     oob = (x < 0) | (x > N - 1)
             
         i_inf = np.floor(x).astype("int").clip(0, N - 1)
         dist = x - i_inf
@@ -310,7 +295,10 @@ class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
             i_inf[mask_idk] -= 1
             dist[mask_idk] = 1
         
-        return i_inf, dist, oob
+        if self.bounds == 'nan':
+            dist = np.where(oob, np.nan, dist)
+
+        return i_inf, dist
 
 
     #For Nearest ?
@@ -477,7 +465,7 @@ class Spline_Indexer:
             inversion_func=self.inversion_func,
         )
         
-        N_min_1, dist, oob = locator.locate_index_weight(values)
+        N_min_1, dist = locator.locate_index_weight(values)
         
         N = len(self.coords)
         
@@ -525,19 +513,6 @@ class Spline_Indexer:
                 indices[i - 1][mask_first_negative] = indices[i][mask_first_negative]
             indices[3][mask_last_oob] = 0
         
-        
-        
-        if self.bounds != 'clip':
-            if self.bounds == 'error':
-                if oob.any():
-                    raise ValueError
-            elif self.bounds == "nan":
-                for i in range(len(weights)) :
-                    if len(indices.shape) == 1:
-                        if oob :
-                            weights[i] = np.NaN
-                    else:
-                        weights[i][oob] = np.NaN
             
         return [(indices[i], weights[i]) for i in range(len(weights))]
     
@@ -622,18 +597,8 @@ class Linear_Indexer:
             inversion_func=self.inversion_func,
         )
         
-        indices, dist, oob = locator.locate_index_weight(values)
+        indices, dist = locator.locate_index_weight(values)
 
-        if self.bounds != 'clip':
-            if self.bounds == 'error':
-                if oob.any():
-                    raise ValueError
-            elif self.bounds == "nan":
-                if not np.isscalar(dist):
-                    dist[oob] = np.nan
-                else:
-                    dist = np.nan
-                    
         if self.ascending:
             return [(indices, 1 - dist), (indices + 1, dist)]
         else:
@@ -664,7 +629,10 @@ class Index:
 
 class Nearest:
     def __init__(
-        self, values: xr.DataArray, tolerance: float|None = 1e-8, spacing: Literal["auto"]|Callable[[float], float] = "auto"
+        self,
+        values: xr.DataArray,
+        tolerance: float | None = 1e-8,
+        spacing: Literal["auto"] | Callable[[float], float] = "auto",
     ):
         """
         Proxy class for value selection (sel)
@@ -673,8 +641,9 @@ class Nearest:
             values (xr.DataArray): values for selection
             tolerance (float, optional): absolute tolerance for inexact search
             spacing(str | Callable): 
-                                    -"auto" : will take the value of the nearest valid value
-                                    -lambda x: f(x) : will take the value of the nearest valid value after inversing the x axis values based on lambda
+                - "auto" : will take the value of the nearest valid value
+                - lambda x: f(x) : will take the value of the nearest valid value after
+                    inverting the x axis values based on lambda
         """
         self.values = values
         self.tolerance = tolerance
@@ -725,7 +694,7 @@ class Nearest_Indexer:
         if not np.isscalar(mvalues) and (mvalues.ndim > 0): 
             dist_inf[mask_idx_neg] = dist_sup[mask_idx_neg] + 1
         else:
-            if(mask_idx_neg):
+            if (mask_idx_neg):
                 dist_inf = dist_sup + 1
 
         if (self.tolerance is not None) and (

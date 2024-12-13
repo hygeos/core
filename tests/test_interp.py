@@ -71,10 +71,10 @@ list_interp_functions = {
     'irregular': np.array([10., 11., 12., 13., 15.]),
 }))
 @pytest.mark.parametrize("values,oob", **parametrize_dict({
-    "scalar": (np.array(12), False),
-    "scalar-edge1": (np.array(10), False),
-    "scalar-edge2": (np.array(15), False),
-    "scalar-oob": (np.array(9), True),
+    "scalar": (np.array(12.), False),
+    "scalar-edge1": (np.array(10.), False),
+    "scalar-edge2": (np.array(15.), False),
+    "scalar-oob": (np.array(9.), True),
     "array": (np.array([np.nan, 9., 10., 10.5, 14.5, 15., 16.]), True),
     "array2D": (np.array([[np.nan, 9., 10.], [14.5, 15., 16.]]), True),
 }))
@@ -84,7 +84,8 @@ list_interp_functions = {
     'linear_error': lambda c: Linear_Indexer(c, bounds="error", regular="auto", inversion_func=None),
     'linear_clip': lambda c: Linear_Indexer(c, bounds="clip", regular="auto", inversion_func=None),
     'spline_nan': lambda c: Spline_Indexer(c, bounds="nan", regular="auto", tension=0.5),
-    # TODO: spline_error, spline_clip
+    'spline_error': lambda c: Spline_Indexer(c, bounds="error", regular="auto", tension=0.5),
+    'spline_clip': lambda c: Spline_Indexer(c, bounds="clip", regular="auto", tension=0.5),
 }))
 def test_indexer(indexer_factory, coords, values, oob, reverse):
     """
@@ -94,7 +95,6 @@ def test_indexer(indexer_factory, coords, values, oob, reverse):
         coords = coords[::-1]
 
     # instantiate the indexer
-    # indexer = Indexer(coords, bounds=bounds, regular="auto", inversion_func=None)
     indexer = indexer_factory(coords)
     
     if hasattr(indexer, 'bounds') and (indexer.bounds == "error") and oob:
@@ -564,3 +564,23 @@ def test_nearest_func_values_invert(request):
     Y = xr.DataArray([1.0, 1.0, 1.0, 2.0], dims=["X"], coords=[np.array([0,1,4,16])])
     assert np.isclose(interp(Y, X=Nearest(xr.DataArray([9.9]), tolerance=None, spacing="auto")), 1.0)
     assert np.isclose(interp(Y, X=Nearest(xr.DataArray([10.1]), tolerance=None, spacing="auto")), 2.0)
+
+
+@pytest.mark.parametrize("indexer_factory", **parametrize_dict({
+    'nearest': lambda x: Nearest(x, tolerance=10),
+    'linear_nan': lambda x: Linear(x, bounds="nan"),
+    'spline_nan': lambda x: Spline(x, bounds="nan"),
+    'linear_clip': lambda x: Linear(x, bounds="clip"),
+    'spline_clip': lambda x: Spline(x, bounds="clip"),
+}))
+def test_interp_1D(request, indexer_factory):
+    Y = xr.DataArray(
+        [1.0, 2.0, 0.0, 3.0], dims=["X"], coords=[np.array([0.0, 1.0, 2.0, 4.0])]
+    )
+    Xi = xr.DataArray(np.linspace(-1, 5, 100))
+    plt.plot(Y.X, Y, 'ro')
+    Ys = interp(Y, X=indexer_factory(Xi))
+    plt.plot(Xi.values, Ys.values, '-')
+    plt.legend()
+    plt.grid(True)
+    conftest.savefig(request)
