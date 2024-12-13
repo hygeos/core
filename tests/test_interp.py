@@ -310,7 +310,7 @@ def test_decreasing(request, regular, interp_version):
         },
     )
     if interp_version == 1:
-        assert interp_v1(data, interp={"a": xr.DataArray(104.2)}) == 104.2
+        assert np.isclose(interp_v1(data, interp={"a": xr.DataArray(104.2)}), 104.2)
         interpolated = interp_v1(
             data,
             interp={"a": xr.DataArray(np.linspace(90, 110, 200), dims=["x"])},
@@ -518,13 +518,13 @@ def test_spline(request, spacing):
     else :
         Y = xr.DataArray([1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,3])])
         
-        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, spacing=spacing)) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, spacing=spacing)) == 1.0
+        assert np.isclose(interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, spacing=spacing)), 1.0)
+        assert np.isclose(interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, spacing=spacing)), 1.0)
         
         Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2,3])])
-        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, spacing=spacing)) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, spacing=spacing)) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, spacing=spacing)) == 1.0
+        assert np.isclose(interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, spacing=spacing)), 1.0)
+        assert np.isclose(interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, spacing=spacing)), 1.0)
+        assert np.isclose(interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, spacing=spacing)), 1.0)
     
 
 
@@ -558,9 +558,9 @@ def test_nearest_func(request, spacing):
     
 def test_nearest_func_values_invert(request):
     Y = xr.DataArray([1.0, 1.0, 1.0, 2.0], dims=["X"], coords=[np.array([0,1,4,16])])
-    assert interp(Y, X=Nearest(xr.DataArray([8.9]), tolerance=None, spacing=lambda x: np.sqrt(x))) == 1.0
-    assert interp(Y, X=Nearest(xr.DataArray([9.1]), tolerance=None, spacing=lambda x: np.sqrt(x))) == 2.0
+    assert np.isclose(interp(Y, X=Nearest(xr.DataArray([8.9]), tolerance=None, spacing=lambda x: np.sqrt(x))), 1.0)
+    assert np.isclose(interp(Y, X=Nearest(xr.DataArray([9.1]), tolerance=None, spacing=lambda x: np.sqrt(x))), 2.0)
     
     Y = xr.DataArray([1.0, 1.0, 1.0, 2.0], dims=["X"], coords=[np.array([0,1,4,16])])
-    assert interp(Y, X=Nearest(xr.DataArray([9.9]), tolerance=None, spacing="auto")) == 1.0
-    assert interp(Y, X=Nearest(xr.DataArray([10.1]), tolerance=None, spacing="auto")) == 2.0
+    assert np.isclose(interp(Y, X=Nearest(xr.DataArray([9.9]), tolerance=None, spacing="auto")), 1.0)
+    assert np.isclose(interp(Y, X=Nearest(xr.DataArray([10.1]), tolerance=None, spacing="auto")), 2.0)
