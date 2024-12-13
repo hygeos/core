@@ -94,13 +94,30 @@ def cachefunc(cache_file: Path|str,
     return decorator
 
 
-def cache_dataframe(cache_file: Path | str):
-    return cachefunc(
-        cache_file,
-        writer=lambda filename, df, args, kwargs: df.to_csv(filename, index=False),
-        reader=lambda filename: {"output": pd.read_csv(filename, parse_dates=["time"])},
-        check_out=lambda x, y: assert_frame_equal,
-    )
+def cache_dataframe(
+    cache_file: Path | str,
+    inputs: Literal["check", "store", "ignore"] = "check"
+):
+    """
+    A decorator that caches the result of a function, which is a pandas DataFrame
+
+    inputs:
+        "check" [default]: store and check the function inputs
+        "store": store but don't check the function inputs
+        "ignore": ignore the function inputs
+    """
+    extension = Path(cache_file).suffix
+    if extension == ".csv":
+        return cachefunc(
+            cache_file,
+            writer=lambda filename, df, args, kwargs: df.to_csv(filename, index=False),
+            reader=lambda filename: {"output": pd.read_csv(filename, parse_dates=["time"])},
+            check_out=lambda x, y: assert_frame_equal,
+        )
+    elif extension == ".pickle":
+        return cache_pickle(cache_file, inputs, check_out=(lambda x,y: x.equals(y)))
+    else:
+        raise ValueError(f'Invalid cache file extension, got ({extension})')
 
 
 def cache_json(
@@ -141,7 +158,16 @@ def cache_json(
 def cache_pickle(
     cache_file: Path | str,
     inputs: Literal["check", "store", "ignore"] = "check",
+    check_out = (lambda x, y : x == y)
 ):
+    """
+    A decorator that caches the result of a function to a pickle file.
+
+    inputs:
+        "check" [default]: store and check the function inputs
+        "store": store but don't check the function inputs
+        "ignore": ignore the function inputs
+    """
 
     def reader(filename):
         with open(filename, 'rb') as fp:
@@ -158,6 +184,7 @@ def cache_pickle(
         reader=reader,
         writer=writer,
         check_in=(lambda x, y : x == y) if (inputs == 'check') else None,
+        check_out=check_out
     )
 
 

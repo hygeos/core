@@ -25,7 +25,16 @@ def test_cachefunc(cache_function, var):
             cache_function(cache_file)(my_function)(0)
 
         assert a == my_function()
-    
+
+@pytest.mark.parametrize('extension', ["pickle", "csv"])
+def test_cache_dataframe(extension):
+    def my_function():
+        return open_dataset('air_temperature').to_dataframe().reset_index().round()
+    with TemporaryDirectory() as tmpdir:
+        cache_file = Path(tmpdir)/('cache.'+extension)
+        cache.cache_dataframe(cache_file)(my_function)()
+        a = cache.cache_dataframe(cache_file)(my_function)()
+        assert all(a == my_function())
 
 def test_cache_dataset():
     def my_function():
