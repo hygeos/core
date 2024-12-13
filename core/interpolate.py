@@ -174,6 +174,21 @@ class Locator:
         self.coords = coords.astype("double")
         self.bounds = bounds
         pass
+
+    def handle_oob(self, values):
+            values = values.astype(np.float32)
+            min_val = min(self.coords)
+            max_val = max(self.coords)
+            oob = None
+            if self.bounds == "clip":
+                values = values.clip(min_val, max_val)
+            else:
+                oob = (values < min_val) | (values > max_val)
+                if self.bounds == "error" and oob.any():
+                    raise ValueError
+                elif self.bounds == "nan":
+                    values[oob] = np.nan
+            return oob, values
     
     #For Linear and Spline
     def locate_index_weight(self, values):
@@ -182,6 +197,8 @@ class Locator:
 
         Returns a list of indices, dist (float 0 to 1) and oob
         """
+        oob, values = self.handle_oob(values)
+
         shp = values.shape
         indices, dist = find_indices(
             (self.coords,), values.astype("double").ravel()[None, :]
@@ -189,18 +206,19 @@ class Locator:
         indices = indices.reshape(shp).clip(0, None) # Note: a clip is performed because
                                                      # -1 is obtained in presence of NaN
         dist = dist.reshape(shp)
-        oob = None
-        if self.bounds == "clip":
-            dist = dist.clip(0, 1)
-        else:
-            oob = (dist < 0) | (dist > 1)
-            if self.bounds == "error" and oob.any():
-                raise ValueError
-            elif self.bounds == "nan":
-                dist[oob] = np.nan
+        # oob = None
+        # if self.bounds == "clip":
+        #     dist = dist.clip(0, 1)
+        # else:
+        #     oob = (dist < 0) | (dist > 1)
+        #     if self.bounds == "error" and oob.any():
+        #         raise ValueError
+        #     elif self.bounds == "nan":
+        #         dist[oob] = np.nan
         
         return indices, dist, oob
 
+        
     
     #For Nearest
     def locate_index(values):
@@ -209,10 +227,11 @@ class Locator:
     
     
 class Locator_Regular(Locator):
-    def __init__(self, vmin: float, vmax: float, N: int, bounds: str):
-        self.vmin = vmin
-        self.vmax = vmax
-        self.N = N
+    def __init__(self, coords, bounds: str):
+        self.coords = coords
+        self.vmin = self.coords[0]
+        self.vmax = self.coords[-1]
+        self.N = len(self.coords)
         self.bounds = bounds
         self.scal = (self.N - 1) / (self.vmax - self.vmin)
         pass
@@ -220,13 +239,15 @@ class Locator_Regular(Locator):
     #For Linear and Spline
     def locate_index_weight(self, values):
         # floating index (scale to [0, N-1])
+        oob, values = self.handle_oob(values)
+
         x = (values - self.vmin) * self.scal
-        oob = None
-        # out of bounds management
-        if self.bounds == "clip":
-            x = x.clip(0, self.N - 1)
-        else:
-            oob = (x < 0) | (x > self.N - 1)
+        # oob = None
+        # # out of bounds management
+        # if self.bounds == "clip":
+        #     x = x.clip(0, self.N - 1)
+        # else:
+        #     oob = (x < 0) | (x > self.N - 1)
             
         i_inf = np.floor(x).astype("int").clip(0, self.N - 1)
         dist = x - i_inf
@@ -235,12 +256,12 @@ class Locator_Regular(Locator):
             # Apply mask condition if `i_inf == N - 1` for scalar
             if i_inf == self.N - 1:
                 i_inf -= 1
-                dist = 1
+                dist = np.int64(1)
         else:
             # Apply mask condition for array
             mask_idk = i_inf == self.N - 1
             i_inf[mask_idk] -= 1
-            dist[mask_idk] = 1
+            dist[mask_idk] = np.int64(1)
         
         return i_inf, dist, oob
     
@@ -249,7 +270,7 @@ class Locator_Regular(Locator):
         raise NotImplementedError
 
 
-class Locator_Inversed_Func:  # TODO: merge with Locator_Regular ?
+class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
     def __init__(self, coords: NDArray, bounds: str, inversion_func):
         self.coords = coords.astype("double")
         self.bounds = bounds
@@ -263,15 +284,17 @@ class Locator_Inversed_Func:  # TODO: merge with Locator_Regular ?
 
         Returns a list of indices, dist (float 0 to 1) and oob
         """
+        oob, values = self.handle_oob(values)
+
         x = self.inversion_func(values)
         N = len(self.coords)
         
-        oob = None
-        # out of bounds management
-        if self.bounds == "clip":
-            x = x.clip(0, N - 1)
-        else:
-            oob = (x < 0) | (x > N - 1)
+        # oob = None
+        # # out of bounds management
+        # if self.bounds == "clip":
+        #     x = x.clip(0, N - 1)
+        # else:
+        #     oob = (x < 0) | (x > N - 1)
             
         i_inf = np.floor(x).astype("int").clip(0, N - 1)
         dist = x - i_inf
@@ -331,7 +354,7 @@ def create_locator(coords, bounds: str, regular: str, inversion_func) -> Locator
         regular = False
         
     if regular:
-        return Locator_Regular(cval[0], cval[-1], len(cval), bounds)
+        return Locator_Regular(coords, bounds)
     else:
         return Locator(cval, bounds)
 
@@ -456,16 +479,6 @@ class Spline_Indexer:
         
         N_min_1, dist, oob = locator.locate_index_weight(values)
         
-        if self.bounds == "clip":
-            dist = dist.clip(0, 1)
-        else:
-            oob = (dist < 0) | (dist > 1)
-            if self.bounds == "error" and oob.any():
-                raise ValueError
-            elif self.bounds == "nan":
-                if not np.isscalar(dist):
-                    dist[oob] = np.NaN
-        
         N = len(self.coords)
         
         #init indices (-2 -1 +1 +2)
@@ -481,7 +494,6 @@ class Spline_Indexer:
         mask_last_oob = indices[3] > (N - 1) #late (-2 -1 +1)
 
         mask_normal = ~(mask_first_negative | mask_last_oob) #middle (-2 -1 +1 +2)
-        
         
         # Initialize weights matrix
         weights = np.zeros((self.tension_matrix_full.shape[1], *dist.shape))
@@ -501,11 +513,17 @@ class Spline_Indexer:
             x_vector_half_late = np.vstack((np.ones_like(t_late), t_late, t_late ** 2, np.zeros_like(t_late))).T
             weights[:, mask_last_oob] = np.dot(self.tension_matrix_late.T, x_vector_half_late.T)
 
-        
         #we change indices like we changed the weights
-        for i in range(1, 4):
-            indices[i - 1][mask_first_negative] = indices[i][mask_first_negative]
-        indices[3][mask_last_oob] = 0
+        if len(indices.shape) == 1:
+            for i in range(1, 4):
+                if(mask_first_negative):
+                    indices[i - 1] = indices[i]
+            if(mask_last_oob):
+                 indices[3] = 0
+        else:
+            for i in range(1, 4):
+                indices[i - 1][mask_first_negative] = indices[i][mask_first_negative]
+            indices[3][mask_last_oob] = 0
         
         
         
@@ -515,7 +533,11 @@ class Spline_Indexer:
                     raise ValueError
             elif self.bounds == "nan":
                 for i in range(len(weights)) :
-                    weights[i][oob] = np.NaN
+                    if len(indices.shape) == 1:
+                        if oob :
+                            weights[i] = np.NaN
+                    else:
+                        weights[i][oob] = np.NaN
             
         return [(indices[i], weights[i]) for i in range(len(weights))]
     
