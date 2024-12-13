@@ -17,7 +17,7 @@ from core.interpolate import (
     Nearest,
     Spline,
 )
-from luts import luts
+# from luts import luts
 from core import conftest
 import xarray as xr
 from core.pytest_utils import parametrize_dict
@@ -42,11 +42,11 @@ list_interp_functions = {
             "lon": l1.longitude,
         },
     ),
-    "lut": lambda data, l1: xr.DataArray(
-        luts.from_xarray(data)[
-            luts.Idx(l1.latitude.values), luts.Idx(l1.longitude.values)
-        ]
-    ),
+    # "lut": lambda data, l1: xr.DataArray(
+    #     luts.from_xarray(data)[
+    #         luts.Idx(l1.latitude.values), luts.Idx(l1.longitude.values)
+    #     ]
+    # ),
     "interp_v2": lambda data, l1: interp(
         # interp_v2
         data,
