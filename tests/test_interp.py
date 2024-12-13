@@ -66,7 +66,6 @@ list_interp_functions = {
     "increasing": False,
     "decreasing": True,
 }))
-@pytest.mark.parametrize("bounds", ["error", "nan", "clip"])
 @pytest.mark.parametrize("coords", **parametrize_dict({
     'regular': np.linspace(10, 15, 6),
     'irregular': np.array([10., 11., 12., 13., 15.]),
@@ -85,8 +84,9 @@ list_interp_functions = {
     'linear_error': lambda c: Linear_Indexer(c, bounds="error", regular="auto", inversion_func=None),
     'linear_clip': lambda c: Linear_Indexer(c, bounds="clip", regular="auto", inversion_func=None),
     'spline_nan': lambda c: Spline_Indexer(c, bounds="nan", regular="auto", tension=0.5),
+    # TODO: spline_error, spline_clip
 }))
-def test_indexer(indexer_factory, coords, values, oob, bounds, reverse):
+def test_indexer(indexer_factory, coords, values, oob, reverse):
     """
     Thoroughly test the indexers
     """

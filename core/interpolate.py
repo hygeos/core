@@ -186,7 +186,8 @@ class Locator:
         indices, dist = find_indices(
             (self.coords,), values.astype("double").ravel()[None, :]
         )
-        indices = indices.reshape(shp)
+        indices = indices.reshape(shp).clip(0, None) # Note: a clip is performed because
+                                                     # -1 is obtained in presence of NaN
         dist = dist.reshape(shp)
         oob = None
         if self.bounds == "clip":
@@ -462,7 +463,8 @@ class Spline_Indexer:
             if self.bounds == "error" and oob.any():
                 raise ValueError
             elif self.bounds == "nan":
-                dist[oob] = np.NaN
+                if not np.isscalar(dist):
+                    dist[oob] = np.NaN
         
         N = len(self.coords)
         
@@ -527,7 +529,7 @@ class Linear:
         spacing: Literal["regular", "irregular", "auto"]|Callable[[float],float] = "auto", 
     ):
         """
-        A proxy class for Linear indeting.
+        A proxy class for Linear indexing.
 
         The purpose of this class is to provide a convenient interface to the
         interp function, by initializing an indexer class.
@@ -542,8 +544,7 @@ class Linear:
                 - no: disable regular grid detection
                 - auto: detect if grid is regular or not
             inversion_fun: is the inverse of the function the indexes uses
-                (for example if indexes follow x² you need to feed sqrt(x)) in a lambda
-                form : lambda x: np.sqrt(x))
+                (for example if indexes follow x² you need to feed sqrt)
         """
         self.values = values
         self.bounds = bounds
@@ -606,8 +607,8 @@ class Linear_Indexer:
                 if oob.any():
                     raise ValueError
             elif self.bounds == "nan":
-                for i in range(len(dist)) :
-                    dist[oob] = np.NaN  # FIXME: problem here, does not depend on i
+                if not np.isscalar(dist):
+                    dist[oob] = np.nan
                     
         if self.ascending:
             return [(indices, 1 - dist), (indices + 1, dist)]
@@ -658,6 +659,7 @@ class Nearest:
     def get_indexer(self, coords: xr.DataArray):
         return Nearest_Indexer(coords.values, self.tolerance, self.spacing)
 
+
 class Nearest_Indexer:
     def __init__(self, coords: NDArray, tolerance: float|None, spacing: str|Callable = "auto"):
         self.tolerance = tolerance
@@ -696,7 +698,7 @@ class Nearest_Indexer:
         
         #EDGE CASE HANDLING ?
         mask_idx_neg = (idx -1) < 0
-        if not np.isscalar(mvalues): 
+        if not np.isscalar(mvalues) and (mvalues.ndim > 0): 
             dist_inf[mask_idx_neg] = dist_sup[mask_idx_neg] + 1
         else:
             if(mask_idx_neg):
