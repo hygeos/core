@@ -196,7 +196,7 @@ class Locator:
             if self.bounds == "error" and oob.any():
                 raise ValueError
             elif self.bounds == "nan":
-                dist[oob] = np.NaN
+                dist[oob] = np.nan
         
         return indices, dist, oob
 
@@ -226,7 +226,6 @@ class Locator_Regular(Locator):
             x = x.clip(0, self.N - 1)
         else:
             oob = (x < 0) | (x > self.N - 1)
-            
             
         i_inf = np.floor(x).astype("int").clip(0, self.N - 1)
         dist = x - i_inf
@@ -272,7 +271,6 @@ class Locator_Inversed_Func:  # TODO: merge with Locator_Regular ?
             x = x.clip(0, N - 1)
         else:
             oob = (x < 0) | (x > N - 1)
-            
             
         i_inf = np.floor(x).astype("int").clip(0, N - 1)
         dist = x - i_inf
@@ -603,7 +601,6 @@ class Linear_Indexer:
         
         indices, dist, oob = locator.locate_index_weight(values)
 
-        
         if self.bounds != 'clip':
             if self.bounds == 'error':
                 if oob.any():
