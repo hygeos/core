@@ -54,8 +54,8 @@ list_interp_functions = {
     "interp_v2_non_regular": lambda data, l1: interp(
         # interp_v2
         data,
-        lat=Linear(l1.latitude, regular='no'),
-        lon=Linear(l1.longitude, regular='no'),
+        lat=Linear(l1.latitude, spacing='irregular'),
+        lon=Linear(l1.longitude, spacing='irregular'),
     ),
 }
 
@@ -435,9 +435,9 @@ def test_nearest_indexer(A):
     assert (indexer(A-0.05)[0][0] == np.array([0, 1, 2])).all()
     
 
-@pytest.mark.parametrize('regular', ['no', 'yes'])
+@pytest.mark.parametrize('spacing', ["regular", "irregular"])
 @pytest.mark.parametrize('type', [Linear, Spline])
-def test_interp_2D(request, regular, type):
+def test_interp_2D(request, spacing, type):
     
     A = xr.DataArray(np.eye(3), dims=['x', 'y'])
     N = 100
@@ -447,12 +447,12 @@ def test_interp_2D(request, regular, type):
         x=type(
             xr.DataArray(np.linspace(-1, 3, N), dims=["new_x"]),
             bounds="clip",
-            regular=regular,
+            spacing=spacing,
         ),
         y=type(
             xr.DataArray(np.linspace(-1, 3, N), dims=["new_Y"]),
             bounds="nan",
-            regular=regular,
+            spacing=spacing,
         ),
     )
 
@@ -460,26 +460,34 @@ def test_interp_2D(request, regular, type):
     conftest.savefig(request)
 
 
-@pytest.mark.parametrize("regular", ["no", "yes"])
-def test_spline(request, regular):
-    if regular :
-        Y = xr.DataArray([1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2])])
-        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
-        
+@pytest.mark.parametrize("spacing", ["regular", "irregular"])
+def test_spline(request, spacing):
+    if spacing == "regular" :
         Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2,3])])
-        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, regular="auto")) == 1.0
     else :
         Y = xr.DataArray([1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,3])])
-        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, regular="auto")) == 1.0
+        
+        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, spacing=spacing)) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, spacing=spacing)) == 1.0
+        
+        Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2,3])])
+        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, spacing=spacing)) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, spacing=spacing)) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, spacing=spacing)) == 1.0
     
-        Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2,4])])
-        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, regular="auto")) == 1.0
-        assert interp(Y, X=Spline(xr.DataArray([3.5]), tension=0.5, regular="auto")) == 1.0
-    
+
+
+@pytest.mark.parametrize('type', [Linear, Spline])
+def test_inverse_func(request, type):
+    Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,4,9])])
+    interp(Y, X=type(xr.DataArray([0.5]), spacing=lambda x: np.sqrt(x)))
+    interp(Y, X=type(xr.DataArray([2]), spacing=lambda x: np.sqrt(x)))
+    interp(Y, X=type(xr.DataArray([6.5]), spacing=lambda x: np.sqrt(x)))
+    linspace = np.linspace(0, 9, 1000)
+    YsNm = interp(Y, X=type(xr.DataArray(linspace)))
+    YsInv = interp(Y, X=type(xr.DataArray(linspace), spacing=lambda x: np.sqrt(x)))
+    plt.plot(Y.X, Y, 'ro')
+    plt.plot(linspace, YsNm, 'b-')
+    plt.plot(linspace, YsInv, 'g-')
+    plt.grid()
+    conftest.savefig(request)
