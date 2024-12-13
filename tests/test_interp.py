@@ -7,7 +7,9 @@ from core.monitor import Chrono
 
 
 from core.interpolate import (
+    Linear_Indexer,
     Nearest_Indexer,
+    Spline_Indexer,
     interp,
     interp_v1,
     selinterp,
@@ -58,6 +60,55 @@ list_interp_functions = {
         lon=Linear(l1.longitude, spacing='irregular'),
     ),
 }
+
+
+@pytest.mark.parametrize("reverse", **parametrize_dict({
+    "increasing": False,
+    "decreasing": True,
+}))
+@pytest.mark.parametrize("bounds", ["error", "nan", "clip"])
+@pytest.mark.parametrize("coords", **parametrize_dict({
+    'regular': np.linspace(10, 15, 6),
+    'irregular': np.array([10., 11., 12., 13., 15.]),
+}))
+@pytest.mark.parametrize("values,oob", **parametrize_dict({
+    "scalar": (np.array(12), False),
+    "scalar-edge1": (np.array(10), False),
+    "scalar-edge2": (np.array(15), False),
+    "scalar-oob": (np.array(9), True),
+    "array": (np.array([np.nan, 9., 10., 10.5, 14.5, 15., 16.]), True),
+    "array2D": (np.array([[np.nan, 9., 10.], [14.5, 15., 16.]]), True),
+}))
+@pytest.mark.parametrize("indexer_factory", **parametrize_dict({ 
+    'nearest': lambda c: Nearest_Indexer(c, tolerance=3),
+    'linear_nan': lambda c: Linear_Indexer(c, bounds="nan", regular="auto", inversion_func=None),
+    'linear_error': lambda c: Linear_Indexer(c, bounds="error", regular="auto", inversion_func=None),
+    'linear_clip': lambda c: Linear_Indexer(c, bounds="clip", regular="auto", inversion_func=None),
+    'spline_nan': lambda c: Spline_Indexer(c, bounds="nan", regular="auto", tension=0.5),
+}))
+def test_indexer(indexer_factory, coords, values, oob, bounds, reverse):
+    """
+    Thoroughly test the indexers
+    """
+    if reverse:
+        coords = coords[::-1]
+
+    # instantiate the indexer
+    # indexer = Indexer(coords, bounds=bounds, regular="auto", inversion_func=None)
+    indexer = indexer_factory(coords)
+    
+    if hasattr(indexer, 'bounds') and (indexer.bounds == "error") and oob:
+        with pytest.raises(ValueError):
+            indexer(values)
+    else:
+        for idx, w in indexer(values):
+            assert (idx >= 0).all()
+            assert (idx < len(coords)).all()
+            if (w is not None) and not isinstance(indexer, Spline_Indexer):
+                w = np.array(w)
+                ok = ~np.isnan(w)
+                assert (w[ok] >= 0).all()
+                assert (w[ok] <= 1).all()
 
 
 @pytest.mark.parametrize("apply_function", **parametrize_dict(list_interp_functions))
