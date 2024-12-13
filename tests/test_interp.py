@@ -13,6 +13,7 @@ from core.interpolate import (
     selinterp,
     Linear,
     Nearest,
+    Spline,
 )
 from luts import luts
 from core import conftest
@@ -199,6 +200,33 @@ def test_interp_v1(kwargs):
             "a": Linear(sample(1, 3, ["x", "y"])),
             "c": Linear(sample(101, 105, ["y", "x"])),
         },
+        {  # same dimensions
+            "a": Spline(sample(1, 3, ["x", "y"])),
+            "b": Spline(sample(11, 14, ["x", "y"])),
+            "c": Spline(sample(101, 105, ["x", "y"])),
+        },
+        {  # mixed dimensions
+            "a": Nearest(sample(1, 3, ["z"]), tolerance=1.),
+            "b": Spline(sample(11, 14, ["x", "y"])),
+            "c": Spline(sample(101, 105, ["x", "z"])),
+        },
+        {  # scalar selection
+            "a": Nearest(2),
+            "b": Spline(sample(11, 14, ["x", "y"])),
+            "c": Spline(sample(101, 105, ["x", "z"])),
+        },
+        {  # missing dimension (slice)
+            "b": Spline(sample(11, 14, ["x", "y"])),
+            "c": Spline(sample(101, 105, ["x", "z"])),
+        },
+        {  # missing dimension (slice)
+            "a": Spline(sample(1, 3, ["x", "y"])),
+            "c": Spline(sample(101, 105, ["x", "z"])),
+        },
+        {  # missing dimension and reversed dimensions
+            "a": Spline(sample(1, 3, ["x", "y"])),
+            "c": Spline(sample(101, 105, ["y", "x"])),
+        },
     ],
 )
 def test_interp_v2(kwargs):
@@ -215,6 +243,7 @@ def test_interp_v2(kwargs):
 
     res.compute()
 
+#Did not add test for spline yet as == is hard to predict for me -Nicolas
 @pytest.mark.parametrize('regular', [True, False])
 @pytest.mark.parametrize("interp_version", [1, 2])
 def test_decreasing(request, regular, interp_version):
@@ -320,6 +349,10 @@ def test_oob_interp(fixed_sample, interp_version):
                 fixed_sample,
                 b = Linear(xr.DataArray([-2]))
             )
+            interp(
+                fixed_sample,
+                b = Spline(xr.DataArray([-2]))
+            )
     with pytest.raises(ValueError):
         if interp_version == 1:
             interp_v1(
@@ -333,6 +366,10 @@ def test_oob_interp(fixed_sample, interp_version):
                 fixed_sample,
                 b = Linear(xr.DataArray([10])),
             )
+            interp(
+                fixed_sample,
+                b = Spline(xr.DataArray([10])),
+            )
 
     if interp_version == 1:
         interp_v1(
@@ -345,6 +382,10 @@ def test_oob_interp(fixed_sample, interp_version):
         interp(
             fixed_sample,
             b = Linear(xr.DataArray([9])),
+        )
+        interp(
+            fixed_sample,
+            b = Spline(xr.DataArray([9])),
         )
 
 
@@ -365,6 +406,10 @@ def test_oob_interp_clip(fixed_sample, interp_version):
         interp(
             fixed_sample,
             b=Linear(xr.DataArray([-2]), bounds="clip"),
+        )
+        interp(
+            fixed_sample,
+            b=Spline(xr.DataArray([-2]), bounds="clip"),
         )
 
 
@@ -391,19 +436,20 @@ def test_nearest_indexer(A):
     
 
 @pytest.mark.parametrize('regular', ['no', 'yes'])
-def test_interp_2D(request, regular):
+@pytest.mark.parametrize('type', [Linear, Spline])
+def test_interp_2D(request, regular, type):
     
     A = xr.DataArray(np.eye(3), dims=['x', 'y'])
     N = 100
 
     interpolated = interp(
         A,
-        x=Linear(
+        x=type(
             xr.DataArray(np.linspace(-1, 3, N), dims=["new_x"]),
             bounds="clip",
             regular=regular,
         ),
-        y=Linear(
+        y=type(
             xr.DataArray(np.linspace(-1, 3, N), dims=["new_Y"]),
             bounds="nan",
             regular=regular,
@@ -414,3 +460,26 @@ def test_interp_2D(request, regular):
     conftest.savefig(request)
 
 
+@pytest.mark.parametrize("regular", ["no", "yes"])
+def test_spline(request, regular):
+    if regular :
+        Y = xr.DataArray([1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2])])
+        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
+        
+        Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2,3])])
+        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, regular="auto")) == 1.0
+    else :
+        Y = xr.DataArray([1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,3])])
+        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, regular="auto")) == 1.0
+    
+        Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,2,4])])
+        assert interp(Y, X=Spline(xr.DataArray([0.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([1.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, regular="auto")) == 1.0
+        assert interp(Y, X=Spline(xr.DataArray([3.5]), tension=0.5, regular="auto")) == 1.0
+    
