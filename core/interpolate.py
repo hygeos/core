@@ -609,6 +609,8 @@ class Linear_Indexer:
             elif self.bounds == "nan":
                 if not np.isscalar(dist):
                     dist[oob] = np.nan
+                else:
+                    dist = np.nan
                     
         if self.ascending:
             return [(indices, 1 - dist), (indices + 1, dist)]
