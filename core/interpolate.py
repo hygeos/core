@@ -243,17 +243,13 @@ class Locator_Regular(Locator):
         
         if self.bounds == 'nan':
             dist = np.where(oob, np.nan, dist)
+        mask_idk = i_inf == self.N - 1
         
-        if np.isscalar(x): #made to handle scalars
-            # Apply mask condition if `i_inf == N - 1` for scalar
-            if i_inf == self.N - 1:
-                i_inf -= 1
-                dist = np.int64(1)
-        else:
-            # Apply mask condition for array
-            mask_idk = i_inf == self.N - 1
-            i_inf[mask_idk] -= 1
-            dist[mask_idk] = np.int64(1)
+
+        # Apply mask condition for array
+        mask_idk = i_inf == self.N - 1
+        i_inf = np.where(mask_idk, i_inf - 1, i_inf)
+        dist = np.where(mask_idk, np.float64(1), dist)
         
         return i_inf, dist
     
@@ -283,17 +279,11 @@ class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
             
         i_inf = np.floor(x).astype("int").clip(0, N - 1)
         dist = x - i_inf
-        
-        if np.isscalar(x): #made to handle scalars
-            # Apply mask condition if `i_inf == N - 1` for scalar
-            if i_inf == N - 1:
-                i_inf -= 1
-                dist = 1
-        else:
-            # Apply mask condition for array
-            mask_idk = i_inf == N - 1
-            i_inf[mask_idk] -= 1
-            dist[mask_idk] = 1
+
+        # Apply mask condition for array
+        mask_idk = i_inf == N - 1
+        i_inf = np.where(mask_idk, i_inf - 1, i_inf)
+        dist = np.where(mask_idk, np.float64(1), dist)
         
         if self.bounds == 'nan':
             dist = np.where(oob, np.nan, dist)
@@ -691,11 +681,9 @@ class Nearest_Indexer:
         
         #EDGE CASE HANDLING ?
         mask_idx_neg = (idx -1) < 0
-        if not np.isscalar(mvalues) and (mvalues.ndim > 0): 
-            dist_inf[mask_idx_neg] = dist_sup[mask_idx_neg] + 1
-        else:
-            if (mask_idx_neg):
-                dist_inf = dist_sup + 1
+
+        dist_inf = np.where(mask_idx_neg, dist_sup + 1, dist_inf)
+
 
         if (self.tolerance is not None) and (
             np.minimum(dist_inf, dist_sup) > self.tolerance
