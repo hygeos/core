@@ -42,7 +42,7 @@ class Config:
         
         if allow_home_config is True:
             
-            base_config_path = Path.home() / ".config"/ config_path.name
+            base_config_path = Path.home() / ".config/Hygeos"/ config_path.name
             if base_config_path.is_file():
                 
                 self.cfg_dict = Config.load_toml_as_dict(base_config_path)

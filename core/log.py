@@ -10,6 +10,7 @@
 from datetime import datetime
 from enum import Enum
 import inspect
+import warnings
 
 # third party imports
 # ...
@@ -160,23 +161,44 @@ def log(lvl: lvl, *args):
     
     _internal.log(lvl, *args)
 
-def critical(*args):
+def critical(*args, e: Exception=None):
     """
     log with defaul level CRITICAL
+    will raise e if passed
     """
+    
     _internal.log(lvl.CRITICAL, *args)
     
-def error(*args):
+    if e is not None:
+        if not issubclass(e, Exception):
+            raise RuntimeError(f"log.error Invalid Exception type: {str(e)}, should be a subclass of {str(Exception)}")
+        raise e(*args)
+    
+def error(*args, e: Exception=None):
     """
     log with defaul level ERROR
+    will raise e if passed
     """
+
     _internal.log(lvl.ERROR, *args)
     
-def warning(*args):
+    if e is not None:
+        if not issubclass(e, Exception):
+            raise RuntimeError(f"log.error Invalid Exception type: {str(e)}, should be a subclass of {str(Exception)}")
+        raise e(*args)
+    
+def warning(*args, w: Warning=None):
     """
     log with defaul level WARNING
     """
     _internal.log(lvl.WARNING, *args)
+    
+    if w is not None:
+        if not issubclass(w, Warning):
+            raise RuntimeError(f"log.error Invalid Warning type: {str(e)}, should be a subclass of {str(Warning)}")
+            
+        msg = _internal.concat_mess(*args)
+        warnings.warn(msg, category=w), 
     
 def info(*args):
     """
