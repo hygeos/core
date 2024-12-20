@@ -71,7 +71,6 @@ from pathlib import Path
 import base64
 import io
 import pytest
-from matplotlib import pyplot as plt
 
 
 def add_image_to_report(request, fp):
@@ -127,6 +126,8 @@ def savefig(request, **kwargs):
 
     `kwargs` are passed to `plt.savefig`
     """
+    from matplotlib import pyplot as plt
+
     fp = io.BytesIO()
     plt.savefig(fp, **kwargs)
     add_image_to_report(request, fp)
