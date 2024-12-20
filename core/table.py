@@ -1,6 +1,56 @@
 from core.static import interface
 from pathlib import Path
 import pandas as pd
+import xml.etree.ElementTree as et
+
+        
+def xml_to_dict(element):
+    """
+    Recursively convert an XML element and its children into a nested dictionary.
+    Special handling for 'neighbor' and country elements.
+    """
+    result = {}
+
+    for child in element:
+        if len(child) != 0: 
+            country_name = child.attrib['name'] 
+            country_data = xml_to_dict(child)
+            result[country_name] = country_data
+        elif len(child.attrib) != 0:
+            info = child.attrib
+            if child.tag not in result:
+                result[child.tag] = []
+            result[child.tag].append(info)
+        else:
+            # Handle other elements normally
+            result[child.tag] = xml_to_dict(child)
+
+    # Add attributes to the result if they exist and are not handled
+    attrib = element.attrib
+    if attrib:
+        if 'name' in attrib: attrib.pop('name')
+        result.update(attrib)
+
+    # Add text content if no children exist
+    if not result and element.text:
+        return element.text.strip()
+
+    return result
+
+def read_xml(filepath: str | Path):
+    """
+    Parse an XML file and return a nested dictionary.
+    """
+    tree = et.parse(filepath)
+    root = tree.getroot()
+    return {root.tag: xml_to_dict(root)}
+
+def read_xml_from_text(xml_string: str) -> dict:
+    """
+    Parse an XML string and return a nested dictionary.
+    """
+    root = et.fromstring(xml_string)
+    return {root.tag: xml_to_dict(root)}
 
 def read_csv(path: str|Path, **kwargs) -> pd.DataFrame:
     """

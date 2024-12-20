@@ -14,6 +14,19 @@ def dataset():
     cols  = [f'col_{i+1}' for i in range(shape[1])] 
     return pd.DataFrame(array, columns=cols)
 
+
+def test_read_xml():
+    xml_file = Path(__file__).parent/'inputs'/'test.xml'
+    d = read_xml(xml_file)
+    print(d)    
+
+def test_read_xml_txt():
+    xml_file = Path(__file__).parent/'inputs'/'xml.txt'
+    with open(xml_file, "r") as file:
+        xml_txt = file.read()
+    d = read_xml_from_text(xml_txt)
+    print(d)    
+
 def test_read_csv():
     csv_file = Path(__file__).parent/'inputs'/'test.csv'
     assert csv_file.is_file()
