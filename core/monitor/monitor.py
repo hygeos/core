@@ -18,7 +18,7 @@ class Monitor:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         for t in self.trackers:
-            t.__exit__()
+            t.__exit__(exc_type, exc_val, exc_tb)
     
     def restart(self):
         for t in self.trackers:
