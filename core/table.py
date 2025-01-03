@@ -92,9 +92,9 @@ def select(table, where:tuple, cols:str|list = None):
     return table[condition][cols]
 
 @interface
-def select_one(table, where:tuple, col:str = None):
+def select_cell(table, where:tuple, col:str = None):
     """
-    Function for selecting a single value in a pandas DataFrame with a condition
+    Function for selecting a single cell value in a pandas DataFrame with a condition
 
     Args:
         dataframe (pd.DataFrame): Input table from which to select
@@ -102,7 +102,7 @@ def select_one(table, where:tuple, col:str = None):
         col (str | list): Name of the column to return
     
     Example:
-        select(df, ('col_1','=',20), 'col_2')
+        select_cell(df, ('col_1','=',20), 'col_2')
     """  
     df = select(table, where, col)
     assert len(df) == 1, f'Expected to return only one values (got {len(df)})'
@@ -110,6 +110,7 @@ def select_one(table, where:tuple, col:str = None):
 
 
 op_map = {"=": lambda a, b: a == b,
+          "==": lambda a, b: a == b,
           ">": lambda a, b: a > b,
           "<": lambda a, b: a < b,
           ">=": lambda a, b: a >= b,

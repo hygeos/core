@@ -198,7 +198,7 @@ def warning(*args, w: Warning=None):
             raise RuntimeError(f"log.error Invalid Warning type: {str(e)}, should be a subclass of {str(Warning)}")
             
         msg = _internal.concat_mess(*args)
-        warnings.warn(msg, category=w), 
+        warnings.warn(msg, category=w)
     
 def info(*args):
     """
