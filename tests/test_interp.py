@@ -71,7 +71,7 @@ list_interp_functions = {
     'irregular': np.array([10., 11., 12., 13., 15.]),
 }))
 @pytest.mark.parametrize("values,oob", **parametrize_dict({
-    "scalar": (np.array(12.), False),
+    "scalar": (np.array(11.2), False),
     "scalar-edge1": (np.array(10.), False),
     "scalar-edge2": (np.array(15.), False),
     "scalar-oob": (np.array(9.), True),
@@ -109,6 +109,16 @@ def test_indexer(indexer_factory, coords, values, oob, reverse):
                 ok = ~np.isnan(w)
                 assert (w[ok] >= 0).all()
                 assert (w[ok] <= 1).all()
+
+        # check bracketing values (for scalars - linear only)
+        if (not oob) and (values.ndim == 0) and isinstance(indexer, Linear_Indexer):
+            i1, w1 = indexer(values)[0]
+            i2, w2 = indexer(values)[1]
+            v1 = coords[i1]
+            v2 = coords[i2]
+            assert v1 <= values
+            assert v2 >= values
+            assert np.isclose(values, v1*w1 + v2*w2)
 
 
 @pytest.mark.parametrize("apply_function", **parametrize_dict(list_interp_functions))

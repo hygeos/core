@@ -173,32 +173,42 @@ class Locator:
     def __init__(self, coords: NDArray, bounds: str):
         self.coords = coords.astype("double")
         self.bounds = bounds
-        pass
+
+        if coords[0] < coords[-1]:
+            self.vmin = coords[0]
+            self.vmax = coords[-1]
+        else:
+            self.vmin = coords[-1]
+            self.vmax = coords[0]
+
 
     def handle_oob(self, values: np.ndarray):
-        min_val = min(self.coords)
-        max_val = max(self.coords)
-        oob = None
+        """
+        handle out of bound values
+        """
         if self.bounds == "clip":
             # FIXME: manage the case where coords and values
             # have incompatible types (eg, int and float)
-            values = values.clip(min_val, max_val)
-        else:
-            oob = (values < min_val) | (values > max_val)
-            if self.bounds == "error" and oob.any():
-                raise ValueError
-        
-        return oob, values
+            values = values.clip(self.vmin, self.vmax)
+        elif self.bounds in ["nan", "error"]:
+            # bounds is either "nan" or "error"
+            oob = (values < self.vmin) | (values > self.vmax)
+            if oob.any():
+                if self.bounds == "error":
+                    raise ValueError
+                if self.bounds == "nan":
+                    values = np.where(oob, np.nan, values)
+
+        return values
         
     
-    #For Linear and Spline
     def locate_index_weight(self, values):
         """
         Find indices and dist of values for linear and spline interpolation in self.coords
 
         Returns a list of indices, dist (float 0 to 1) and oob
         """
-        oob, values = self.handle_oob(values)
+        values = self.handle_oob(values)
 
         shp = values.shape
         indices, dist = find_indices(
@@ -208,46 +218,40 @@ class Locator:
                                                      # -1 is obtained in presence of NaN
         dist = dist.reshape(shp)
 
-        if self.bounds == 'nan':
-            dist = np.where(oob, np.nan, dist)
-        
         return indices, dist
 
-        
-    
-    #For Nearest
     def locate_index(values):
         raise NotImplementedError
-        
     
     
 class Locator_Regular(Locator):
     def __init__(self, coords, bounds: str):
         self.coords = coords
-        self.vmin = self.coords[0]
-        self.vmax = self.coords[-1]
+        self.vstart = self.coords[0]
+        self.vend = self.coords[-1]
+        if self.vstart < self.vend:
+            self.vmin = self.vstart
+            self.vmax = self.vend
+        else:
+            self.vmin = self.vend
+            self.vmax = self.vstart
         self.N = len(self.coords)
         self.bounds = bounds
-        self.scal = (self.N - 1) / (self.vmax - self.vmin)
-        pass
+        self.scal = (self.N - 1) / (self.vend - self.vstart)
     
     #For Linear and Spline
     def locate_index_weight(self, values):
-        # floating index (scale to [0, N-1])
-        oob, values = self.handle_oob(values)
+        values = self.handle_oob(values)
+        
+        # calculate floating index (scale to [0, N-1])
+        x = (values - self.vstart) * self.scal
+        i_inf = np.floor(np.nan_to_num(x)).astype("int")
 
-        x = (values - self.vmin) * self.scal
-
-        i_inf = np.floor(x).astype("int").clip(0, self.N - 1)
         dist = x - i_inf
-        
-        if self.bounds == 'nan':
-            dist = np.where(oob, np.nan, dist)
+
         mask_idk = i_inf == self.N - 1
-        
 
         # Apply mask condition for array
-        mask_idk = i_inf == self.N - 1
         i_inf = np.where(mask_idk, i_inf - 1, i_inf)
         dist = np.where(mask_idk, np.float64(1), dist)
         
@@ -261,18 +265,22 @@ class Locator_Regular(Locator):
 class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
     def __init__(self, coords: NDArray, bounds: str, inversion_func):
         self.coords = coords.astype("double")
+        if coords[0] < coords[-1]:
+            self.vmin = coords[0]
+            self.vmax = coords[-1]
+        else:
+            self.vmin = coords[-1]
+            self.vmax = coords[0]
         self.bounds = bounds
         self.inversion_func = inversion_func
-        pass
     
-    #For Linear and Spline
     def locate_index_weight(self, values):
         """
         Find indices and dist of values for linear and spline interpolation in self.coords
 
         Returns a list of indices, dist (float 0 to 1) and oob
         """
-        oob, values = self.handle_oob(values)
+        values = self.handle_oob(values)
 
         x = self.inversion_func(values)
         N = len(self.coords)
@@ -285,9 +293,6 @@ class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
         i_inf = np.where(mask_idk, i_inf - 1, i_inf)
         dist = np.where(mask_idk, np.float64(1), dist)
         
-        if self.bounds == 'nan':
-            dist = np.where(oob, np.nan, dist)
-
         return i_inf, dist
 
 
@@ -298,31 +303,18 @@ class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
 
 def create_locator(coords, bounds: str, regular: str, inversion_func) -> Locator:
     """
-        Locator factory    
-    
-        The purpose of this method is to generate the correct Locator based on the
-        coords, the bounds, if it's regular and the inversion func
-        so far it can produce a Locator, a Locator_Regular and a Locator_Inversed_Func
+    Locator factory    
 
-        Args:
-            bounds (str): how to deal with out-of-bounds values:
-                - error: raise a ValueError
-                - nan: replace by NaNs
-                - clip: clip values to the extrema
-            regular (str): how to deal with regular grids
-                - yes: raise an error in case of non-regular grid
-                - no: disable regular grid detection
-                - auto: detect if grid is regular or not
-            inversion_fun: is the inverse of the function the indexes uses (for example if indexes follow x² you need to feed sqrt(x)) in a lambda form : lambda x: np.sqrt(x) 
+    The purpose of this method is to instantiate the appropriate "Locator" class.
+
+    The args are passed from the indexers.
     """
-    # factory pour Locator ou Locator_Regular
     
     if inversion_func is not None :
         return Locator_Inversed_Func(coords, bounds, inversion_func)
     
     # regular grid detection
     cval = coords
-    
     if regular in ['regular', 'auto']:
         diff = np.diff(cval)
         regular = np.allclose(diff[0], diff)
@@ -417,29 +409,6 @@ class Spline_Indexer:
             [0.5, -1, 0.5, 0],
             [0, 0, 0, 0],
         ])
-        
-        """
-        A proxy class for Spline indexing.
-
-        The purpose of this class is to provide a convenient interface to the
-        interp function, by initializing an indexer class.
-
-        Args:
-            bounds (str): how to deal with out-of-bounds values:
-                - error: raise a ValueError
-                - nan: replace by NaNs
-                - clip: clip values to the extrema
-            regular 
-            (str): how to deal with regular grids
-                - yes: raise an error in case of non-regular grid
-                - no: disable regular grid detection
-                - auto: detect if grid is regular or not
-            (Callable) : is the inverse of the function the indexes uses (for example if indexes follow x² you need to feed sqrt(x)) in a lambda form : lambda x: np.sqrt(x) 
-            tension (float): how tight the rope between points is (1 very tight, 0 very loose)
-                - 0: Very tight rope
-                - 1: Very lose rope
-                The points between indexes 0 and 1 and N - 1 and N will have a tightness of 0.5
-        """
         
     def __call__(self, values):
         """
@@ -552,7 +521,9 @@ class Linear:
     def get_indexer(self, coords: xr.DataArray):
         cval = coords.values
         if len(cval) < 2 :
-            raise ValueError("Linear needs at least 2 point to index properly") #AJOUTER LA BONNE ERREUR
+            raise ValueError(
+                f"Cannot apply linear indexing to an axis of {len(cval)} values"
+            )
         return Linear_Indexer(cval, self.bounds, self.regular, self.inversion_func)
 
 
