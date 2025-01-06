@@ -32,6 +32,6 @@ class Monitor:
         for t in self.trackers:
             t.stop()
 
-    def print(self):
+    def display(self):
         for t in self.trackers:
-            t.print()
+            t.display()

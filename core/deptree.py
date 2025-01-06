@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from time import sleep
 from typing import Type
 
+from core import log
 
 class BaseProduct:
     """
@@ -103,7 +104,7 @@ def example():
             self.executor_id = "local"
 
         def run(self):
-            print(f"Downloading level1 {self.id} on {self.executor_id}")
+            log.info(f"Downloading level1 {self.id} on {self.executor_id}")
             sleep(1)
 
     class Level2(BaseProduct):
@@ -116,7 +117,7 @@ def example():
             return [Level1(self.id)]
 
         def run(self):
-            print(f"Generating level2 {self.id} on {self.executor_id}")
+            log.info(f"Generating level2 {self.id} on {self.executor_id}")
             sleep(1)
 
     class Composite(BaseProduct):
@@ -129,7 +130,7 @@ def example():
             return [Level2(i) for i in range(5)]
 
         def run(self):
-            print(
+            log.info(
                 f"Generating monthly composite {self.id} on {self.executor_id} from "
                 f"{len(self.depends())} dependencies."
             )

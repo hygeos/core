@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 from core.fileutils import filegen
-
+from core import log
 
 def download_url(
     url: str,
@@ -27,8 +27,8 @@ def download_url(
     @filegen(if_exists=if_exists, verbose=verbose, **kwargs)
     def download_target(path):
         if verbose:
-            print('Downloading:', url)
-            print('To: ', target)
+            log.info('Downloading:', url)
+            log.info('To: ', target)
 
         cmd = f'wget {wget_opts} {url} -O {path}'
         # Detect access problem

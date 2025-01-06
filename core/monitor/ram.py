@@ -1,5 +1,6 @@
 import tracemalloc
 
+from core import log
 
 class RAM:
     """
@@ -17,7 +18,7 @@ class RAM:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
-        self.print()
+        self.display()
     
     def restart(self):
         tracemalloc.start()
@@ -35,11 +36,11 @@ class RAM:
         tracemalloc.stop()
         return self.current, self.peak
 
-    def print(self):
+    def display(self):
         str_peak = self._format_size(self.peak)
         str_current = self._format_size(self.current)
         msg = "RAM usage: [{}] use {} at peak and {} at the end of execution."         
-        print(msg.format(self.name, str_peak, str_current))
+        log.info(msg.format(self.name, str_peak, str_current))
     
     def _format_size(self, byte_size, rjust: int = 8):
         scale = {

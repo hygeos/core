@@ -16,6 +16,7 @@ from zipfile import ZipFile
 from datetime import datetime, timedelta
 from tempfile import TemporaryDirectory, gettempdir, mkdtemp
 
+from core import log
 from core.lock import LockFile
 
 class ErrorUncompressed(Exception):
@@ -89,7 +90,7 @@ def uncompress(filename,
     """
     filename = Path(filename)
     if verbose:
-        print(f'Uncompressing {filename} to {dirname}')
+        log.info(f'Uncompressing {filename} to {dirname}')
     if not Path(dirname).exists():
         if create_out_dir:
             Path(dirname).mkdir(parents=True)
@@ -122,7 +123,7 @@ def uncompress(filename,
         elif fname.endswith('.Z'):
             cmd = f'gunzip {fname}'
             if verbose:
-                print('Executing:', cmd)
+                log.info('Executing:', cmd)
             if subprocess.call(cmd.split()):
                 raise Exception(f'Error executing command {cmd}')
             target_tmp = filename.parent/filename.stem

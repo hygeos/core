@@ -1,6 +1,8 @@
 import time
 from datetime import timedelta
 
+from core import log
+
 class Chrono:
     """
     - string: str
@@ -20,7 +22,7 @@ class Chrono:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
-        self.print(self.unit)
+        self.display(self.unit)
     
     def restart(self):
         self.paused = False
@@ -57,7 +59,7 @@ class Chrono:
     def isPaused(self):
         return self.paused
 
-    def print(self, unit="m"):
+    def display(self, unit="m"):
         
         assert unit in ["m", "s", "ms", "us"]
         
@@ -65,7 +67,7 @@ class Chrono:
         if unit == "m":
             m = int(t) // 60
             s = int(t) % 60
-            print(f"Chrono: [{self.string}] took {m:02}m{s:02}s to complete.")
+            log.info(f"Chrono: [{self.string}] took {m:02}m{s:02}s to complete.")
         else:
             coefs = {
                 "s":  1, 
@@ -74,4 +76,4 @@ class Chrono:
             }
             coef = coefs[unit]
             
-            print(f"Chrono: [{self.string}] took {t * coef:.3f}{unit} to complete.")
+            log.info(f"Chrono: [{self.string}] took {t * coef:.3f}{unit} to complete.")

@@ -5,6 +5,8 @@ from typing import Optional
 
 load_dotenv(dotenv_path=find_dotenv(usecwd=True)) 
 
+from core import log
+
 def getdir(
     envvar: str,
     default: Optional[Path] = None,
@@ -80,4 +82,4 @@ def getdir(
 
 
 if __name__ == "__main__":
-    print(f"dotenv file is: {find_dotenv(usecwd=True)}")
+    log.info(f"dotenv file is: {find_dotenv(usecwd=True)}")

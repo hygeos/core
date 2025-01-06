@@ -17,7 +17,9 @@ from core.interpolate import (
     Nearest,
     Spline,
 )
-from luts import luts
+try: from luts import luts 
+except: pass
+
 from core import conftest
 import xarray as xr
 from core.pytest_utils import parametrize_dict

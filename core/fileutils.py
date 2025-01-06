@@ -14,6 +14,7 @@ from tempfile import TemporaryDirectory
 from typing import Literal, Optional, Union
 
 from core.lock import LockFile
+from core import log
 from core.uncompress import uncompress as uncomp
 
 
@@ -33,7 +34,7 @@ def safe_move(src, dst, makedirs=True):
             pdst.parent.mkdir(parents=True)
         else:
             raise IOError(f'Error, directory {pdst.parent} does not exist')
-    print(f'Moving "{psrc}" to "{pdst}"...')
+    log.debug(f'Moving "{psrc}" to "{pdst}"...')
 
     with TemporaryDirectory(prefix='copying_'+psrc.name+'_', dir=pdst.parent) as tmpdir:
         tmp = Path(tmpdir)/psrc.name
@@ -216,7 +217,7 @@ class filegen:
 
             if skip(ofile, self.if_exists):
                 if self.verbose:
-                    print(f'Skipping existing file {ofile.name}')
+                    log.info(f'Skipping existing file {ofile.name}')
                 return
             
             with TemporaryDirectory(dir=self.tmpdir) as tmpd:
