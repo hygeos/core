@@ -225,8 +225,19 @@ class Locator:
     
     
 class Locator_Regular(Locator):
-    def __init__(self, coords, bounds: str):
-        self.coords = coords
+    def __init__(self, coords, bounds: str, inversion_func: Callable|None = None):
+        self.inversion_func = inversion_func
+        if inversion_func is None:
+            self.coords = coords
+        else:
+            self.coords = inversion_func(coords)
+
+        # Check that the coords are regular, otherwise raise a ValueError
+        diff = np.diff(self.coords)
+        regular = np.allclose(diff[0], diff)
+        if not regular:
+            raise ValueError
+
         self.vstart = self.coords[0]
         self.vend = self.coords[-1]
         if self.vstart < self.vend:
@@ -241,6 +252,9 @@ class Locator_Regular(Locator):
     
     #For Linear and Spline
     def locate_index_weight(self, values):
+        if self.inversion_func is not None:
+            values = self.inversion_func(values)
+
         values = self.handle_oob(values)
         
         # calculate floating index (scale to [0, N-1])
@@ -262,46 +276,9 @@ class Locator_Regular(Locator):
         raise NotImplementedError
 
 
-class Locator_Inversed_Func(Locator):  # TODO: merge with Locator_Regular ?
-    def __init__(self, coords: NDArray, bounds: str, inversion_func):
-        self.coords = coords.astype("double")
-        if coords[0] < coords[-1]:
-            self.vmin = coords[0]
-            self.vmax = coords[-1]
-        else:
-            self.vmin = coords[-1]
-            self.vmax = coords[0]
-        self.bounds = bounds
-        self.inversion_func = inversion_func
-    
-    def locate_index_weight(self, values):
-        """
-        Find indices and dist of values for linear and spline interpolation in self.coords
-
-        Returns a list of indices, dist (float 0 to 1) and oob
-        """
-        values = self.handle_oob(values)
-
-        x = self.inversion_func(values)
-        N = len(self.coords)
-            
-        i_inf = np.floor(x).astype("int").clip(0, N - 1)
-        dist = x - i_inf
-
-        # Apply mask condition for array
-        mask_idk = i_inf == N - 1
-        i_inf = np.where(mask_idk, i_inf - 1, i_inf)
-        dist = np.where(mask_idk, np.float64(1), dist)
-        
-        return i_inf, dist
-
-
-    #For Nearest ?
-    def locate_index(values):
-        raise NotImplementedError
-        
-
-def create_locator(coords, bounds: str, regular: str, inversion_func) -> Locator:
+def create_locator(
+    coords, bounds: str, spacing
+) -> Locator:
     """
     Locator factory    
 
@@ -309,24 +286,18 @@ def create_locator(coords, bounds: str, regular: str, inversion_func) -> Locator
 
     The args are passed from the indexers.
     """
-    
-    if inversion_func is not None :
-        return Locator_Inversed_Func(coords, bounds, inversion_func)
-    
-    # regular grid detection
-    cval = coords
-    if regular in ['regular', 'auto']:
-        diff = np.diff(cval)
-        regular = np.allclose(diff[0], diff)
-        if regular == 'regular':
-            assert regular
-    else:
-        regular = False
-        
-    if regular:
-        return Locator_Regular(coords, bounds)
-    else:
-        return Locator(cval, bounds)
+    if spacing != "irregular":
+        # regular, auto, or callable
+        ifunc = spacing if callable(spacing) else None
+        try:
+            return Locator_Regular(coords, bounds, inversion_func=ifunc)
+        except ValueError:
+            if spacing == "auto":
+                pass
+            else: # regular or callable: raise the exception
+                raise
+
+    return Locator(coords, bounds)
 
 
 class Spline:
@@ -336,23 +307,8 @@ class Spline:
         tension = 0.5, 
         bounds: Literal["error", "nan", "clip"] = "error", 
         spacing: Literal["regular", "irregular", "auto"]|Callable[[float],float] = "auto", 
-        ):
-        self.values = values
-        self.bounds = bounds
-        self.tension = tension
-        
-        self.regular = None
-        self.inversion_func = None
-        
-        if isinstance(spacing, str) :
-            self.regular = spacing
-        elif isinstance(spacing, Callable):
-            self.inversion_func = spacing
-        
-        if self.regular is None and self.inversion_func is None:
-            TypeError("spacing should either be a str or a Callable")
-            
-    """
+    ):
+        """
         A proxy class for Spline indeting.
 
         The purpose of this class is to provide a convenient interface to the
@@ -363,31 +319,35 @@ class Spline:
                 - error: raise a ValueError
                 - nan: replace by NaNs
                 - clip: clip values to the extrema
-            regular 
-            (str): how to deal with regular grids
-                - yes: raise an error in case of non-regular grid
-                - no: disable regular grid detection
-                - auto: detect if grid is regular or not
-            (Callable) : is the inverse of the function the indexes uses (for example if indexes follow x² you need to feed sqrt(x)) in a lambda form : lambda x: np.sqrt(x) 
+            spacing: how to deal with regular grids
+                - "regular": assume a regular grid, raise an error if not
+                - "irregular": assume an irregular grid
+                - "auto": detect if grid is regular or not
+                - if a function is provided, it is assumed that the grid is regular
+                after applying this function. 
+                (for example if the coords follow x² you need to feed sqrt)
             tension (float): how tight the rope between points is (1 very tight, 0 very loose)
                 - 0: Very tight rope
                 - 1: Very lose rope
                 The points between indexes 0 and 1 and N - 1 and N will have a tightness of 0.5
-    """
+        """
+        self.values = values
+        self.bounds = bounds
+        self.tension = tension
+        self.spacing = spacing
+
     def get_indexer(self, coords: xr.DataArray):
-        
         cval = coords.values
-        if len(cval) < 3 : #2 1 0
+        if len(cval) < 3 :
             raise ValueError("You need to have at least 3 points to spline in between") #AJOUTER LA BONNE ERREUR
-        return Spline_Indexer(cval, self.bounds, self.regular, self.tension, self.inversion_func)
+        return Spline_Indexer(cval, self.bounds, self.spacing, self.tension)
 
 
 class Spline_Indexer:
-    def __init__(self, coords: NDArray, bounds: str, regular: str, tension: float, inversion_func = None):
+    def __init__(self, coords: NDArray, bounds: str, spacing, tension: float):
         self.coords = coords
-        self.regular = regular
+        self.spacing = spacing
         self.bounds = bounds
-        self.inversion_func = inversion_func
 
         self.tension_matrix_full = np.array([
             [0,             1,              0,                  0],
@@ -409,6 +369,12 @@ class Spline_Indexer:
             [0.5, -1, 0.5, 0],
             [0, 0, 0, 0],
         ])
+
+        self.locator = create_locator(
+            coords=self.coords,
+            bounds=self.bounds,
+            spacing=self.spacing,
+        )
         
     def __call__(self, values):
         """
@@ -416,15 +382,8 @@ class Spline_Indexer:
 
         Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
         """
-
-        locator = create_locator(
-            coords=self.coords,
-            bounds=self.bounds,
-            regular=self.regular,
-            inversion_func=self.inversion_func,
-        )
         
-        N_min_1, dist = locator.locate_index_weight(values)
+        N_min_1, dist = self.locator.locate_index_weight(values)
         
         N = len(self.coords)
         
@@ -481,7 +440,7 @@ class Linear:
     def __init__(
         self,
         values: xr.DataArray,
-        bounds: Literal["error", "nan", "clip"] = "error",
+        bounds: Literal["error", "nan", "clip", "cycle"] = "error",
         spacing: Literal["regular", "irregular", "auto"]|Callable[[float],float] = "auto", 
     ):
         """
@@ -495,28 +454,20 @@ class Linear:
                 - error: raise a ValueError
                 - nan: replace by NaNs
                 - clip: clip values to the extrema
-            regular (str): how to deal with regular grids
-                - yes: raise an error in case of non-regular grid
-                - no: disable regular grid detection
-                - auto: detect if grid is regular or not
-            inversion_fun: is the inverse of the function the indexes uses
-                (for example if indexes follow x² you need to feed sqrt)
+                - cycle: the axis is considered cyclic
+                    eg: longitudes between -180 and 179
+                    allows indexing values in the range of [-180, 180] or even [0, 360]
+            spacing: how to deal with regular grids
+                - "regular": assume a regular grid, raise an error if not
+                - "irregular": assume an irregular grid
+                - "auto": detect if grid is regular or not
+                - if a function is provided, it is assumed that the grid is regular
+                  after applying this function. 
+                  (for example if the coords follow x² you need to feed sqrt)
         """
         self.values = values
         self.bounds = bounds
-        
-        self.regular = None
-        self.inversion_func = None
-        
-        #I want to raise an error as fast as possible :
-        
-        if isinstance(spacing, str) :
-            self.regular = spacing
-        elif isinstance(spacing, Callable):
-            self.inversion_func = spacing
-        
-        if self.regular is None and self.inversion_func is None:
-            TypeError("spacing should either be a str or a Callable")
+        self.spacing = spacing
     
     def get_indexer(self, coords: xr.DataArray):
         cval = coords.values
@@ -524,18 +475,17 @@ class Linear:
             raise ValueError(
                 f"Cannot apply linear indexing to an axis of {len(cval)} values"
             )
-        return Linear_Indexer(cval, self.bounds, self.regular, self.inversion_func)
+        return Linear_Indexer(cval, self.bounds, self.spacing)
 
 
 class Linear_Indexer:
-    def __init__(self, coords: NDArray, bounds: str, regular: str, inversion_func):
+    def __init__(self, coords: NDArray, bounds: str, spacing):
         self.bounds = bounds
         self.N = len(coords)
         self.coords = coords
-        self.regular = regular
-        self.inversion_func = inversion_func
+        self.spacing = spacing
 
-        #check ascending/descending order
+        # check ascending/descending order
         if (np.diff(coords) > 0).all():
             self.ascending = True
             self.coords = coords
@@ -545,20 +495,20 @@ class Linear_Indexer:
         else:
             raise ValueError('Input coords should be monotonous.')
 
+        self.locator = create_locator(
+            coords=self.coords,
+            bounds=self.bounds,
+            spacing=self.spacing,
+        )
+
     def __call__(self, values: NDArray) -> List:
         """
         Find indices of `values` for linear interpolation in self.coords
 
         Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]
         """
-        locator = create_locator(
-            coords=self.coords,
-            bounds=self.bounds,
-            regular=self.regular,
-            inversion_func=self.inversion_func,
-        )
         
-        indices, dist = locator.locate_index_weight(values)
+        indices, dist = self.locator.locate_index_weight(values)
 
         if self.ascending:
             return [(indices, 1 - dist), (indices + 1, dist)]

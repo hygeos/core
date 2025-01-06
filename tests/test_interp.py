@@ -82,12 +82,12 @@ list_interp_functions = {
 }))
 @pytest.mark.parametrize("indexer_factory", **parametrize_dict({ 
     'nearest': lambda c: Nearest_Indexer(c, tolerance=3),
-    'linear_nan': lambda c: Linear_Indexer(c, bounds="nan", regular="auto", inversion_func=None),
-    'linear_error': lambda c: Linear_Indexer(c, bounds="error", regular="auto", inversion_func=None),
-    'linear_clip': lambda c: Linear_Indexer(c, bounds="clip", regular="auto", inversion_func=None),
-    'spline_nan': lambda c: Spline_Indexer(c, bounds="nan", regular="auto", tension=0.5),
-    'spline_error': lambda c: Spline_Indexer(c, bounds="error", regular="auto", tension=0.5),
-    'spline_clip': lambda c: Spline_Indexer(c, bounds="clip", regular="auto", tension=0.5),
+    'linear_nan': lambda c: Linear_Indexer(c, bounds="nan", spacing="auto"),
+    'linear_error': lambda c: Linear_Indexer(c, bounds="error", spacing="auto"),
+    'linear_clip': lambda c: Linear_Indexer(c, bounds="clip", spacing="auto"),
+    'spline_nan': lambda c: Spline_Indexer(c, bounds="nan", spacing="auto", tension=0.5),
+    'spline_error': lambda c: Spline_Indexer(c, bounds="error", spacing="auto", tension=0.5),
+    'spline_clip': lambda c: Spline_Indexer(c, bounds="clip", spacing="auto", tension=0.5),
 }))
 def test_indexer(indexer_factory, coords, values, oob, reverse):
     """
@@ -539,21 +539,10 @@ def test_spline(request, spacing):
         assert np.isclose(interp(Y, X=Spline(xr.DataArray([2.5]), tension=0.5, spacing=spacing)), 1.0)
     
 
+def test_inverse_func():
+    indexer = Linear_Indexer([0., 1., 4., 9.], bounds="nan", spacing=np.sqrt)
+    indexer(0.5)
 
-@pytest.mark.parametrize('type', [Linear, Spline])
-def test_inverse_func(request, type):
-    Y = xr.DataArray([1.0, 1.0, 1.0, 1.0], dims=["X"], coords=[np.array([0,1,4,9])])
-    interp(Y, X=type(xr.DataArray([0.5]), spacing=lambda x: np.sqrt(x)))
-    interp(Y, X=type(xr.DataArray([2]), spacing=lambda x: np.sqrt(x)))
-    interp(Y, X=type(xr.DataArray([6.5]), spacing=lambda x: np.sqrt(x)))
-    linspace = np.linspace(0, 9, 1000)
-    YsNm = interp(Y, X=type(xr.DataArray(linspace)))
-    YsInv = interp(Y, X=type(xr.DataArray(linspace), spacing=lambda x: np.sqrt(x)))
-    plt.plot(Y.X, Y, 'ro')
-    plt.plot(linspace, YsNm, 'b-')
-    plt.plot(linspace, YsInv, 'g-')
-    plt.grid()
-    conftest.savefig(request)
     
 @pytest.mark.parametrize('spacing', ["auto", lambda x: np.sqrt(x)])
 def test_nearest_func(request, spacing):
