@@ -89,10 +89,14 @@ def select(table, where:tuple, cols:str|list = None):
         select(df, ('col_1','=',20), ['col_2','col_3'])
     """ 
     condition = op_map[where[1]](table[where[0]], where[2])
-    return table[condition][cols]
+    
+    result = table[condition]
+    if cols is not None: 
+        result = result[cols]
+    return result
 
 @interface
-def select_cell(table, where:tuple, col:str = None):
+def select_cell(table, where:tuple, col:str):
     """
     Function for selecting a single cell value in a pandas DataFrame with a condition
 
