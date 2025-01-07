@@ -23,8 +23,8 @@ def interp(da: xr.DataArray, **kwargs):
           memory efficient than performing independently the selection and interpolation.
         - Supports pointwise indexing/interpolation using dask arrays
           (see https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing)
-        - Supports per-dimension options (nearest neighbour selection, interpolation,
-          out-of-bounds behaviour...)
+        - Supports per-dimension options (nearest neighbour selection, linear/spline
+          interpolation, out-of-bounds behaviour, cyclic dimensions...)
 
     Args:
         da (xr.DataArray): The input DataArray
@@ -181,10 +181,15 @@ class Locator:
             self.vmin = coords[-1]
             self.vmax = coords[0]
 
+        if bounds == "cycle":
+            raise RuntimeError('Cannot use bounds="cycle" with irregular locator')
+
 
     def handle_oob(self, values: np.ndarray):
         """
         handle out of bound values
+
+        Note: when bounds == "cycle", does nothing
         """
         if self.bounds == "clip":
             # FIXME: manage the case where coords and values
@@ -225,7 +230,9 @@ class Locator:
     
     
 class Locator_Regular(Locator):
-    def __init__(self, coords, bounds: str, inversion_func: Callable|None = None):
+    def __init__(
+        self, coords, bounds: str, inversion_func: Callable | None = None, period=None
+    ):
         self.inversion_func = inversion_func
         if inversion_func is None:
             self.coords = coords
@@ -249,8 +256,13 @@ class Locator_Regular(Locator):
         self.N = len(self.coords)
         self.bounds = bounds
         self.scal = (self.N - 1) / (self.vend - self.vstart)
+
+        if (period is not None) and (not np.isclose(period, self.N / self.scal)):
+            raise AssertionError(
+                f"Expected a period of {period}, but a period of {self.N/self.scal} "
+                "has been derived from the coords"
+            )
     
-    #For Linear and Spline
     def locate_index_weight(self, values):
         if self.inversion_func is not None:
             values = self.inversion_func(values)
@@ -263,11 +275,11 @@ class Locator_Regular(Locator):
 
         dist = x - i_inf
 
-        mask_idk = i_inf == self.N - 1
-
-        # Apply mask condition for array
-        i_inf = np.where(mask_idk, i_inf - 1, i_inf)
-        dist = np.where(mask_idk, np.float64(1), dist)
+        if self.bounds != "cycle":
+            # Deals with indexing the last coordinate item
+            mask_idk = i_inf == self.N - 1
+            i_inf = np.where(mask_idk, i_inf - 1, i_inf)
+            dist = np.where(mask_idk, np.float64(1), dist)
         
         return i_inf, dist
     
@@ -277,7 +289,7 @@ class Locator_Regular(Locator):
 
 
 def create_locator(
-    coords, bounds: str, spacing
+    coords, bounds: str, spacing, period: float | None = None
 ) -> Locator:
     """
     Locator factory    
@@ -290,7 +302,7 @@ def create_locator(
         # regular, auto, or callable
         ifunc = spacing if callable(spacing) else None
         try:
-            return Locator_Regular(coords, bounds, inversion_func=ifunc)
+            return Locator_Regular(coords, bounds, inversion_func=ifunc, period=period)
         except ValueError:
             if spacing == "auto":
                 pass
@@ -441,7 +453,9 @@ class Linear:
         self,
         values: xr.DataArray,
         bounds: Literal["error", "nan", "clip", "cycle"] = "error",
-        spacing: Literal["regular", "irregular", "auto"]|Callable[[float],float] = "auto", 
+        spacing: Literal["regular", "irregular", "auto"]
+        | Callable[[float], float] = "auto",
+        period: float | None = None,
     ):
         """
         A proxy class for Linear indexing.
@@ -451,11 +465,11 @@ class Linear:
 
         Args:
             bounds (str): how to deal with out-of-bounds values:
-                - error: raise a ValueError
-                - nan: replace by NaNs
-                - clip: clip values to the extrema
-                - cycle: the axis is considered cyclic
-                    eg: longitudes between -180 and 179
+                - "error": raise a ValueError
+                - "nan": replace by NaNs
+                - "clip": clip values to the extrema
+                - "cycle": the axis is considered cyclic
+                    e.g.: longitudes between -180 and 179
                     allows indexing values in the range of [-180, 180] or even [0, 360]
             spacing: how to deal with regular grids
                 - "regular": assume a regular grid, raise an error if not
@@ -464,10 +478,14 @@ class Linear:
                 - if a function is provided, it is assumed that the grid is regular
                   after applying this function. 
                   (for example if the coords follow x² you need to feed sqrt)
+            period: if provided, we verify that the period inferred from the coordinates
+                is equal to this value.
+                (for verification, only when bounds="cycle")
         """
         self.values = values
         self.bounds = bounds
         self.spacing = spacing
+        self.period = period
     
     def get_indexer(self, coords: xr.DataArray):
         cval = coords.values
@@ -475,15 +493,18 @@ class Linear:
             raise ValueError(
                 f"Cannot apply linear indexing to an axis of {len(cval)} values"
             )
-        return Linear_Indexer(cval, self.bounds, self.spacing)
+        return Linear_Indexer(cval, self.bounds, self.spacing, self.period)
 
 
 class Linear_Indexer:
-    def __init__(self, coords: NDArray, bounds: str, spacing):
+    def __init__(
+        self, coords: NDArray, bounds: str, spacing, period=None
+    ):
         self.bounds = bounds
         self.N = len(coords)
         self.coords = coords
         self.spacing = spacing
+        self.period = period
 
         # check ascending/descending order
         if (np.diff(coords) > 0).all():
@@ -499,6 +520,7 @@ class Linear_Indexer:
             coords=self.coords,
             bounds=self.bounds,
             spacing=self.spacing,
+            period=period,
         )
 
     def __call__(self, values: NDArray) -> List:
@@ -511,12 +533,21 @@ class Linear_Indexer:
         indices, dist = self.locator.locate_index_weight(values)
 
         if self.ascending:
-            return [(indices, 1 - dist), (indices + 1, dist)]
+            iinf = indices
+            winf = 1 - dist
+            isup = indices + 1
+            wsup = dist
         else:
-            return [
-                (self.N - 1 - indices, 1 - dist),
-                (self.N - 2 - indices, dist),
-            ]
+            iinf = self.N - 1 - indices
+            isup = self.N - 2 - indices
+            winf = 1 - dist
+            wsup = dist
+        
+        if self.bounds == "cycle":
+            iinf = iinf % self.N
+            isup = isup % self.N
+
+        return [(iinf, winf), (isup, wsup)]
 
 
 class Index:

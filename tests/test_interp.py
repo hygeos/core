@@ -85,6 +85,7 @@ list_interp_functions = {
     'linear_nan': lambda c: Linear_Indexer(c, bounds="nan", spacing="auto"),
     'linear_error': lambda c: Linear_Indexer(c, bounds="error", spacing="auto"),
     'linear_clip': lambda c: Linear_Indexer(c, bounds="clip", spacing="auto"),
+    'linear_cycle': lambda c: Linear_Indexer(c, bounds="cycle", spacing="auto"),
     'spline_nan': lambda c: Spline_Indexer(c, bounds="nan", spacing="auto", tension=0.5),
     'spline_error': lambda c: Spline_Indexer(c, bounds="error", spacing="auto", tension=0.5),
     'spline_clip': lambda c: Spline_Indexer(c, bounds="clip", spacing="auto", tension=0.5),
@@ -97,7 +98,11 @@ def test_indexer(indexer_factory, coords, values, oob, reverse):
         coords = coords[::-1]
 
     # instantiate the indexer
-    indexer = indexer_factory(coords)
+    try:
+        indexer = indexer_factory(coords)
+    except RuntimeError:
+        # in case of bounds="cycle" and irregular cooefs
+        return
     
     if hasattr(indexer, 'bounds') and (indexer.bounds == "error") and oob:
         with pytest.raises(ValueError):
@@ -118,9 +123,17 @@ def test_indexer(indexer_factory, coords, values, oob, reverse):
             i2, w2 = indexer(values)[1]
             v1 = coords[i1]
             v2 = coords[i2]
-            assert v1 <= values
-            assert v2 >= values
             assert np.isclose(values, v1*w1 + v2*w2)
+            if indexer.bounds != "cycle":
+                assert v1 <= values
+                assert v2 >= values
+
+
+def test_cycle_period():
+    coords = np.linspace(-180, 179, 360)
+    Linear_Indexer(coords, bounds="cycle", spacing="auto", period=360),
+    with pytest.raises(AssertionError):
+        Linear_Indexer(coords, bounds="cycle", spacing="auto", period=359),
 
 
 @pytest.mark.parametrize("apply_function", **parametrize_dict(list_interp_functions))
@@ -499,20 +512,20 @@ def test_nearest_indexer(A):
     
 
 @pytest.mark.parametrize('spacing', ["regular", "irregular"])
-@pytest.mark.parametrize('type', [Linear, Spline])
-def test_interp_2D(request, spacing, type):
+@pytest.mark.parametrize('kind', [Linear, Spline])
+def test_interp_2D(request, spacing, kind):
     
     A = xr.DataArray(np.eye(3), dims=['x', 'y'])
     N = 100
 
     interpolated = interp(
         A,
-        x=type(
+        x=kind(
             xr.DataArray(np.linspace(-1, 3, N), dims=["new_x"]),
             bounds="clip",
             spacing=spacing,
         ),
-        y=type(
+        y=kind(
             xr.DataArray(np.linspace(-1, 3, N), dims=["new_Y"]),
             bounds="nan",
             spacing=spacing,
@@ -572,13 +585,14 @@ def test_nearest_func_values_invert(request):
     'linear_nan': lambda x: Linear(x, bounds="nan"),
     'spline_nan': lambda x: Spline(x, bounds="nan"),
     'linear_clip': lambda x: Linear(x, bounds="clip"),
+    'linear_cycle': lambda x: Linear(x, bounds="cycle"),
     'spline_clip': lambda x: Spline(x, bounds="clip"),
 }))
 def test_interp_1D(request, indexer_factory):
     Y = xr.DataArray(
-        [1.0, 2.0, 0.0, 3.0], dims=["X"], coords=[np.array([0.0, 1.0, 2.0, 4.0])]
+        [1.0, 2.0, 0.0, 3.0], dims=["X"], coords=[np.array([0.0, 1.0, 2.0, 3.0])]
     )
-    Xi = xr.DataArray(np.linspace(-1, 5, 100))
+    Xi = xr.DataArray(np.linspace(-2, 6, 100))
     plt.plot(Y.X, Y, 'ro')
     Ys = interp(Y, X=indexer_factory(Xi))
     plt.plot(Xi.values, Ys.values, '-')
