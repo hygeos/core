@@ -167,4 +167,30 @@ def test_wrong_default():
         @interface
         def function(a: int=3.14): return
         a = function()
+
+
+
+def test_classmethod():
     
+    class simpleclass:
+        
+        n = 1
+        
+        @classmethod
+        @interface
+        def get(cls,
+                a: int,
+                *,
+                b: int,
+                c: int = 3
+        ): 
+            return [a,b,c] + [cls.number()]
+        
+        @classmethod
+        def number(cls): return 11 + cls.n
+        
+        
+    
+    r = simpleclass.get(1, b=2)
+    assert r == [1,2,3,12]
+

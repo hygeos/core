@@ -12,11 +12,12 @@ def interface(function):
     
     if isclass(function):
         raise WrongUsage(f'\n\tCannot declare class \'{function.__name__}\' as an interface, only functions or methods can be')
-        
+    
     def wrapper(*args, **kwargs):
         
         # construct datastructures used
         expected_signature = [(i.name, i.annotation) for i in signature(function).parameters.values()]
+        
         unnamed_params = [type(i) for i in args] 
         named_params  = [(i, type(kwargs[i])) for i in kwargs] # named parameters can only be lasts 
         full_default_values = [(k, v.default) for k, v in signature(function).parameters.items()]
@@ -72,9 +73,9 @@ def interface(function):
         
         for param_name, param_value in full_default_values.items():
             param_type = type(param_value)
-            
             expected_type = expected_signature.pop(param_name)
             
+            if expected_type == _empty: continue
             if (param_type is type(None)): continue # no need to specify that None is a possible value if it is the default value
             
             if not issubclass(param_type, expected_type):
@@ -95,6 +96,6 @@ def interface(function):
         if len(expected_signature) != 0:
             mess = [f"Parameter \'{p}\' still unchecked after interface call, module error." for p in expected_signature]
             raise InterfaceException(mess)
-            
+        
         return function(*args, **kwargs)
     return wrapper
