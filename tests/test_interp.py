@@ -305,7 +305,8 @@ def test_interp_v1(kwargs):
         },
     ],
 )
-def test_interp_v2(kwargs):
+@pytest.mark.parametrize('method', [1, 2, 3])
+def test_interp_v2(kwargs, method):
     data = xr.DataArray(
         np.zeros((3, 4, 5), dtype="float32"),
         dims=["a", "b", "c"],
@@ -315,7 +316,7 @@ def test_interp_v2(kwargs):
             "c": [105.0, 104.0, 103.0, 102.0, 101.0],
         },
     )
-    res = interp(data, **kwargs)
+    res = interp(data, method=method, **kwargs)
 
     res.compute()
 
@@ -513,7 +514,8 @@ def test_nearest_indexer(A):
 
 @pytest.mark.parametrize('spacing', ["regular", "irregular"])
 @pytest.mark.parametrize('kind', [Linear, Spline])
-def test_interp_2D(request, spacing, kind):
+@pytest.mark.parametrize('method', [1, 2, 3])
+def test_interp_2D(request, spacing, kind, method):
     
     A = xr.DataArray(np.eye(3), dims=['x', 'y'])
     N = 100
@@ -530,6 +532,7 @@ def test_interp_2D(request, spacing, kind):
             bounds="nan",
             spacing=spacing,
         ),
+        method=method,
     )
 
     plt.imshow(interpolated)
