@@ -15,3 +15,12 @@ def test_base():
 
 def test_str_conversion():
     log.log(log.lvl.INFO, 1)
+    
+    
+def test_box():
+    
+    log.info(
+        "Let's put emphasis on ",
+        log.rgb.orange("THIS"),
+        " word"
+    )

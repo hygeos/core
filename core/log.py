@@ -27,6 +27,7 @@ class config:
 
 
 class _color:
+    default = '\033[0m'
     silenced = False
     
     def __init__(self, value):
@@ -34,7 +35,12 @@ class _color:
 
     def __str__(self):
         return self.string if config.show_color else ""
-
+    
+    def __call__(self, string):
+        """
+        boxes the provided string with its color, and reset to default afterward
+        """
+        return self.string + string + _color.default
 
 class rgb:
     purple      = _color('\033[95m')
@@ -45,7 +51,7 @@ class rgb:
     red         = _color('\033[91m')
     bold        = _color('\033[1m')
     underline   = _color('\033[4m')
-    default     = _color('\033[0m')
+    default     = _color(_color.default)
     
 # set levels enums
 class lvl(Enum):
