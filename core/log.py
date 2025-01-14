@@ -40,7 +40,7 @@ class _color:
         """
         boxes the provided string with its color, and reset to default afterward
         """
-        return self.string + string + _color.default
+        return self.string + str(string) + _color.default
 
 class rgb:
     purple      = _color('\033[95m')
