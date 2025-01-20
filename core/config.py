@@ -122,3 +122,7 @@ class Config:
     
     def __str__(self):
         return str(self.config_dict)
+    
+    @interface
+    def __getitem__(self, key: str, subsection=None):
+        return self.get(key=key, subsection=subsection)

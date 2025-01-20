@@ -3,6 +3,7 @@ from typing import get_origin, get_args
 
 from core.static.Exceptions import WrongUsage, InterfaceException
 
+from core import log
 
 def interface(function):
     """
@@ -11,7 +12,8 @@ def interface(function):
     """
     
     if isclass(function):
-        raise WrongUsage(f'\n\tCannot declare class \'{function.__name__}\' as an interface, only functions or methods can be')
+        mess = f'\n\tCannot declare class \'{function.__name__}\' as an interface, only functions or methods can be'
+        log.error(mess, e=WrongUsage)
     
     def wrapper(*args, **kwargs):
         
@@ -28,7 +30,8 @@ def interface(function):
         act_nargs = len(unnamed_params) + len(named_params) + len(default_params)
         
         if exp_nargs > act_nargs:
-            raise InterfaceException(f'\n\tFunction \'{function.__name__}\': Exepected {exp_nargs} arguments, got {act_nargs}')
+            mess = f'\n\tFunction \'{function.__name__}\': Exepected {exp_nargs} arguments, got {act_nargs}'
+            log.error(mess, e=InterfaceException)
         
         errors = []
         # check unnamed parameters
@@ -90,12 +93,12 @@ def interface(function):
                     expect = " or ".join([str(i) for i in p[1]])
                 
                 mess += (f'\n\t\tParameter \'{param}\' expected: {expect} got {actual}')
-            raise InterfaceException(mess)
+            log.error(mess, e=InterfaceException)
 
         # check if some arguments haven't been checked        
         if len(expected_signature) != 0:
-            mess = [f"Parameter \'{p}\' still unchecked after interface call, module error." for p in expected_signature]
-            raise InterfaceException(mess)
+            mess = [f"Function \'{function.__name__} Parameter \'{p}\' still unchecked after interface call, module error." for p in expected_signature]
+            log.error(mess, e=InterfaceException)
         
         return function(*args, **kwargs)
     return wrapper
