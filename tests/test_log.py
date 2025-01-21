@@ -1,5 +1,6 @@
 import core
 from core import log
+from time import sleep
 
 import pytest
 
@@ -24,3 +25,9 @@ def test_box():
         log.rgb.orange("THIS"),
         " word"
     )
+
+def test_progress_bar():
+    pbar = log.pbar(log.lvl.INFO, range(20), desc='test')
+    for i in pbar:
+        pbar.write(str(i))
+        sleep(0.1)

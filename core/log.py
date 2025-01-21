@@ -9,11 +9,16 @@
 # standard library imports
 from datetime import datetime
 from enum import Enum
+from tqdm import tqdm
 import inspect
 import warnings
 
 # third party imports
-# ...
+try:
+    from IPython import get_ipython
+    from tqdm.notebook import tqdm
+except: 
+    from tqdm import tqdm
         
 # sub package imports
 # ...
@@ -110,6 +115,17 @@ class _internal:
                 
         print(_internal.format_msg(lvl, msg, mod))
     
+    def _loading_bar(**kwargs):
+        frame  = inspect.currentframe().f_back.f_back
+        mod = inspect.getmodule(frame)
+        
+        lvl = kwargs.pop('lvl')
+        prefix = _internal.format_msg(lvl, '', mod)
+        # kwargs['bar_format'] = prefix+'{l_bar}{bar}{r_bar}'
+        kwargs['bar_format'] = '{l_bar}{bar}{r_bar}'
+        kwargs.pop('kwargs')
+        return tqdm(**kwargs)
+    
     def concat_mess(*args):
         message = ""
         for arg in args:
@@ -120,40 +136,21 @@ class _internal:
 def set_lvl(lvl: lvl):
     _internal.min_global_level = lvl
 
-# def _no_loading_bar(iterable=None, desc=None, total=None, leave=True, file=None,
-#         ncols=None, mininterval=0.1, maxinterval=10.0, miniters=None,
-#         ascii=None, disable=False, unit='it', unit_scale=False,
-#         dynamic_ncols=False, smoothing=0.3, bar_format=None, initial=0,
-#         position=None, postfix=None, unit_divisor=1000, write_bytes=False,
-#         lock_args=None, nrows=None, colour=None, delay=0, gui=False,
-#         **kwargs):
-#     return iterable
-
-
-# def set_to_file_output() :
-#     Log._format_msg_func = Log._format_msg_no_color
-#     Log._loading_bar_func = Log._no_loading_bar
-
-
-# def set_to_terminal_output():
-#     Log._format_msg_func = Log._format_msg
-#     Log._loading_bar_func = tqdm
     
-# #interface tqdm please go to https://tqdm.github.io/docs/tqdm/ for documentation
-# def loading_bar(iterable=None, desc=None, total=None, leave=True, file=None,
-#         ncols=None, mininterval=0.1, maxinterval=10.0, miniters=None,
-#         ascii=None, disable=False, unit='it', unit_scale=False,
-#         dynamic_ncols=False, smoothing=0.3, bar_format=None, initial=0,
-#         position=None, postfix=None, unit_divisor=1000, write_bytes=False,
-#         lock_args=None, nrows=None, colour=None, delay=0, gui=False,
-#         **kwargs):
+#interface tqdm please go to https://tqdm.github.io/docs/tqdm/ for documentation
+def pbar(lvl: lvl = lvl.INFO, iterable=None, desc=None, total=None, leave=True, 
+        ncols=None, mininterval=0.1, maxinterval=10.0, miniters=None,
+        ascii=None, disable=False, unit='it', unit_scale=False,
+        dynamic_ncols=False, smoothing=0.3, initial=0, file=None,
+        position=None, postfix=None, unit_divisor=1000, write_bytes=False,
+        lock_args=None, nrows=None, colour=None, delay=0, gui=False,
+        **kwargs):
+    """
+    log a progress bar such as tqdm
+    Args: All arguments are those from tqdm (cf. https://tqdm.github.io/docs/tqdm/)
+    """
     
-    
-#     return Log._loading_bar_func(iterable, desc, total, leave, file, ncols, mininterval,
-#                         maxinterval, miniters, ascii, disable, unit, unit_scale,
-#                         dynamic_ncols, smoothing, bar_format, initial, position,
-#                         postfix, unit_divisor, write_bytes, lock_args, nrows,
-#                         colour, delay, gui, **kwargs)
+    return _internal._loading_bar(**locals())
 
 
 def silence(module, level_and_below : lvl = lvl.CRITICAL):  # blacklist only below certain level ? e.g Log.silence("core.filegen", bellow_level=lvl.ERROR)
