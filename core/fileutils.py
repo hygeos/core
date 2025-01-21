@@ -217,7 +217,7 @@ class filegen:
 
             if skip(ofile, self.if_exists):
                 if self.verbose:
-                    log.info(f'Skipping existing file {ofile.name}')
+                    log.debug(f'Skipping existing file {ofile.name}')
                 return
             
             with TemporaryDirectory(dir=self.tmpdir) as tmpd:
