@@ -14,11 +14,9 @@ import inspect
 import warnings
 
 # third party imports
-try:
-    from IPython import get_ipython
-    from tqdm.notebook import tqdm
-except: 
-    from tqdm import tqdm
+import sys
+if 'ipykernel' in sys.modules: from tqdm.notebook import tqdm
+else: from tqdm import tqdm
         
 # sub package imports
 # ...

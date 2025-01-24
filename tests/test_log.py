@@ -29,5 +29,6 @@ def test_box():
 def test_progress_bar():
     pbar = log.pbar(log.lvl.INFO, range(20), desc='test')
     for i in pbar:
+        pbar.set_description(str(i))
         pbar.write(str(i))
         sleep(0.1)
