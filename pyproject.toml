@@ -29,6 +29,12 @@ toml = "*"
 tqdm = "*" # tqdm itself doesn't have any dependencies
 python-dotenv = "*"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-html = "*"
+pytest-xdist = "*"
+ipykernel = "*"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
