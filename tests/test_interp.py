@@ -1,4 +1,5 @@
-from matplotlib import pyplot as plt
+try: from matplotlib import pyplot as plt
+except: pass
 import numpy as np
 import pytest
 
