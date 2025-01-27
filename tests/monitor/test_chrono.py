@@ -38,4 +38,13 @@ def test_pause():
     dt2 = c.elapsed()
     
     assert dt == dt2
+
+def test_loop():
+    c = Chrono()
+    for i in range(10):
+        c.restart()
+        time.sleep(0.01)
+        c.pause()
+        time.sleep(0.01)
     
+    assert pytest.approx(c.total_t, rel=1e-1,) == 10*0.01

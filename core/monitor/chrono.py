@@ -15,7 +15,7 @@ class Chrono:
         self.paused = False
         self.string = string
         self.start_t: float = time.time()
-        self.stop_t:  float = None
+        self.total_t: float = 0.
     
     def __enter__(self):
         self.restart()
@@ -32,32 +32,27 @@ class Chrono:
         if self.paused:
             raise RuntimeError('Cannot pause already paused chrono object')
         self.paused = True
-        self.stop_t = time.time()
+        self.total_t += time.time()- self.start_t
 
     def elapsed(self) -> timedelta:
         if self.paused:
-            return timedelta(seconds=(self.stop_t - self.start_t))
+            return timedelta(seconds=(self.total_t))
         else:
             return timedelta(seconds=(time.time() - self.start_t))
         
     def reset(self) -> timedelta:
-        self.stop_t = time.time()
-        dt = timedelta(seconds=(self.stop_t - self.start_t))
+        dt = self.elapsed()
         self.start_t: float = time.time()
-        self.stop_t:  float = None
-        
+        self.total_t: float = 0.
         return dt
     
     def laps(self) -> timedelta:
         return self.reset()
         
     def stop(self) -> timedelta:
-        self.stop_t = time.time()
         self.paused = True
-        return timedelta(seconds=(self.stop_t - self.start_t))
-    
-    def isPaused(self):
-        return self.paused
+        self.total_t += time.time() - self.start_t
+        return timedelta(seconds=self.total_t)
 
     def display(self, unit="m"):
         

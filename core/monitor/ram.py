@@ -9,8 +9,9 @@ class RAM:
     
     def __init__(self, name='ram object'):
         self.name = name
-        self.peak = None
-        self.current = None
+        self.paused = False
+        self.peak: float = 0.
+        self.current: float = 0.
         tracemalloc.start()
     
     def __enter__(self):
@@ -21,18 +22,37 @@ class RAM:
         self.display()
     
     def restart(self):
+        self.paused = False
         tracemalloc.start()
-        
+    
+    def pause(self):
+        if self.paused:
+            raise RuntimeError('Cannot pause already paused chrono object')
+        self.paused = True
+        current, peak = self.stop()
+        self.peak += peak
+        self.current += current
+ 
+    def elapsed(self):
+        if not self.paused: 
+            self.stop()
+            self.restart()
+        return self.peak, self.current
+               
     def reset(self):
         current, peak = self.stop()
-        self.restart()        
+        self.restart()  
+        self.peak: float = 0.
+        self.current: float = 0.      
         return current, peak
     
     def laps(self):
         return self.reset()
         
     def stop(self):
-        self.current, self.peak = tracemalloc.get_traced_memory()
+        current, peak = tracemalloc.get_traced_memory()
+        self.peak += peak
+        self.current += current
         tracemalloc.stop()
         return self.current, self.peak
 
@@ -42,7 +62,7 @@ class RAM:
         msg = "RAM usage: [{}] use {} at peak and {} at the end of execution."         
         log.info(msg.format(self.name, str_peak, str_current))
     
-    def _format_size(self, byte_size, rjust: int = 8):
+    def _format_size(self, byte_size):
         scale = {
             3: "KB",  
             6: "MB", 
