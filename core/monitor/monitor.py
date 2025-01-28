@@ -23,14 +23,31 @@ class Monitor:
     def restart(self):
         for t in self.trackers:
             t.restart()
+    def pause(self):
+        for t in self.trackers:
+            t.pause()
+ 
+    def elapsed(self):
+        out = []
+        for t in self.trackers:
+            out.append(t.elapsed())
+        return out
+               
+    def reset(self):
+        out = []
+        for t in self.trackers:
+            out.append(t.reset())
+        return out
     
     def laps(self):
         for t in self.trackers:
             t.laps()
         
     def stop(self):
+        out = []
         for t in self.trackers:
-            t.stop()
+            out.append(t.stop())
+        return out
 
     def display(self):
         for t in self.trackers:
