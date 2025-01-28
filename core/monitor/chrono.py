@@ -6,15 +6,15 @@ from core import log
 
 class Chrono:
     """
-    - string: str
+    - name: str
     - unit "m" | "s" | "ms" | "us"
     """
     
-    def __init__(self, string='chrono object', unit="m"):
+    def __init__(self, name = 'chrono object', unit="m"):
         assert unit in ["m", "s", "ms", "us"]
         self.unit = unit
+        self.name = name
         self.paused = False
-        self.string = string
         self.start_t: float = time.time()
         self.total_t: float = 0.
     
@@ -63,7 +63,7 @@ class Chrono:
         if unit == "m":
             m = int(t) // 60
             s = int(t) % 60
-            log.info(f"Chrono: [{self.string}] took {m:02}m{s:02}s to complete.")
+            log.info(f"Chrono: [{self.name}] took {m:02}m{s:02}s to complete.")
         else:
             coefs = {
                 "s":  1, 
@@ -72,4 +72,4 @@ class Chrono:
             }
             coef = coefs[unit]
             
-            log.info(f"Chrono: [{self.string}] took {t * coef:.3f}{unit} to complete.")
+            log.info(f"Chrono: [{self.name}] took {t * coef:.3f}{unit} to complete.")

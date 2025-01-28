@@ -7,7 +7,7 @@ class RAM:
     - name: str
     """
     
-    def __init__(self, name='ram object'):
+    def __init__(self, name = 'ram object'):
         self.name = name
         self.paused = False
         self.peak: float = 0.

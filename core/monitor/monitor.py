@@ -7,10 +7,11 @@ class Monitor:
     Meta-structure to monitor some variables in a script
     """
     
-    def __init__(self, time=True, ram=True):
+    def __init__(self, name = 'monitor object', time=True, ram=True):
+        self.name = name
         self.trackers = []
-        if ram : self.trackers.append(RAM())
-        if time: self.trackers.append(Chrono())         
+        if ram : self.trackers.append(RAM(name))
+        if time: self.trackers.append(Chrono(name))         
     
     def __enter__(self):
         for t in self.trackers:
