@@ -51,8 +51,8 @@ class RAM:
         
     def stop(self):
         current, peak = tracemalloc.get_traced_memory()
-        self.peak += peak
-        self.current += current
+        self.peak = max(self.peak, peak)
+        self.current = current
         tracemalloc.stop()
         return self.current, self.peak
 

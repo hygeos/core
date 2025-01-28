@@ -1,5 +1,6 @@
 import time
 from datetime import timedelta
+from typing import Literal
 
 from core import log
 
@@ -54,9 +55,9 @@ class Chrono:
         self.total_t += time.time() - self.start_t
         return timedelta(seconds=self.total_t)
 
-    def display(self, unit="m"):
-        
-        assert unit in ["m", "s", "ms", "us"]
+    def display(self, unit: Literal["m", "s", "ms", "us"] = None):
+        if unit: assert unit in ["m", "s", "ms", "us"]
+        else: unit = self.unit
         
         t = self.elapsed().total_seconds()
         if unit == "m":

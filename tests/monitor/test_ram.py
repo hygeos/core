@@ -46,5 +46,7 @@ def test_loop():
         a.append(np.random.randint(0,10,(20,20)))
         r.pause()
         b.append(np.random.randint(0,10,(20,20)))
-    pass
-    # assert pytest.approx(c.total_t, 0.01) == 10*0.01
+    
+    assert pytest.approx(r.current, 0.01) == 6656
+    assert pytest.approx(r.peak, 0.01) == 6692864
+    r.display()
