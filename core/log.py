@@ -83,13 +83,14 @@ class _internal:
         
         mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # if calling from main mod is None
         
-        if config.show_level:       lvl_prefix          += f"[{level.name}] "
+        if config.show_level:       lvl_prefix          += f"[{level.name}] ".ljust(8+2)
         if config.show_namespace:   namespace_prefix    += f"({mod_name}) "
         if config.show_time:        time_prefix         += f"{datetime.now().strftime('%H:%M:%S')} "
         
         string = f"{level.color}{lvl_prefix}{rgb.orange}{namespace_prefix}{rgb.green}{time_prefix}{rgb.default}{msg}"
         
         return string
+    
         
         # proxy
     def log(lvl: lvl, *args):
@@ -111,7 +112,7 @@ class _internal:
             if blname in mod.__name__ and lvl.value <= _internal.blacklist[blmod].value:
                 return 
                 
-        print(_internal.format_msg(lvl, msg, mod))
+        print(_internal.format_msg(lvl, msg, mod), file=sys.stderr)
     
     def _loading_bar(**kwargs):
         frame  = inspect.currentframe().f_back.f_back
@@ -129,6 +130,10 @@ class _internal:
         for arg in args:
             message += str(arg)
         return message + str(rgb.default)
+        
+def stderr(*args):
+    msg = _internal.concat_mess(*args)
+    print(msg, file=sys.stderr)
         
 # filters = ...
 def set_lvl(lvl: lvl):
@@ -212,3 +217,6 @@ def debug(*args):
     log with defaul level DEBUG
     """
     _internal.log(lvl.DEBUG, *args)
+
+
+
