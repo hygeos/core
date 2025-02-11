@@ -241,7 +241,11 @@ class Locator_Regular(Locator):
 
         # Check that the coords are regular, otherwise raise a ValueError
         diff = np.diff(self.coords)
-        regular = np.allclose(diff[0], diff)
+        self.is_time = 'timedelta' in diff.dtype.name
+        if self.is_time:
+            regular = np.allclose(diff[0], diff, rtol=1e-5, atol=np.timedelta64(0, "s"))
+        else:
+            regular = np.allclose(diff[0], diff)
         if not regular:
             raise ValueError
 
@@ -255,7 +259,11 @@ class Locator_Regular(Locator):
             self.vmax = self.vstart
         self.N = len(self.coords)
         self.bounds = bounds
-        self.scal = (self.N - 1) / (self.vend - self.vstart)
+
+        deltat = (self.vend - self.vstart)
+        if self.is_time:
+            deltat = deltat / np.timedelta64(1, "s")
+        self.scal = (self.N - 1) / deltat
 
         if (period is not None) and (not np.isclose(period, self.N / self.scal)):
             raise AssertionError(
@@ -270,7 +278,10 @@ class Locator_Regular(Locator):
         values = self.handle_oob(values)
         
         # calculate floating index (scale to [0, N-1])
-        x = (values - self.vstart) * self.scal
+        if self.is_time:
+            x = (values - self.vstart) * self.scal / np.timedelta64(1, "s")
+        else:
+            x = (values - self.vstart) * self.scal
         i_inf = np.floor(np.nan_to_num(x)).astype("int")
 
         dist = x - i_inf
@@ -470,7 +481,9 @@ class Linear:
                 - "clip": clip values to the extrema
                 - "cycle": the axis is considered cyclic
                     e.g.: longitudes between -180 and 179
-                    allows indexing values in the range of [-180, 180] or even [0, 360]
+                    allows indexing values in the range of [-180, 180] or even [0, 360].
+                    The "period" argument can be used to check the period inferred
+                    from the coord values, for example period=360.
             spacing: how to deal with regular grids
                 - "regular": assume a regular grid, raise an error if not
                 - "irregular": assume an irregular grid
@@ -478,9 +491,11 @@ class Linear:
                 - if a function is provided, it is assumed that the grid is regular
                   after applying this function. 
                   (for example if the coords follow x² you need to feed sqrt)
-            period: if provided, we verify that the period inferred from the coordinates
-                is equal to this value.
-                (for verification, only when bounds="cycle")
+                The index lookup is optimized for regular grids, using the
+                Locator_Regular class.
+            period (optional, float): if provided, we verify that the period inferred
+                from the coordinates is equal to this value.
+                (only when bounds="cycle")
         """
         self.values = values
         self.bounds = bounds
@@ -507,10 +522,12 @@ class Linear_Indexer:
         self.period = period
 
         # check ascending/descending order
-        if (np.diff(coords) > 0).all():
+        diff = np.diff(coords).astype(float)
+        zero = np.zeros(1, dtype=diff.dtype)
+        if (diff > zero).all():
             self.ascending = True
             self.coords = coords
-        elif (np.diff(coords) < 0).all():
+        elif (diff < zero).all():
             self.ascending = False
             self.coords = coords[::-1].copy()
         else:

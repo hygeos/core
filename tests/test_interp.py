@@ -1,5 +1,7 @@
-try: from matplotlib import pyplot as plt
-except: pass
+try:
+    from matplotlib import pyplot as plt
+except:
+    pass
 import numpy as np
 import pytest
 
@@ -18,8 +20,10 @@ from core.interpolate import (
     Nearest,
     Spline,
 )
-try: from luts import luts 
-except: pass
+try:
+    from luts import luts 
+except:
+    pass
 
 from core import conftest
 import xarray as xr
@@ -128,6 +132,16 @@ def test_indexer(indexer_factory, coords, values, oob, reverse):
             if indexer.bounds != "cycle":
                 assert v1 <= values
                 assert v2 >= values
+
+
+def test_indexer_time():
+    indexer = Linear_Indexer(
+        np.datetime64('2025-01-01') + np.arange(10)*np.timedelta64(1, 'D'),
+        bounds="error",
+        spacing="auto",
+    )
+    value = np.array(np.datetime64('2025-01-02 10:30'))
+    indexer(value)
 
 
 def test_cycle_period():

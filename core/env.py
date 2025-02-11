@@ -2,10 +2,10 @@ from dotenv import load_dotenv, find_dotenv
 from os import environ
 from pathlib import Path
 from typing import Optional
+from core import log
 
 load_dotenv(dotenv_path=find_dotenv(usecwd=True)) 
 
-from core import log
 
 def getdir(
     envvar: str,
