@@ -96,6 +96,7 @@ def interface(function):
         # retrieve meta infos about function signature and passed parameters
         # construct datastructures used
         expected_signature = [(i.name, i.annotation) for i in signature(function).parameters.values()]
+        expected_return_type = signature(function).return_annotation
         
         full_default_values = [(k, v.default) for k, v in signature(function).parameters.items()]
         default_params = [item for item in full_default_values if item[1] is not _empty]
@@ -159,5 +160,13 @@ def interface(function):
                 mess += (f'\n\t\tParameter \'{param}\' expected: {expect} got {actual} with value: {value}')
             log.error(mess, e=InterfaceException)
 
-        return function(*args, **kwargs)
+        result = function(*args, **kwargs)
+
+        if (expected_return_type != _empty) and not isinstance(result, expected_return_type):
+            mess = f'\n\tFunction \'{function.__name__}\': Invalid type returned: '
+            mess += f"Expected {expected_return_type} got {type(result)}"  
+            log.error(mess, e=InterfaceException)
+        
+        return result
+        
     return wrapper

@@ -152,6 +152,17 @@ def test_kwargs_wrong_missed_default():
         kw = dict(b=123, c=3.14)
         function(True, **kw, e=True)
 
+def test_return_type():
+    
+    @interface
+    def function(x: int) -> int:
+        return 2*x + 0.5
+        
+    with pytest.raises(InterfaceException):
+        function(3)
+
+
+    
 
 def test_explicit_nonepassing():
     
