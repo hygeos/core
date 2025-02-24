@@ -167,7 +167,7 @@ def log(lvl: lvl, *args):
     
     _internal.log(lvl, *args)
 
-def critical(*args, e: Exception=None):
+def critical(*args, e: Exception=RuntimeError):
     """
     log with defaul level CRITICAL
     will raise e if passed
@@ -180,7 +180,7 @@ def critical(*args, e: Exception=None):
             raise RuntimeError(f"log.error Invalid Exception type: {str(e)}, should be a subclass of {str(Exception)}")
         raise e(*args)
     
-def error(*args, e: Exception=None):
+def error(*args, e: Exception=RuntimeError):
     """
     log with defaul level ERROR
     will raise e if passed
