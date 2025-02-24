@@ -5,6 +5,82 @@ from core.static.Exceptions import WrongUsage, InterfaceException
 
 from core import log
 
+def _compile_passed_signature(
+    expected_signature,
+    args,
+    kwargs,
+    default_params,
+):
+    expected_signature_copy = expected_signature.copy()
+    passed_signature = {}
+    
+    # def debug():
+    #     print("unnamed_params      ", unnamed_params)
+    #     print("named_params        ", named_params)
+    #     print("full_default_values ", full_default_values)
+    #     print("args                ", args)
+    #     print("kwargs              ", kwargs)
+    #     print("default_params      ", default_params)
+    #     print("-" * 22)
+    #     print("expected      ", expected_signature)
+    #     print("-" * 22)
+    #     print("compiled      ", passed_signature)
+    
+    args = list(args)
+
+    for i, p in enumerate(expected_signature):
+        passed_signature[p[0]] = _param(name=p[0], hints=p[1], index=i)
+    
+    for n, v in kwargs.items():
+        passed_signature[n].set_value(v)
+    
+    unmatched_params = [p for p in passed_signature.values() if not p.has_value()]
+    unmatched_params = sorted(unmatched_params, key=lambda p: p.index)
+    
+    for i, value in enumerate(args):
+        unmatched_params[i].set_value(value)
+    
+    # add default values to param which are missing their values
+    default_params = {k: v for k, v in default_params}
+    for p in passed_signature.values():
+        if not p.has_value():
+            p.set_value(default_params[p.name])
+            
+        if p.name in default_params and default_params[p.name] == None: 
+            p.hints = p.hints | None
+    
+    for param in passed_signature.values():
+        assert param.has_value() # should always be true
+            
+    
+    return passed_signature.values()
+
+class _param:
+    
+    def __init__(self, name, hints, index):
+        self.name = name
+        self.hints = hints
+        self.index = index
+    
+    def set_value(self, value):
+        self.value = value
+    
+    def __str__(self):
+        ret = f"({self.name}, {self.hints}"
+        if hasattr(self, "value"):
+            ret += f", {self.value}"
+        else: 
+            ret += ", NOT MATCHED YET"
+        ret += ")"
+        return ret
+    
+    def __repr__(self):
+        return self.__str__()
+        
+    def has_value(self):
+        return hasattr(self, "value")
+    
+
 def interface(function):
     """
     Declare a function or method as an Interface
@@ -17,88 +93,71 @@ def interface(function):
     
     def wrapper(*args, **kwargs):
         
+        # retrieve meta infos about function signature and passed parameters
         # construct datastructures used
         expected_signature = [(i.name, i.annotation) for i in signature(function).parameters.values()]
         
-        unnamed_params = [type(i) for i in args] 
-        named_params  = [(i, type(kwargs[i])) for i in kwargs] # named parameters can only be lasts 
         full_default_values = [(k, v.default) for k, v in signature(function).parameters.items()]
         default_params = [item for item in full_default_values if item[1] is not _empty]
         
-        # checknumber of parameters
-        exp_nargs = len(expected_signature)
-        act_nargs = len(unnamed_params) + len(named_params) + len(default_params)
-        
-        if exp_nargs > act_nargs:
-            mess = f'\n\tFunction \'{function.__name__}\': Exepected {exp_nargs} arguments, got {act_nargs}'
-            log.error(mess, e=InterfaceException)
+        passed_signature = _compile_passed_signature(
+            expected_signature,
+            args,
+            kwargs,
+            default_params,
+        )
         
         errors = []
-        # check unnamed parameters
-        for param_type in unnamed_params:
-            expected_name, expected_type = expected_signature.pop(0)
-            param_name, default_value = full_default_values.pop(0)
-            
-            if expected_type == _empty: continue
-            
-            if get_origin(expected_type) is type(int|float): # check if unions ( type(int|float) evaluate to typing.UnionType )
-                expected_type = get_args(expected_type)
-            
-            if hasattr(expected_type, '__origin__'): # workaround for defs like list[str] → list (only check base type)
-                expected_type = expected_type.__origin__
-                
-            if not issubclass(param_type, expected_type):
-                explicit_none_passing = (param_type is type(None)) and (type(default_value) is type(None))
-                if not explicit_none_passing: # no error if explicitly passed None, when None is the default, otherwise error
-                    errors.append((expected_name, expected_type, param_type))
         
+        # Type checking
+        for p in passed_signature:
+            
+            ref = expected_signature.pop(0)
+            assert ref[0] == p.name # if not true => Reconstruction is desynced.
+            
+            hints = p.hints
+            if hints == _empty: # no type hint provided at function declaration
+                continue
+            
+            # Inheritance management (subclass should be allowed in place of superclass)
+            vtypes = [type(p.value)] # vtypes is a list of types for the value (namely its type and all superclasses)
+            if hasattr(p.value, "__class__"):
+                superclasses = list(p.value.__class__.__bases__)
+                if object in superclasses:
+                    superclasses.remove(object)
+                vtypes += superclasses
+
+            # process type hint
+            if get_origin(hints) == type(int|float):
+                hints = get_args(hints)
+            else: hints = [hints]
+            # removes the subtyping list list[str] -> list
+            exploded_hints = [get_origin(hint) or hint for hint in hints] 
+            # list[str]|float -> [class list, class float]
+
+            matched = False
+            for vtype in vtypes: # iterate value's class and superclasses
+                for hint in exploded_hints:
+                    if issubclass(vtype, hint):
+                        matched = True
+                        break
+                if matched:
+                    break
+            
+            if not matched:
+                errors.append(p)
         
-        expected_signature  = {i[0]: i[1] for i in expected_signature}
-        full_default_values = {i[0]: i[1] for i in full_default_values}
-        
-        # check named parameters
-        for param_name, param_type in named_params:
-            expected_type = expected_signature.pop(param_name)
-            default_value = full_default_values.pop(param_name) # only check in case of error: exempt None if default
-            
-            if expected_type == _empty: continue
-            
-            if get_origin(expected_type) is type(int|float): # allow unions
-                expected_type = get_args(expected_type)
-            
-            if hasattr(expected_type, '__origin__'): # workaround for defs like list[str] → list (only check base type)
-                expected_type = expected_type.__origin__
-                
-            if not issubclass(param_type, expected_type):
-                explicit_none_passing = (param_type is type(None)) and (type(default_value) is type(None))
-                if not explicit_none_passing: # no error if explicitly passed None, when None is the default, otherwise error
-                    errors.append((param_name, expected_type, param_type))
-        
-        for param_name, param_value in full_default_values.items():
-            param_type = type(param_value)
-            expected_type = expected_signature.pop(param_name)
-            
-            if expected_type == _empty: continue
-            if (param_type is type(None)): continue # no need to specify that None is a possible value if it is the default value
-            
-            if not issubclass(param_type, expected_type):
-                errors.append((param_name, expected_type, param_type))
-    
+        # Error management:
         # raise error if at least one mismatch
         if len(errors) != 0: # error on at least one parameter
-            mess = f'\n\tFunction \'{function.__name__}\': Wrong parameters types passed:'  
+            mess = f'\n\tFunction \'{function.__name__}\': Invalid parameters types passed:'  
             for p in errors:
-                param, expect, actual = p
-                if type(p[1]) is tuple: # better message for unions e.g: int | float
+                param, expect, actual, value = p.name, p.hints, type(p.value), p.value
+                if type(p.hints) is tuple: # better message for unions e.g: int | float
                     expect = " or ".join([str(i) for i in p[1]])
                 
-                mess += (f'\n\t\tParameter \'{param}\' expected: {expect} got {actual}')
+                mess += (f'\n\t\tParameter \'{param}\' expected: {expect} got {actual} with value: {value}')
             log.error(mess, e=InterfaceException)
 
-        # check if some arguments haven't been checked        
-        if len(expected_signature) != 0:
-            mess = [f"Function \'{function.__name__} Parameter \'{p}\' still unchecked after interface call, module error." for p in expected_signature]
-            log.error(mess, e=InterfaceException)
-        
         return function(*args, **kwargs)
     return wrapper
