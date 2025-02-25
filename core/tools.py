@@ -7,15 +7,16 @@ Various utility functions for modifying xarray object
 
 import re
 from pathlib import Path
-from typing import Union, overload
+from typing import Union, overload, Dict, List, Tuple
 import xarray as xr
 import numpy as np
+from dask import array as da
 
 from numpy import arcsin as asin
 from numpy import cos, radians, sin, sqrt, where
 try:
     from shapely.geometry import Point, Polygon
-except:
+except ImportError:
     pass
 from collections import OrderedDict
 from dateutil.parser import parse
@@ -604,3 +605,125 @@ def xrcrop(
         isel_dict[k] = slice(imin, imax)
 
     return A.isel(isel_dict)
+
+
+class MapBlocksOutput:
+    def __init__(
+        self,
+        model: List,
+        new_dims: Dict | None = None,
+    ) -> None:
+        """
+        Describe a Dataset structure, for use with xr.map_blocks to ensure consistency
+        between the output of the blockwise function and the call to xr.map_blocks.
+
+        Args:
+            model: list of DataArrays of Var objects describing the output
+            new_dims: dictionary providing the new dimensions
+                ex: new_dims={'new_dim': xr.DataArray([0, 2, 3])}
+                or simply the dimension size if new_dim has no coordinate
+
+        Example:
+            model = MapBlockOutput([
+                # Either describe the variable with a `Var` object
+                Var('latitude', 'float32', ['x', 'y']),
+                # or with a renamed DataArray
+                ds.rho_toa.rename('rho_gc')
+            ])
+
+        """
+        self.model = model
+        self.new_dims = new_dims or {}
+
+    def template(self, ds: xr.Dataset) -> xr.Dataset:
+        """
+        Return an empty template for this model, to be provided to xr.map_blocks
+        """
+        return xr.merge(
+            [
+                m.to_dataarray(ds, self.new_dims) if isinstance(m, Var) else m
+                for m in self.model
+            ]
+        )
+
+    def conform(self, ds: xr.Dataset, transpose: bool = False) -> xr.Dataset:
+        """
+        Conform dataset `ds` to this model
+
+        transpose: whether to automatically transpose the variables in `ds` to conform
+            to the specified dimensions.
+        """
+        list_vars = []
+        for var in self.model:
+            da = ds[var.name]
+            if da.dtype != var.dtype:
+                raise TypeError(
+                    f'Expected type "{var.dtype}" for "{var.name}" but '
+                    f'encountered "{da.dtype}"'
+                )
+
+            if da.dims != var.dims:
+                if set(da.dims) != set(var.dims):
+                    raise RuntimeError(
+                        f'Expected dimensions "{var.dims}" for variable "{var.name}" '
+                        f'but encountered "{da.dims}".'
+                    )
+                if transpose:
+                    list_vars.append(da.transpose(*var.dims))
+                else:
+                    raise RuntimeError(
+                        f'Expected dimensions "{var.dims}" for variable "{var.name}" '
+                        f'but encountered "{da.dims}". Please consider `transpose=True`'
+                    )
+            else:
+                list_vars.append(da)
+
+        return xr.merge(list_vars)
+
+
+class Var:
+    def __init__(self, name: str, dtype: str, dims: Tuple):
+        """
+        Represents a DataArray structure as used by `MapBlockOutput`
+        """
+        self.name = name
+        self.dtype = dtype
+        self.dims = dims
+
+    def to_dataarray(self, ds: xr.Dataset, new_dims: Dict | None = None):
+        """
+        Convert to a DataArray with dims infos provided by `ds`
+
+        Args:
+            new_dims: size of each new dimension
+            new_coords: coords of each new dimension
+        """
+        new_dims = new_dims or {}
+        shape = []
+        chunks = []
+        coords = {}
+        for d in self.dims:
+            if d in ds.dims:
+                shape.append(len(ds[d]))
+                chunks.append(ds.chunks[d])
+            else:
+                if d not in new_dims:
+                    raise RuntimeError(f'dimension "{d}" has not been described.')
+                if hasattr(new_dims[d], "__len__"):
+                    n = len(new_dims[d])
+                else:
+                    n = new_dims[d]
+                shape.append(n)
+                chunks.append((n,))
+
+            if d in ds.coords:
+                coords[d] = ds.coords[d].values
+            elif (d in new_dims) and hasattr(new_dims[d], "__len__"):
+                coords[d] = new_dims[d]
+
+        return xr.DataArray(
+            da.empty(shape=shape, dtype=self.dtype, chunks=chunks),
+            dims=self.dims,
+            name=self.name,
+            coords=coords,
+        )
