@@ -3,6 +3,7 @@ import pytest
 from core.static import interface
 from core.static.Exceptions import InterfaceException
 
+from pathlib import Path
 
 def test_base():
     
@@ -13,6 +14,18 @@ def test_base():
     
     with pytest.raises(InterfaceException):
         function("a")
+        
+
+def test_harp_fail():
+    
+    class obj:
+        @interface
+        def __init__(self, *, csv_files: list[Path], variables: dict[str: str], config: dict={}):
+            self.v = variables
+            self.config = config
+            self.csv = csv_files
+
+    obj1 = obj(csv_files=[], variables={}, config={})
 
 def test_default_none():
     

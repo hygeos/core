@@ -2,7 +2,7 @@ from inspect import isclass, signature, _empty
 from typing import get_origin, get_args
 
 from core.static.Exceptions import WrongUsage, InterfaceException
-
+from typing import Any
 from core import log
 
 def _compile_passed_signature(
@@ -110,6 +110,10 @@ def interface(function):
         
         errors = []
         
+        # if function.__name__ == "get":
+        if expected_return_type == Any:
+            pass
+        
         # Type checking
         for p in passed_signature:
             
@@ -162,7 +166,10 @@ def interface(function):
 
         result = function(*args, **kwargs)
 
-        if (expected_return_type != _empty) and not isinstance(result, expected_return_type):
+        if      (expected_return_type != _empty) \
+            and (expected_return_type != Any) \
+            and not isinstance(result, expected_return_type):
+            
             mess = f'\n\tFunction \'{function.__name__}\': Invalid type returned: '
             mess += f"Expected {expected_return_type} got {type(result)}"  
             log.error(mess, e=InterfaceException)
