@@ -635,6 +635,16 @@ class MapBlocksOutput:
         self.model = model
         self.new_dims = new_dims or {}
 
+    def __add__(self, other):
+        """
+        Concatenate two MapBlockOutput objects
+        """
+        concatenated = MapBlocksOutput(self.model + other.model,
+                               new_dims={**self.new_dims, **other.new_dims})
+        names = [x.name for x in concatenated.model]
+        assert len(set(names)) == len(names)
+        return concatenated
+
     def template(self, ds: xr.Dataset) -> xr.Dataset:
         """
         Return an empty template for this model, to be provided to xr.map_blocks
