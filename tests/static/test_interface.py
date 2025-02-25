@@ -1,3 +1,4 @@
+from typing import Any
 import pytest
 
 from core.static import interface
@@ -16,16 +17,38 @@ def test_base():
         function("a")
         
 
-def test_harp_fail():
+def test_return_any():
     
-    class obj:
-        @interface
-        def __init__(self, *, csv_files: list[Path], variables: dict[str: str], config: dict={}):
-            self.v = variables
-            self.config = config
-            self.csv = csv_files
+    @interface
+    def function(x: int) -> Any:
+        return "OK"
+    
+    function(123)
 
-    obj1 = obj(csv_files=[], variables={}, config={})
+
+def test_disable():
+    
+    @interface
+    def func(x: int):
+        return x*2
+    
+    func("hello")
+    
+    interface.disable()
+    func("wrong type")
+    interface.enable()
+    
+    with pytest.raises(InterfaceException):
+        func("wrong type")
+        
+        interface.enable()
+        func("wrong type")
+
+    func(123)
+        
+    interface.disable()
+    func("wrong type")
+    
 
 def test_default_none():
     

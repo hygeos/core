@@ -11,20 +11,7 @@ def _compile_passed_signature(
     kwargs,
     default_params,
 ):
-    expected_signature_copy = expected_signature.copy()
     passed_signature = {}
-    
-    # def debug():
-    #     print("unnamed_params      ", unnamed_params)
-    #     print("named_params        ", named_params)
-    #     print("full_default_values ", full_default_values)
-    #     print("args                ", args)
-    #     print("kwargs              ", kwargs)
-    #     print("default_params      ", default_params)
-    #     print("-" * 22)
-    #     print("expected      ", expected_signature)
-    #     print("-" * 22)
-    #     print("compiled      ", passed_signature)
     
     args = list(args)
 
@@ -90,8 +77,12 @@ def interface(function):
     if isclass(function):
         mess = f'\n\tCannot declare class \'{function.__name__}\' as an interface, only functions or methods can be'
         log.error(mess, e=WrongUsage)
+        
     
     def wrapper(*args, **kwargs):
+        
+        if hasattr(interface, "disabled"):
+            return function(*args, **kwargs)
         
         # retrieve meta infos about function signature and passed parameters
         # construct datastructures used
@@ -109,10 +100,6 @@ def interface(function):
         )
         
         errors = []
-        
-        # if function.__name__ == "get":
-        if expected_return_type == Any:
-            pass
         
         # Type checking
         for p in passed_signature:
@@ -177,3 +164,20 @@ def interface(function):
         return result
         
     return wrapper
+
+interface.disable = lambda : setattr(interface, "disabled", True)
+interface.enable =  lambda : delattr(interface, "disabled")
+
+interface.disable()
+
+# def debug_infos():
+#     print("unnamed_params      ", unnamed_params)
+#     print("named_params        ", named_params)
+#     print("full_default_values ", full_default_values)
+#     print("args                ", args)
+#     print("kwargs              ", kwargs)
+#     print("default_params      ", default_params)
+#     print("-" * 22)
+#     print("expected      ", expected_signature)
+#     print("-" * 22)
+#     print("compiled      ", passed_signature)
