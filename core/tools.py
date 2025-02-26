@@ -804,7 +804,7 @@ def xr_unfilter(
         determined automatically from the condition dimensions.
     fill_value_float (float, optional): The fill value for floating point data types.
         Default is np.nan.
-    fill_value_int (int, optional): The fill value for integer data types. Default is -1.
+    fill_value_int (int, optional): The fill value for integer data types. Default is 0.
     transparent (bool, optional): whether to revert the transparent compatibility
         conversion applied in xrwhere.
 
@@ -859,19 +859,36 @@ def xr_filter_decorator(
     argpos: int,
     condition: Callable,
     fill_value_float: float = np.nan,
-    fill_value_int: int = -2,
+    fill_value_int: int = 0,
     transparent: bool = False,
+    stackdim: str | None = None,
 ):
     """
-    A decorator which applies the function only where condition is True
+    A decorator which applies the decorated function only where the condition is True.
 
-    function takes a xr.Dataset as argument. The positional argument index is `argpos`.
+    Args:
+        argpos (int): Position index of the input dataset in the decorated function call.
+        condition (Callable): A callable taking the Dataset as input and returning a
+            boolean DataArray.
+        fill_value_float (float, optional): Fill value for floating point data types.
+            Default is np.nan.
+        fill_value_int (int, optional): Fill value for integer data types.
+            Default is 0
+        transparent (bool, optional): Whether to reassign the original dimension names
+            to the Dataset (expanding with length-one dimensions). Default is False.
+        stackdim (str | None, optional): The name of the new stacked dimension.
+            If None, it will be determined automatically from the condition dimensions. Default is None.
 
     Example:
-        @xrfilter(0, lambda x: x.flags == 0)
+        @xr_filter_decorator(0, lambda x: x.flags == 0)
         def my_func(ds: xr.Dataset) -> xr.Dataset:
             # my_func is applied only where ds.flags == 0
             ...
+
+    The decorator works by:
+    1. Extracting a subset of the dataset where the condition is True using `xr_filter`.
+    2. Applying the decorated function to the subset.
+    3. Reconstructing the original dataset from the subset using `xr_unfilter`.
     """
 
     def decorator(func):
@@ -879,7 +896,12 @@ def xr_filter_decorator(
         def wrapper(*args, **kwargs):
             ds = args[argpos]
             ok = condition(ds)
-            sub = xr_filter(ds, ok, transparent=transparent)
+            sub = xr_filter(
+                ds,
+                ok,
+                stackdim=stackdim,
+                transparent=transparent,
+            )
             new_args = tuple(sub if i == argpos else a for i, a in enumerate(args))
             result = func(*new_args, **kwargs)
             return xr_unfilter(
@@ -887,6 +909,7 @@ def xr_filter_decorator(
                 ok,
                 fill_value_float=fill_value_float,
                 fill_value_int=fill_value_int,
+                stackdim=stackdim,
                 transparent=transparent,
             )
 
