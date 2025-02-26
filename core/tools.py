@@ -5,9 +5,10 @@
 Various utility functions for modifying xarray object
 '''
 
+from functools import wraps
 import re
 from pathlib import Path
-from typing import Union, overload, Dict, List, Tuple
+from typing import Callable, Union, overload, Dict, List, Tuple
 import xarray as xr
 import numpy as np
 from dask import array as da
@@ -636,9 +637,6 @@ class MapBlocksOutput:
         self.new_dims = new_dims or {}
 
     def __add__(self, other):
-        """
-        Concatenate two MapBlockOutput objects
-        """
         concatenated = MapBlocksOutput(self.model + other.model,
                                new_dims={**self.new_dims, **other.new_dims})
         names = [x.name for x in concatenated.model]
@@ -737,3 +735,161 @@ class Var:
             name=self.name,
             coords=coords,
         )
+
+
+def xr_filter(
+    ds: xr.Dataset,
+    condition: xr.DataArray,
+    stackdim: str | None = None,
+    transparent: bool = False,
+) -> xr.Dataset:
+    """
+    Extracts a subset of the dataset where the condition is True, stacking the
+    `condition` dimensions. Equivalent to numpy's boolean indexing, A[condition].
+
+    Parameters:
+    ds (xr.Dataset): The input dataset.
+    condition (xr.DataArray): A boolean DataArray indicating where the condition is True.
+    stackdim (str, optional): The name of the new stacked dimension. If None, it will be
+        determined automatically from the condition dimensions.
+    transparent (bool, optional): whether to reassign the original dimension names to
+        the Dataset (expanding with length-one dimensions).
+
+    Returns:
+    xr.Dataset: A new dataset with the subset of data where the condition is True.
+    """
+    stackdim = stackdim or "_".join(condition.dims)
+    assert stackdim not in ds.dims
+    ok = condition.stack({stackdim: condition.dims})
+
+    # make sure that no coords are attached to the condition dimensions
+    for dim in condition.dims:
+        assert dim not in ds.coords
+
+    # Extract sub Dataset
+    stacked = ds.stack({stackdim: condition.dims})
+    sub = xr.Dataset()
+    for var in stacked:
+        da = stacked[var]
+        sub[var] = xr.DataArray(
+            da.values[
+                tuple(ok if (dim == stackdim) else slice(None) for dim in da.dims)
+            ],
+            dims=da.dims,
+        )
+
+    sub = sub.assign_coords(ds.coords)
+    if transparent:
+        # reassign the initial dimension names to the Dataset
+        sub = sub.rename({stackdim: condition.dims[0]}).expand_dims(*condition.dims[1:])
+    return sub
+
+
+def xr_unfilter(
+    sub: xr.Dataset,
+    condition: xr.DataArray,
+    stackdim: str | None = None,
+    fill_value_float: float = np.nan,
+    fill_value_int: int = 0,
+    transparent: bool = False,
+) -> xr.DataArray:
+    """
+    Reconstructs the original dataset from a subset dataset where the condition is True,
+    unstacking the condition dimensions.
+
+    Parameters:
+    sub (xr.Dataset): The subset dataset where the condition is True.
+    condition (xr.DataArray): A boolean DataArray indicating where the condition is True.
+    stackdim (str, optional): The name of the stacked dimension. If None, it will be
+        determined automatically from the condition dimensions.
+    fill_value_float (float, optional): The fill value for floating point data types.
+        Default is np.nan.
+    fill_value_int (int, optional): The fill value for integer data types. Default is -1.
+    transparent (bool, optional): whether to revert the transparent compatibility
+        conversion applied in xrwhere.
+
+    Returns:
+    xr.DataArray: The reconstructed dataset with the specified dimensions unstacked.
+    """
+    stackdim = stackdim or "_".join(condition.dims)
+
+    if transparent:
+        sub = sub.rename({condition.dims[0]: stackdim}).squeeze([*condition.dims[1:]])
+
+    assert stackdim in sub.dims
+    ok = condition.stack({stackdim: condition.dims})
+
+    stacked = xr.Dataset()
+    for var in sub:
+        # determine the shape of the stacked array
+        stacked_shape = tuple(
+            sub[dim].size if dim != stackdim else condition.size
+            for dim in sub[var].dims
+        )
+
+        # determine fill value
+        dtype = sub[var].dtype
+        if np.issubdtype(dtype, np.floating):
+            fill_value = fill_value_float
+        elif np.issubdtype(dtype, np.integer):
+            fill_value = fill_value_int
+        else:
+            raise ValueError(f"Undefined fill value for type {dtype}")
+
+        # initialize the stacked array
+        stacked[var] = xr.DataArray(
+            np.full(stacked_shape, fill_value, dtype=dtype), dims=sub[var].dims
+        )
+
+        # affect the sub values to the stacked array
+        stacked[var].values[
+            tuple(ok if (dim == stackdim) else slice(None) for dim in sub[var].dims)
+        ] = sub[var].values
+
+    # unstack the array
+    full = stacked.assign_coords({stackdim: ok[stackdim]}).unstack(stackdim)
+
+    # remove the coords from unstacked dimensions
+    full = full.drop_vars(condition.dims)
+
+    return full.assign_coords(sub.coords)
+
+
+def xr_filter_decorator(
+    argpos: int,
+    condition: Callable,
+    fill_value_float: float = np.nan,
+    fill_value_int: int = -2,
+    transparent: bool = False,
+):
+    """
+    A decorator which applies the function only where condition is True
+
+    function takes a xr.Dataset as argument. The positional argument index is `argpos`.
+
+    Example:
+        @xrfilter(0, lambda x: x.flags == 0)
+        def my_func(ds: xr.Dataset) -> xr.Dataset:
+            # my_func is applied only where ds.flags == 0
+            ...
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            ds = args[argpos]
+            ok = condition(ds)
+            sub = xr_filter(ds, ok, transparent=transparent)
+            new_args = tuple(sub if i == argpos else a for i, a in enumerate(args))
+            result = func(*new_args, **kwargs)
+            return xr_unfilter(
+                result,
+                ok,
+                fill_value_float=fill_value_float,
+                fill_value_int=fill_value_int,
+                transparent=transparent,
+            )
+
+        return wrapper
+
+    return decorator
