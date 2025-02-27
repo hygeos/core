@@ -14,8 +14,6 @@ from core.interpolate import (
     Nearest_Indexer,
     Spline_Indexer,
     interp,
-    interp_v1,
-    selinterp,
     Linear,
     Nearest,
     Spline,
@@ -35,33 +33,17 @@ list_interp_functions = {
         lat=l1.latitude,
         lon=l1.longitude,
     ),
-    "selinterp": lambda data, l1: selinterp(
-        data,
-        lat=l1.latitude,
-        lon=l1.longitude,
-        method="interp",
-    ),
+    # "lut": lambda data, l1: xr.DataArray(
+    #     luts.from_xarray(data)[
+    #         luts.Idx(l1.latitude.values), luts.Idx(l1.longitude.values)
+    #     ]
+    # ),
     "interp": lambda data, l1: interp(
-        # interp_v1
-        data,
-        interp={
-            "lat": l1.latitude,
-            "lon": l1.longitude,
-        },
-    ),
-    "lut": lambda data, l1: xr.DataArray(
-        luts.from_xarray(data)[
-            luts.Idx(l1.latitude.values), luts.Idx(l1.longitude.values)
-        ]
-    ),
-    "interp_v2": lambda data, l1: interp(
-        # interp_v2
         data,
         lat=Linear(l1.latitude),
         lon=Linear(l1.longitude),
     ),
-    "interp_v2_non_regular": lambda data, l1: interp(
-        # interp_v2
+    "interp_non_regular": lambda data, l1: interp(
         data,
         lat=Linear(l1.latitude, spacing='irregular'),
         lon=Linear(l1.longitude, spacing='irregular'),
@@ -204,67 +186,6 @@ def sample(vmin: float, vmax: float, dims: list):
     "kwargs",
     [
         {  # same dimensions
-            "interp": {
-                "a": sample(1, 3, ["x", "y"]),
-                "b": sample(11, 14, ["x", "y"]),
-                "c": sample(101, 105, ["x", "y"]),
-            },
-            "sel": {},
-        },
-        {  # mixed dimensions
-            "interp": {
-                "b": sample(11, 14, ["x", "y"]),
-                "c": sample(101, 105, ["x", "z"]),
-            },
-            "sel": {"a": sample(1, 3, ["z"])},
-            "options": {"a": {"method": "nearest"}},
-        },
-        {  # scalar
-            "interp": {
-                "b": sample(11, 14, ["x", "y"]),
-                "c": sample(101, 105, ["x", "z"]),
-            },
-            "sel": {"a": 2},
-        },
-        {  # missing dimension (slice)
-            "interp": {
-                "b": sample(11, 14, ["x", "y"]),
-                "c": sample(101, 105, ["x", "z"]),
-            },
-        },
-        {  # missing dimension (slice)
-            "interp": {
-                "a": sample(1, 3, ["x", "y"]),
-                "c": sample(101, 105, ["x", "z"]),
-            },
-        },
-        {  # missing dimension and reversed dimensions
-            "interp": {
-                "a": sample(1, 3, ["x", "y"]),
-                "c": sample(101, 105, ["y", "x"]),
-            },
-        },
-    ],
-)
-def test_interp_v1(kwargs):
-    data = xr.DataArray(
-        np.zeros((3, 4, 5), dtype="float32"),
-        dims=["a", "b", "c"],
-        coords={
-            "a": [1.0, 2.0, 4.0],
-            "b": [11.0, 12.0, 13.0, 14.0],
-            "c": [105.0, 104.0, 103.0, 102.0, 101.0],
-        },
-    )
-    res = interp_v1(data, **kwargs)
-
-    res.compute()
-
-
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        {  # same dimensions
             "a": Linear(sample(1, 3, ["x", "y"])),
             "b": Linear(sample(11, 14, ["x", "y"])),
             "c": Linear(sample(101, 105, ["x", "y"])),
@@ -320,7 +241,7 @@ def test_interp_v1(kwargs):
         },
     ],
 )
-def test_interp_v2(kwargs):
+def test_interp(kwargs):
     data = xr.DataArray(
         np.zeros((3, 4, 5), dtype="float32"),
         dims=["a", "b", "c"],
@@ -336,8 +257,7 @@ def test_interp_v2(kwargs):
 
 
 @pytest.mark.parametrize('regular', [True, False])
-@pytest.mark.parametrize("interp_version", [1, 2])
-def test_decreasing(request, regular, interp_version):
+def test_decreasing(request, regular):
     if regular:
         a = [105.0, 104.0, 103.0, 102.0, 101.0]
     else:
@@ -349,20 +269,11 @@ def test_decreasing(request, regular, interp_version):
             "a": a,
         },
     )
-    if interp_version == 1:
-        assert np.isclose(interp_v1(data, interp={"a": xr.DataArray(104.2)}), 104.2)
-        interpolated = interp_v1(
-            data,
-            interp={"a": xr.DataArray(np.linspace(90, 110, 200), dims=["x"])},
-            options={"a": {"bounds": "clip"}},
-        )
-    else:
-        # interp_v2
-        assert np.isclose(interp(data, a = Linear(xr.DataArray(104.2))),104.2)
-        interpolated = interp(
-            data,
-            a = Linear(xr.DataArray(np.linspace(90, 110, 200), dims=["x"]), bounds="clip"),
-        )
+    assert np.isclose(interp(data, a = Linear(xr.DataArray(104.2))),104.2)
+    interpolated = interp(
+        data,
+        a = Linear(xr.DataArray(np.linspace(90, 110, 200), dims=["x"]), bounds="clip"),
+    )
 
     # Plot some interpolated data
     interpolated.plot()
@@ -385,123 +296,64 @@ def fixed_sample(request) -> xr.DataArray:
     )
 
 
-@pytest.mark.parametrize("interp_version", [1, 2])
-def test_oob_sel(fixed_sample, interp_version):
+def test_oob_sel(fixed_sample):
     # Selection failing because of out of bounds
     with pytest.raises(ValueError):
-        if interp_version == 1:
-            interp_v1(
-                fixed_sample,
-                sel={
-                    "b": xr.DataArray([-2]),
-                },
-            )
-        else:
-            interp(
-                fixed_sample,
-                b = Nearest(xr.DataArray([-2])),
-            )
-
-
-@pytest.mark.parametrize("interp_version", [1, 2])
-def test_oob_sel_nearest(fixed_sample, interp_version):
-    # This should pass
-    if interp_version == 1:
-        interp_v1(
-            fixed_sample,
-            sel={
-                "b": xr.DataArray([-2]),
-            },
-            options={"b": {"method": "nearest"}},
-        )
-    else:
         interp(
             fixed_sample,
-            b = Nearest(xr.DataArray([-2]), tolerance=None)
+            b = Nearest(xr.DataArray([-2])),
         )
 
 
-@pytest.mark.parametrize("interp_version", **parametrize_dict({
-    'interp_v1': 1,
-    'interp_v2': 2,
-}))
-def test_oob_interp(fixed_sample, interp_version):
+def test_oob_sel_nearest(fixed_sample):
+    # This should pass
+    interp(
+        fixed_sample,
+        b = Nearest(xr.DataArray([-2]), tolerance=None)
+    )
+
+
+def test_oob_interp(fixed_sample):
     # Interpolation failing because of out of bounds
     with pytest.raises(ValueError):
-        if interp_version == 1:
-            interp_v1(
-                fixed_sample,
-                interp={
-                    "b": xr.DataArray([-2]),
-                },
-            )
-        else:
-            interp(
-                fixed_sample,
-                b = Linear(xr.DataArray([-2]))
-            )
-            interp(
-                fixed_sample,
-                b = Spline(xr.DataArray([-2]))
-            )
+        interp(
+            fixed_sample,
+            b = Linear(xr.DataArray([-2]))
+        )
+        interp(
+            fixed_sample,
+            b = Spline(xr.DataArray([-2]))
+        )
     with pytest.raises(ValueError):
-        if interp_version == 1:
-            interp_v1(
-                fixed_sample,
-                interp={
-                    "b": xr.DataArray([10]),
-                },
-            )
-        else:
-            interp(
-                fixed_sample,
-                b = Linear(xr.DataArray([10])),
-            )
-            interp(
-                fixed_sample,
-                b = Spline(xr.DataArray([10])),
-            )
-
-    if interp_version == 1:
-        interp_v1(
-            fixed_sample,
-            interp={
-                "b": xr.DataArray([9]),
-            },
-        )
-    else:
         interp(
             fixed_sample,
-            b = Linear(xr.DataArray([9])),
+            b = Linear(xr.DataArray([10])),
         )
         interp(
             fixed_sample,
-            b = Spline(xr.DataArray([9])),
+            b = Spline(xr.DataArray([10])),
         )
 
+    interp(
+        fixed_sample,
+        b = Linear(xr.DataArray([9])),
+    )
+    interp(
+        fixed_sample,
+        b = Spline(xr.DataArray([9])),
+    )
 
-@pytest.mark.parametrize("interp_version", [1, 2])
-def test_oob_interp_clip(fixed_sample, interp_version):
+
+def test_oob_interp_clip(fixed_sample):
     # Passes because clip=True
-    if interp_version == 1:
-        interp_v1(
-            fixed_sample,
-            interp={
-                "b": xr.DataArray([-2]),
-            },
-            options={
-                "b": {"bounds": "clip"},
-            },
-        )
-    else:
-        interp(
-            fixed_sample,
-            b=Linear(xr.DataArray([-2]), bounds="clip"),
-        )
-        interp(
-            fixed_sample,
-            b=Spline(xr.DataArray([-2]), bounds="clip"),
-        )
+    interp(
+        fixed_sample,
+        b=Linear(xr.DataArray([-2]), bounds="clip"),
+    )
+    interp(
+        fixed_sample,
+        b=Spline(xr.DataArray([-2]), bounds="clip"),
+    )
 
 
 
