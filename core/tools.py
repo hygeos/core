@@ -762,10 +762,6 @@ def xr_filter(
     assert stackdim not in ds.dims
     ok = condition.stack({stackdim: condition.dims})
 
-    # make sure that no coords are attached to the condition dimensions
-    for dim in condition.dims:
-        assert dim not in ds.coords
-
     # Extract sub Dataset
     stacked = ds.stack({stackdim: condition.dims})
     sub = xr.Dataset()
@@ -778,7 +774,11 @@ def xr_filter(
             dims=da.dims,
         )
 
-    sub = sub.assign_coords(ds.coords)
+    # Assign required coordinates to sub
+    sub = sub.assign_coords(
+        {dim: ds.coords[dim] for dim in ds.coords if dim not in condition.coords}
+    )
+    
     if transparent:
         # reassign the initial dimension names to the Dataset
         sub = sub.rename({stackdim: condition.dims[0]}).expand_dims(*condition.dims[1:])
@@ -849,10 +849,13 @@ def xr_unfilter(
     # unstack the array
     full = stacked.assign_coords({stackdim: ok[stackdim]}).unstack(stackdim)
 
-    # remove the coords from unstacked dimensions
-    full = full.drop_vars(condition.dims)
+    # remove all coords
+    full = full.drop_vars(full.coords)
 
-    return full.assign_coords(sub.coords)
+    # reassign all required coords
+    full = full.assign_coords(sub.coords).assign_coords(condition.coords)
+
+    return full
 
 
 def xr_filter_decorator(
