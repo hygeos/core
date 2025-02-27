@@ -7,9 +7,17 @@ import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 from scipy.interpolate._rgi_cython import find_indices
+try:
+    from numba import njit
+    from numba.typed import List
+except ImportError:
+    # numba is not available
+    List = list
+    def njit(func: Callable) -> Callable: # no-op decorator
+        return func
 
 
-def interp(da: xr.DataArray, **kwargs):
+def interp(da: xr.DataArray, *, method=1, **kwargs):
     """
     Interpolate/select a DataArray onto new coordinates.
 
@@ -74,6 +82,7 @@ def interp(da: xr.DataArray, **kwargs):
             "da": da,
             "out_dims": out_dims,
             "indexers": indexers,
+            "method": method,
         },
     )
     ret.attrs.update(da.attrs)
@@ -92,7 +101,7 @@ def product_dict(**kwargs) -> Iterable[Dict]:
 
 
 def interp_block(
-    ds: xr.Dataset, da: xr.DataArray, out_dims, indexers: Dict
+    ds: xr.Dataset, da: xr.DataArray, out_dims, indexers: Dict, method: int
 ) -> xr.DataArray:
     """
     This function is called by map_blocks in function `interp`, and performs the
@@ -115,16 +124,35 @@ def interp_block(
     # cartesian product of the combination of lower and upper indices (in case of
     # linear interpolation) for each dimension
     t0 = datetime.now()
-    result = 0
     data_values = da.values
-    for iw in product_dict(**indices_weights):
-        weights = [
-            1 if iw[dim][1] is None else iw[dim][1].reshape(w_shape[dim])
-            for dim in iw
+    if method == 1:
+        result = 0
+        for iw in product_dict(**indices_weights):
+            weights = [
+                1 if iw[dim][1] is None else iw[dim][1].reshape(w_shape[dim])
+                for dim in iw
+            ]
+            w = reduce(lambda x, y: x*y, weights)
+            keys = [(iw[dim][0] if dim in iw else slice(None)) for dim in da.dims]
+            result += data_values[tuple(keys)] * w
+    else:
+        # reformat indices_weights as a list for each dimension in da
+        # TODO: use a single indices_weights for the above as well
+        indices_weights_list = [
+            indices_weights[dim]
+            if dim in indices_weights
+            else (np.array([]), np.array(1.0))   # non-interpolated dimensions
+            for dim in da.dims
         ]
-        w = reduce(lambda x, y: x*y, weights)
-        keys = [(iw[dim][0] if dim in iw else slice(None)) for dim in da.dims]
-        result += data_values[tuple(keys)] * w
+        if method == 2:
+            # convert to numba list, otherwise it does not get passed to numba
+            # warning, timing includes numba compilation
+            result = interpolate_numba_method2(data_values, List(indices_weights_list))
+        elif method == 3:
+            result = interpolate_numba_method3(data_values, List(indices_weights_list))
+        else:
+            raise ValueError(f"Invalid method {method}")
+    
     time_interp = datetime.now() - t0
     
     # determine output coords
@@ -701,3 +729,159 @@ def determine_output_dimensions(data, ds, dims_sel_interp):
             out_dims.append(dim)
     
     return out_dims
+
+
+@njit
+def inc_coords(pos, shp):
+    """
+    Increment integer coordinates defined by vector `pos` within dimensions of
+    given shape `shp`
+    """
+    pos[0] += 1
+    for i in range(len(shp)-1):
+        if pos[i] == shp[i]:
+            pos[i] = 0
+            pos[i+1] += 1
+        else:
+            break
+
+
+@njit
+def muls(a, b):
+    """
+    Multiply all elements of `a` by a scalar `b` (in place)
+    """
+    af = a.ravel()
+    for i in range(af.size):
+        af[i] *= b
+
+@njit
+def mul(a: NDArray, b: NDArray, inplace: bool) -> NDArray:
+    """
+    Multiply `a` and `b` element by element
+    """
+    assert a.shape == b.shape
+    if not inplace:
+        out = a.copy()
+    else:
+        out = a
+
+    outf = out.ravel()
+    bf = b.ravel()
+    for i in range(outf.size):
+        outf[i] *= bf[i]
+    
+    return out
+
+@njit
+def add(a: NDArray, b: NDArray, inplace: bool) -> NDArray:
+    """
+    Add `a` and `b` element by element
+    """
+    assert a.shape == b.shape
+    if inplace:
+        out = a
+    else:
+        out = a.copy()
+    outf = out.ravel()
+    bf = b.ravel()
+    for i in range(outf.size):
+        outf[i] += bf[i]
+
+
+@njit
+def interpolate_numba_method2(data: NDArray, indices_weights: list) -> NDArray:
+    """
+    data is the array to interpolate
+
+    indices_weights is a list (for each `data` dimension) of list of tuples
+        (indices, weights)
+        where `indices` and `weights` are the indices and weights to apply
+        along each diumension.
+        if indices is an array of size 0 (eg, np.array([])), then the dimension is
+        left as-is (eg, slice(None)).
+    """
+    data_flat = data.ravel()
+    assert data.flags.c_contiguous
+
+    # get the number of points to iterate along each dimension
+    # (shape of the hypercube)
+    shph = [len(ls) for ls in indices_weights]
+    shp = data.shape
+    ndim = len(shp)
+    assert len(shph) == ndim
+    
+    # get the total number of items to iterate (cartesian product)
+    sizeh = 1
+    for t in shph:
+        sizeh *= t
+    
+    pos = [0 for _ in shph] # current position in the hypercube
+
+    out = None
+    
+    # loop over the points in the hypercube
+    for _ in range(sizeh):
+        # calculate current address in the flat data array
+        # and the associated weight
+        # (loop over the dimensions)
+        addr = None
+        weight = None
+        
+        for i in range(ndim):
+            # tuple of indice+weight for current dimension
+            iw = indices_weights[i][pos[i]]
+            ind = iw[0]
+            w = iw[1]
+            
+            if addr is None:
+                addr = ind.copy()
+                addr_flat = addr.ravel()
+            else:
+                #addr = addr*shp[i+1] + ind
+                muls(addr, shp[i])
+                add(addr, ind, True)
+            
+            if weight is None:
+                weight = w.copy()
+                wf = weight.ravel()
+            else:
+                mul(weight, w, True)
+
+        # accumulate (data_flat[addr] * weight) in `out`
+        if out is None:
+            out = np.zeros(weight.shape, dtype='float64')
+            outf = out.ravel()
+        for i in range(outf.size):
+            outf[i] += data_flat[addr_flat[i]] * wf[i]
+
+        # increment the position in the hypercube
+        inc_coords(pos, shph)
+        
+    return out
+
+
+@njit
+def interpolate_numba_method3(data: NDArray, indices_weights: list):
+    """
+    Other tentative version of interpolate_numba where the interpolation operates on a
+    scalar (interpolate_numba_method3_inner)
+
+    This function loops over all elements of the final array
+    """
+    # for coord in <pixel loop>:
+    #     interpolate_numba_method3_inner(data, indices_weights_scal)
+    raise NotImplementedError
+
+
+@njit
+def interpolate_numba_method3_inner(
+    data: NDArray, indices_weights_scal: list,
+) -> float:
+    """
+    Interpolation of a scalar in `data`
+
+    indices_weights_scal: list (for each dimension) of lists (for each combination of
+    points) of tuples (index, weight)
+    """
+    raise NotImplementedError
