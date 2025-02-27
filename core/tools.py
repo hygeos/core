@@ -654,6 +654,9 @@ class MapBlocksOutput:
             ]
         )
 
+    def subset(self, ds: xr.Dataset) -> xr.Dataset:
+        return ds[[var.name for var in self.model]]
+
     def conform(self, ds: xr.Dataset, transpose: bool = False) -> xr.Dataset:
         """
         Conform dataset `ds` to this model
@@ -915,6 +918,30 @@ def xr_filter_decorator(
                 stackdim=stackdim,
                 transparent=transparent,
             )
+
+        return wrapper
+
+    return decorator
+
+
+def conform(attrname: str, transpose: bool = True):
+    """
+    A method decorator which applies MapBlocksOutput.conform to the method output.
+
+    The MapBlocksOutput should be an attribute `attrname` of the class.
+    """
+
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            # get the MapBlocksOutput model
+            model = getattr(self, attrname)
+
+            # apply the function
+            result = func(self, *args, **kwargs)
+
+            # return the conformed result
+            return model.conform(result, transpose=transpose)
 
         return wrapper
 
