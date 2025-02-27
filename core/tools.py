@@ -895,6 +895,10 @@ def xr_filter_decorator(
     1. Extracting a subset of the dataset where the condition is True using `xr_filter`.
     2. Applying the decorated function to the subset.
     3. Reconstructing the original dataset from the subset using `xr_unfilter`.
+
+    NOTE: this decorator does not guarantee that the order of dimensions is maintained.
+    When using this decorator with `xr.apply_blocks`, you may want to wrap your
+    xr_filter_decorator decorated method with the `conform` decorator.
     """
 
     def decorator(func):
