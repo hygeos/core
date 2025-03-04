@@ -6,15 +6,24 @@ from typing import Dict, Iterable, List, Literal, Callable
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
-from scipy.interpolate._rgi_cython import find_indices
+from packaging import version
+# from scipy.interpolate._rgi_cython import find_indices
+
 try:
-    from numba import njit
+    from numba import njit, jit, prange
     from numba.typed import List
+    
 except ImportError:
-    # numba is not available
+    # Numba is not available
+    # -> Replace all import by native Python alternive
+    
     List = list
     def njit(func: Callable) -> Callable: # no-op decorator
         return func
+    def jit(func: Callable) -> Callable: # no-op decorator
+        return func
+    prange = range
+
 
 
 def interp(da: xr.DataArray, *, method=1, **kwargs):
@@ -179,6 +188,64 @@ def interp_block(
 
     return ret
 
+@jit(nopython=True, parallel=True)
+def find_indices(coordinates, values) -> tuple[np.ndarray, np.ndarray]:
+    """
+    assumes the coordinates is sorted and one dim
+    assumes the values array is flattened
+        -> require reshaping after call
+        
+    Note:
+        When extrapolating the distance is computing by assuming the same distance between the previous
+        valid segment to extrapolate the missing point.
+        
+        This function reproduces the behavior of scipy interpolate._rgi_cython.find_indices
+        
+        ex:
+            coords = [1,2,4,8]
+            find_indices(coords, [10])
+            
+            1, 2, 4, 8, (10), ?? missing point
+            
+            8 -> 10 -> 12 (same max dist as previous segment 4 - 8)
+            dist = 0.5
+            
+            This behavior is a best guess, as obivously in our case logic would be that the bound should be 16, 
+            but this cannot be infered rigourously.
+         
+    """
+    
+    coordinates = coordinates[0].flatten()
+    values = values.flatten()
+    
+    left_indices   = np.empty(len(values), dtype=np.int32)    # not uint32: when extrapolating the index can be negative, and it overflows
+    left_distances = np.empty(len(values), dtype=np.float32)  # not float64: distances are roughly comprised between [0 - 1] (excepted when extrapolating)
+    
+    size = len(values) # store locally because used twise
+    
+    for i in prange(size): # parallel for loop OMP
+        value = values[i]
+        index = np.searchsorted(coordinates, value, side="left") - 1
+        
+        # NOTE: ---------------------------------
+        #   * All the computations below could be done on the whole vector, outside the loop 
+        #   * It could degrade perforamce because of cache locality.
+        #   * It could allow for vectorized assembly instructions (way faster) which may not be possible in this loop
+        #   * It would be faster when numba is not installed (no jit -> empty decorator)
+        #   because of the searchsorted.
+        #   * search sorted is probably the bottleneck anyway
+        # ---------------------------------------
+        
+        # : inline 2 next line onto previous ? (compiler could already be optimizing it anyway..)
+        offset = (index < 0) + (index >= size) * -1     # if extrapolating leftside: 1, if extrapolating rightside: -1, otherwise: 0
+        index += offset                                 # if extrapolating, bring the index back to the bounds
+        
+        left_indices[i] = index                         # store left index
+        left_val  = coordinates[index]                  # store locally leftbound val because used twice
+        right_val = coordinates[index + 1]              # store locally rightbound val because used twice
+        left_distances[i] = (value - left_val) / (right_val - left_val) # compute distance
+        
+    return (left_indices[None, :], left_distances[None, :])
 
 class Locator:
     """
@@ -748,7 +815,7 @@ def inc_coords(pos, shp):
 
 @njit
 def muls(a, b):
-    """
+    """ 
     Multiply all elements of `a` by a scalar `b` (in place)
     """
     af = a.ravel()
@@ -868,6 +935,8 @@ def interpolate_numba_method3(data: NDArray, indices_weights: list):
     scalar (interpolate_numba_method3_inner)
 
     This function loops over all elements of the final array
+    
+    Essentially loops over the output grid and compute the hypercube weighted mean from the data grid
     """
     # for coord in <pixel loop>:
     #     interpolate_numba_method3_inner(data, indices_weights_scal)
