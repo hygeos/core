@@ -43,7 +43,11 @@ def to_netcdf(
         if_exists (str, optional): what to do if output file exists. Defaults to 'error'.
         other kwargs are passed to ds.to_netcdf
     """
-    assert isinstance(ds, xr.Dataset), "to_netcdf expects an xarray Dataset"
+    soluce = ', got an xarray DataArray. Please use .to_dataset method and ' \
+             'specify a variable name' if isinstance(ds, xr.DataArray) else ''
+    if not isinstance(ds, xr.Dataset):
+        log.error("to_netcdf expects an xarray Dataset" + soluce, 
+                  e=AssertionError)
 
     encoding = (
         {var: dict(zlib=True, complevel=complevel) for var in ds.data_vars}
