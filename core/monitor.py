@@ -172,10 +172,14 @@ class Monitor:
     """
     
     def __init__(self, name: str = 'monitor object', 
-                 time: Chrono = Chrono('monitor chrono'), 
-                 ram: RAM = RAM('monitor ram')):
+                 time: Chrono = None, 
+                 ram: RAM = None):
         self.name = name
         self.trackers = []
+        
+        if ram is None: ram = RAM(self.name)
+        if time is None: time = Chrono(self.name)
+        
         if ram : self.trackers.append(ram)
         if time: self.trackers.append(time)         
     
