@@ -7,7 +7,7 @@ authors = [
     {name = "Joackim Orcière", email = "joackim.orciere@hygeos.com"},
     {name = "Nathan Capon", email = "nathan.capon@hygeos.com"}
 ]
-dependencies = ["tqdm", "xarray", "dask", "scipy", "h5netcdf", "python-dotenv"]
+dependencies = ["tqdm", "xarray", "dask", "scipy", "h5netcdf", "python-dotenv", "toml"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -31,3 +31,4 @@ scipy = "*"
 pooch = "*"
 h5netcdf = "*"
 python-dotenv = "*"
+toml = "*"
