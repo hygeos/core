@@ -105,8 +105,8 @@ class RAM:
             raise RuntimeError('Cannot pause already paused chrono object')
         self.paused = True
         current, peak = self.stop()
-        self.peak += peak
-        self.current += current
+        self.peak = max(self.peak,peak)
+        self.current = current
  
     def elapsed(self):
         if not self.paused: 

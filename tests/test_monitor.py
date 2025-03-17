@@ -92,8 +92,8 @@ def test_ram_loop():
         r.pause()
         b.append(np.random.randint(0,10,(20,20)))
     
-    assert pytest.approx(r.current, 0.01) == 6656
-    assert pytest.approx(r.peak, 0.01) == 6692864
+    assert pytest.approx(r.current, 0.01) == 3300
+    assert pytest.approx(r.peak, 0.01) == 3700
     r.display()
     
     
