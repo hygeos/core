@@ -463,6 +463,5 @@ def test_interp_1D(request, indexer_factory):
     plt.plot(Y.X, Y, 'ro')
     Ys = interp(Y, X=indexer_factory(Xi))
     plt.plot(Xi.values, Ys.values, '-')
-    plt.legend()
     plt.grid(True)
     conftest.savefig(request)
