@@ -301,7 +301,7 @@ def test_oob_sel(fixed_sample):
     with pytest.raises(ValueError):
         interp(
             fixed_sample,
-            b = Nearest(xr.DataArray([-2])),
+            b = Nearest(xr.DataArray([-2]), tolerance=1e-4),
         )
 
 

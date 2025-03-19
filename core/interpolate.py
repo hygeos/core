@@ -576,7 +576,7 @@ class Nearest:
     def __init__(
         self,
         values: xr.DataArray,
-        tolerance: float | None = 1e-8,
+        tolerance: float | None = None,
         spacing: Literal["auto"] | Callable[[float], float] = "auto",
     ):
         """
