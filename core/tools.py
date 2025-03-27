@@ -667,27 +667,7 @@ class MapBlocksOutput:
         list_vars = []
         for var in self.model:
             da = ds[var.name]
-            if da.dtype != var.dtype:
-                raise TypeError(
-                    f'Expected type "{var.dtype}" for "{var.name}" but '
-                    f'encountered "{da.dtype}"'
-                )
-
-            if da.dims != var.dims:
-                if set(da.dims) != set(var.dims):
-                    raise RuntimeError(
-                        f'Expected dimensions "{var.dims}" for variable "{var.name}" '
-                        f'but encountered "{da.dims}".'
-                    )
-                if transpose:
-                    list_vars.append(da.transpose(*var.dims))
-                else:
-                    raise RuntimeError(
-                        f'Expected dimensions "{var.dims}" for variable "{var.name}" '
-                        f'but encountered "{da.dims}". Please consider `transpose=True`'
-                    )
-            else:
-                list_vars.append(da)
+            list_vars.append(var.conform(da))
 
         return xr.merge(list_vars)
 
@@ -738,6 +718,34 @@ class Var:
             name=self.name,
             coords=coords,
         )
+
+    def conform(self, da: xr.DataArray, transpose: bool = False) -> xr.DataArray:
+        """
+        Conform a DataArray to the variable definition
+        """
+        # type check
+        if da.dtype != self.dtype:
+            raise TypeError(
+                f'Expected type "{self.dtype}" for "{self.name}" but '
+                f'encountered "{da.dtype}"'
+            )
+        
+        # dimensions check
+        if da.dims != self.dims:
+            if set(da.dims) != set(self.dims):
+                raise RuntimeError(
+                    f'Expected dimensions "{self.dims}" for variable "{self.name}" '
+                    f'but encountered "{da.dims}".'
+                )
+            if transpose:
+                return da.transpose(*self.dims)
+            else:
+                raise RuntimeError(
+                    f'Expected dimensions "{self.dims}" for variable "{self.name}" '
+                    f'but encountered "{da.dims}". Please consider `transpose=True`'
+                )
+        else:
+            return da
 
 
 def xr_filter(
