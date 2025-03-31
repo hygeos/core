@@ -211,6 +211,12 @@ def info(*args):
     log with default level INFO
     """
     _internal.log(lvl.INFO, *args)
+
+def check(condition, *args):
+    """
+    log assertion with level ERROR
+    """
+    if not condition: _internal.log(lvl.ERROR, *args)
     
 def debug(*args):
     """
