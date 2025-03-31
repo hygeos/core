@@ -212,11 +212,11 @@ def info(*args):
     """
     _internal.log(lvl.INFO, *args)
 
-def check(condition, *args):
+def check(condition, *args, e: Exception=AssertionError):
     """
     log assertion with level ERROR
     """
-    if not condition: _internal.log(lvl.ERROR, *args)
+    if not condition: _internal.log(lvl.ERROR, *args, e=e)
     
 def debug(*args):
     """

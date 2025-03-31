@@ -2,7 +2,6 @@
 # ...
         
 # third party imports
-import xarray as xr
         
 # sub package imports
 from core.static import interface
@@ -72,3 +71,20 @@ class names:
     description     = _name("description")
     product_name    = _name("product_name")
     input_directory = _name("input_directory")
+
+
+def add_var(ds, var, attrs: _name):
+    """
+    Add a new variable to a xarray.Dataset with it attributes
+
+    Args:
+        ds (xr.Dataset): Dataset to complete
+        var (xr.DataArray): Array to add 
+        attrs (_name): Attributes to join to the new variable
+    """
+    ds[attrs.name] = var
+    if attrs.desc: ds[attrs.name].attrs['description'] = attrs.desc
+    if attrs.unit: ds[attrs.name].attrs['unit'] = attrs.unit
+    if attrs.range: ds[attrs.name].attrs['values_range'] = attrs.range
+    if attrs.dtype: ds[attrs.name].attrs['dtype'] = attrs.dtype
+    return ds
