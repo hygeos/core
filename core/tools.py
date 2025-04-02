@@ -667,7 +667,7 @@ class MapBlocksOutput:
         list_vars = []
         for var in self.model:
             da = ds[var.name]
-            list_vars.append(var.conform(da))
+            list_vars.append(var.conform(da, transpose=transpose))
 
         return xr.merge(list_vars)
 
