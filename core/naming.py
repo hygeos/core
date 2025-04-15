@@ -5,6 +5,7 @@
         
 # sub package imports
 from core.static import interface
+from core.log import check
 
 
 class _name(object):
@@ -82,9 +83,21 @@ def add_var(ds, var, attrs: _name):
         var (xr.DataArray): Array to add 
         attrs (_name): Attributes to join to the new variable
     """
+    
+    # Add data and common attributes
     ds[attrs.name] = var
     if attrs.desc: ds[attrs.name].attrs['description'] = attrs.desc
     if attrs.unit: ds[attrs.name].attrs['unit'] = attrs.unit
-    if attrs.range: ds[attrs.name].attrs['values_range'] = attrs.range
-    if attrs.dtype: ds[attrs.name].attrs['dtype'] = attrs.dtype
+    
+    # Check data range of values
+    if attrs.range:
+        check(var.min() > attrs.range[0] and var.max() < attrs.range[1], 
+              f'Values for new var ({attrs.name}) out of range ({attrs.range})')
+        ds[attrs.name].attrs['values_range'] = attrs.range
+    
+    # Check data type
+    if attrs.dtype: 
+        ds[attrs.name] = ds[attrs.name].astype(attrs.dtype)
+        ds[attrs.name].attrs['dtype'] = attrs.dtype
+        
     return ds

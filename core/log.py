@@ -216,7 +216,7 @@ def check(condition, *args, e: Exception=AssertionError):
     """
     log assertion with level ERROR
     """
-    if not condition: _internal.log(lvl.ERROR, *args, e=e)
+    if not condition: error(*args, e=e)
     
 def debug(*args):
     """
