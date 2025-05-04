@@ -49,7 +49,9 @@ def download_url(
 
 def download_nextcloud(product_name: str, 
                        output_dir: Path | str, 
-                       input_dir: Path | str = ''):
+                       input_dir: Path | str = '',
+                       verbose: bool = True,
+                       if_exists: Literal['skip', 'overwrite', 'backup', 'error'] = 'skip'):
     """
     Function for downloading data from Nextcloud contained in the data/eoread directory
 
@@ -62,15 +64,12 @@ def download_nextcloud(product_name: str,
         Path: Output path of the downloaded data
     """
     
-    @filegen(arg=0)
-    def download_with_filegen(output_path, input_path):
-        system(f'wget {sharelink_eoread}/download?files={input_path} -c -O {output_path}')
-    
     output_dir = mdir(output_dir)
     outpath    = output_dir/product_name
     inputpath  = Path(input_dir)/product_name
     
-    download_with_filegen(outpath, inputpath)
+    url = f'{sharelink_eoread}/download?files={inputpath}'
+    download_url(url, outpath, wget_opts='-c', verbose=verbose, if_exists=if_exists)
     
     # Uncompress downloaded file 
     if product_name.split('.')[-1] in ['zip','gz']:
