@@ -7,7 +7,7 @@ from datetime import timedelta
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-from core.uncompress import CacheDir, duration
+from core.files.uncompress import CacheDir, duration
 
 
 def test_uncompress_cache():

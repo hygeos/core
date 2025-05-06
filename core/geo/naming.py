@@ -61,7 +61,8 @@ class names:
     
     # Flags
     flags = _name("flags", "Bitmask describing the pixel data", None, dtype='uint16')
-
+    quality = _name("quality", "Boolean mask describing the pixel quality", None, dtype=bool)
+    
     # Attributes
     crs             = _name("crs", "Projection")
     datetime        = _name("datetime")

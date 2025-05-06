@@ -3,8 +3,8 @@ from os import system
 from pathlib import Path
 from typing import Literal
 
-from core.fileutils import filegen, mdir
-from core.uncompress import uncompress
+from core.files.fileutils import filegen, mdir
+from core.files.uncompress import uncompress
 from core import log
 
 sharelink_eoread = 'https://docs.hygeos.com/s/Fy2bYLpaxGncgPM/'

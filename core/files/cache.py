@@ -9,8 +9,8 @@ from tempfile import TemporaryDirectory
 from typing import Callable, Literal, Optional
 from pandas.testing import assert_frame_equal
 
-from .save import to_netcdf
-from .fileutils import filegen, safe_move
+from core.files.save import to_netcdf
+from core.files.fileutils import filegen, safe_move
 
 
 def cachefunc(cache_file: Path|str,

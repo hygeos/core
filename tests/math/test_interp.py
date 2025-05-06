@@ -9,7 +9,7 @@ import pytest
 from core.monitor import Chrono
 
 
-from core.interpolate import (
+from core.math.interpolate import (
     Linear_Indexer,
     Nearest_Indexer,
     Spline_Indexer,
@@ -23,9 +23,9 @@ try:
 except:
     pass
 
-from core import conftest
+from core.tests import conftest
 import xarray as xr
-from core.pytest_utils import parametrize_dict
+from core.tests.pytest_utils import parametrize_dict
 
 
 list_interp_functions = {

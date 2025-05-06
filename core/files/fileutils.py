@@ -13,9 +13,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal, Optional, Union
 
-from core.lock import LockFile
+from core.files.lock import LockFile
 from core import log
-from core.uncompress import uncompress as uncomp
+from core.files.uncompress import uncompress as uncomp
 
 
 def safe_move(src, dst, makedirs=True):

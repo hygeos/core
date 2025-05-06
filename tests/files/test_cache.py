@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytest
-from core import cache
+from core.files import cache
 from xarray.tutorial import open_dataset
 from tempfile import TemporaryDirectory
 

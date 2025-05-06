@@ -9,7 +9,7 @@ from typing import Literal, Optional
 import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
-from core.fileutils import filegen
+from core.files.fileutils import filegen
 from core import log
 
 def to_netcdf(

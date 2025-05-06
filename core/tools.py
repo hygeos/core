@@ -22,7 +22,7 @@ except ImportError:
 from collections import OrderedDict
 from dateutil.parser import parse
 
-from core.naming import names
+from core.geo.naming import names
 
 
 flags          = 'flags'

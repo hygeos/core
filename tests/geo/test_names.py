@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
         
 # sub package imports
-from core.naming import *
+from core.geo.naming import *
 
 
 def test_names():

@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from tempfile import TemporaryDirectory, gettempdir, mkdtemp
 
 from core import log
-from core.lock import LockFile
+from core.files.lock import LockFile
 
 class ErrorUncompressed(Exception):
     """
