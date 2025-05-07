@@ -6,6 +6,8 @@ from core.static.Exceptions import InterfaceException
 
 from pathlib import Path
 
+interface.enable()
+
 def test_base():
     
     @interface # define function with typed parameters
@@ -27,6 +29,8 @@ def test_return_any():
 
 
 def test_disable():
+    
+    interface.disable()
     
     @interface
     def func(x: int):
