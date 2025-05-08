@@ -783,6 +783,7 @@ def xr_filter(
                 tuple(ok if (dim == stackdim) else slice(None) for dim in da.dims)
             ],
             dims=da.dims,
+            attrs=da.attrs
         )
 
     # Assign required coordinates to sub
@@ -849,7 +850,9 @@ def xr_unfilter(
 
         # initialize the stacked array
         stacked[var] = xr.DataArray(
-            np.full(stacked_shape, fill_value, dtype=dtype), dims=sub[var].dims
+            np.full(stacked_shape, fill_value, dtype=dtype),
+            dims=sub[var].dims,
+            attrs=sub[var].attrs,
         )
 
         # affect the sub values to the stacked array
