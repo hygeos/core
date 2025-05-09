@@ -845,6 +845,8 @@ def xr_unfilter(
             fill_value = fill_value_float
         elif np.issubdtype(dtype, np.integer):
             fill_value = fill_value_int
+        elif dtype == np.dtype(bool):
+            fill_value = False
         else:
             raise ValueError(f"Undefined fill value for type {dtype}")
 
