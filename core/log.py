@@ -84,7 +84,7 @@ class _internal:
     min_global_level = lvl.DEBUG
     blacklist = {}
     
-    prefix = env.getvar("HYGEOS_LOG_PREFIX_FORMAT", default="$level $time")
+    prefix = env.getvar("HYGEOS_LOG_PREFIX", default="%level %time")
     
     
     def format_msg(level: lvl, msg: str, mod):
@@ -92,28 +92,32 @@ class _internal:
         prefix = _internal.prefix
                 
         kwargs = {}
-        if "$level" in prefix: # status, level
+        if "%level" in prefix: # status, level
             kwargs["level"] = f"{level.color}" + f"[{level.name.lower()}]".ljust(8+2)
             
-        if "$namespace" in prefix: # namespace
+        if "%namespace" in prefix: # namespace
             mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # because if calling from main mod is None
             kwargs["namespace"] = f"{rgb.orange}" + f"{mod_name}"
         
-        if "$icon" in prefix: # icon
+        if "%icon" in prefix: # icon
             kwargs["icon"] = f"{level.color}" + f"{level.icon}"
             
-        if "$time" in prefix: # time
+        if "%time" in prefix: # time
             kwargs["time"] = f"{rgb.green}" +f"{datetime.now().strftime('%H:%M:%S')}"
         
-        if "$pid" in prefix:
+        if "%pid" in prefix:
             kwargs["pid"] = f"{rgb.orange}" + f"{os.getpid()}"
         
         prefix = prefix.format(**kwargs) # add sapce if no whitespace at right hand
         if len(prefix) > 0 and not prefix[-1].isspace():
             prefix += " "
         
+        class t(Template):
+            delimiter = "%"
+        
         prefix = Template(prefix).substitute(**kwargs)
         string = f"{prefix}{rgb.default}{msg}"
+        
         
         return string
     
@@ -254,7 +258,7 @@ def prompt(*args, **kwargs):
     return input()
 
 
-def set_format(fmt: Literal["$level", "$icon", "$time", "$namespace", "$pid"]):
+def set_format(fmt: Literal["%level", "%icon", "%time", "%namespace", "%pid"]):
     """
     valid keys: 
     """
