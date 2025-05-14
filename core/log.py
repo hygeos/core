@@ -115,7 +115,7 @@ class _internal:
         class t(Template):
             delimiter = "%"
         
-        prefix = Template(prefix).substitute(**kwargs)
+        prefix = t(prefix).substitute(**kwargs)
         string = f"{prefix}{rgb.default}{msg}"
         
         

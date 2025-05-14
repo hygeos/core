@@ -1,6 +1,6 @@
 [project]
 name = "core"
-version = "1.0.28"
+version = "1.0.29"
 description = "Common Operations for Robust Engineering"
 authors = [
     {name = "François Steinmetz", email = "fs@hygeos.com"},
