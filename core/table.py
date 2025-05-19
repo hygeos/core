@@ -1,7 +1,42 @@
+from xml.etree import ElementTree as ET
 from core.static import interface
 from pathlib import Path
 import pandas as pd
 
+
+def read_xml(path: str|Path) -> dict:
+    """
+    Function to read xml file
+
+    Args:
+        path (str | Path): Path of xml file
+    """
+    
+    # Recurse function
+    def parse(node, dic):
+        
+        # Check if leaf 
+        l = list(node)
+        if len(l) == 0: 
+            if 'name' in node.attrib: 
+                attrs = node.attrib
+                tag = attrs.pop('name')
+                dic[tag] = attrs
+            elif node.attrib: dic[node.tag] = node.attrib
+            else: dic[node.tag] = node.text
+            return
+        
+        # Update dictonary
+        if 'name' in node.attrib: tag = node.attrib['name']
+        else: tag = node.tag
+        dic[tag] = {}
+        
+        # Recurse over node
+        for item in l: parse(item, dic[tag])
+    
+    outdic = {}
+    parse(ET.parse(path).getroot(), outdic)
+    return outdic
 
 def read_csv(path: str|Path, **kwargs) -> pd.DataFrame:
     """
