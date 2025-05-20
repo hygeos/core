@@ -37,7 +37,8 @@ class names:
 
     bands    = _name("bands", "Visible spectral dimension of the acquisition", None)
     bands_ir = _name("bands_ir", "Infrared spectral dimension of the acquisition", None)
-    bnames   = _name("bandnames", "Name of each band", None)
+    bnames   = _name("bandnames", "Name of bands", None)
+    detector = _name("detectors", "Index of detector", None)
     
     # Radiometry 
     rtoa     = _name("Rtoa", "Top of Atmosphere reflectance", None, dtype='float32')
