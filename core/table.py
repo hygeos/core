@@ -1,4 +1,5 @@
 from xml.etree import ElementTree as ET
+from lxml import objectify
 from core.static import interface
 from pathlib import Path
 import pandas as pd
@@ -11,32 +12,7 @@ def read_xml(path: str|Path) -> dict:
     Args:
         path (str | Path): Path of xml file
     """
-    
-    # Recurse function
-    def parse(node, dic):
-        
-        # Check if leaf 
-        l = list(node)
-        if len(l) == 0: 
-            if 'name' in node.attrib: 
-                attrs = node.attrib
-                tag = attrs.pop('name')
-                dic[tag] = attrs
-            elif node.attrib: dic[node.tag] = node.attrib
-            else: dic[node.tag] = node.text
-            return
-        
-        # Update dictonary
-        if 'name' in node.attrib: tag = node.attrib['name']
-        else: tag = node.tag
-        dic[tag] = {}
-        
-        # Recurse over node
-        for item in l: parse(item, dic[tag])
-    
-    outdic = {}
-    parse(ET.parse(path).getroot(), outdic)
-    return outdic
+    return _XML_parser().parse(path)
 
 def read_csv(path: str|Path, **kwargs) -> pd.DataFrame:
     """
@@ -106,3 +82,52 @@ op_map = {"=": lambda a, b: a == b,
           ">=": lambda a, b: a >= b,
           "<=": lambda a, b: a <= b,
           "!=": lambda a, b: a != b,}
+
+class _XML_parser:
+    
+    def __init__(self):
+        pass
+    
+    def parse(self, xmlpath):
+        root = objectify.parse(xmlpath).getroot()
+        return self.recurse(root)
+    
+    def get_tag(self, node):
+        if 'name' not in node.attrib: 
+            tag = node.tag
+            if node.prefix: 
+                prefix = '{'+node.nsmap[node.prefix]+'}'
+                tag = tag.replace(prefix,'')
+            return tag.strip()
+        else: return node.attrib['name']
+
+    def recurse(self, node):
+        """Recursively convert an lxml.objectify tree to a dictionary"""
+        result = {}
+        
+        # Handle attributes
+        if node.attrib:
+            result['attributes'] = dict(node.attrib)
+        
+        # Handle child elements
+        for child in node.getchildren():
+            
+            tag = self.get_tag(child)
+            child_res = self.recurse(child)
+            if ['values'] == list(child_res.keys()): 
+                child_res = child_res['values']
+            
+            # If this tag already exists, we need to make it a list
+            if tag in result:
+                if isinstance(result[tag], list):
+                    result[tag].append(child_res)
+                else:
+                    result[tag] = [result[tag], child_res]
+            else:
+                result[tag] = child_res
+        
+        # Handle text content if no children
+        if not node.getchildren() and node.pyval:
+            result['values'] = node.pyval
+        
+        return result

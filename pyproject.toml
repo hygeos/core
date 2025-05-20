@@ -7,7 +7,7 @@ authors = [
     {name = "Joackim Orcière", email = "joackim.orciere@hygeos.com"},
     {name = "Nathan Capon", email = "nathan.capon@hygeos.com"}
 ]
-dependencies = ["tqdm", "xarray", "dask", "scipy", "h5netcdf", "python-dotenv", "toml"]
+dependencies = ["tqdm", "xarray", "dask", "scipy", "h5netcdf", "python-dotenv", "toml", "lxml"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -36,5 +36,6 @@ h5netcdf = "*"
 python-dotenv = "*"
 toml = "*"
 matplotlib-base = "*"
+lxml = "*"
 # prefect = ">=3.3.4,<4"
 # prefect-dask = ">=0.3.3,<0.4"
