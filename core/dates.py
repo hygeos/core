@@ -41,3 +41,22 @@ def time_range(start: datetime, end: datetime, step: timedelta) -> list[datetime
     datelist = [start + i*step for i in range(dt)]
     if end not in datelist: datelist += [end]
     return datelist
+
+def now_isofmt():
+    """
+    Returns now in iso format
+    """
+    return datetime.now().isoformat()
+
+def duration(s):
+    """
+    Returns a timedelta from a string `s`
+    """
+    if s.endswith('w'):
+        return timedelta(weeks=float(s[:-1]))
+    elif s.endswith('d'):
+        return timedelta(days=float(s[:-1]))
+    elif s.endswith('h'):
+        return timedelta(hours=float(s[:-1]))
+    else:
+        raise Exception(f'Can not convert "{s}"')

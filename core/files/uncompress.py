@@ -13,8 +13,9 @@ import getpass
 from pathlib import Path
 from functools import wraps
 from zipfile import ZipFile
-from datetime import datetime, timedelta
+from datetime import datetime
 from tempfile import TemporaryDirectory, gettempdir, mkdtemp
+from core.dates import duration, now_isofmt
 
 from core import log
 from core.files.lock import LockFile
@@ -161,26 +162,6 @@ def uncompress(filename,
     assert target.exists()
 
     return target
-
-
-def now_isofmt():
-    """
-    Returns now in iso format
-    """
-    return datetime.now().isoformat()
-
-def duration(s):
-    """
-    Returns a timedelta from a string `s`
-    """
-    if s.endswith('w'):
-        return timedelta(weeks=float(s[:-1]))
-    elif s.endswith('d'):
-        return timedelta(days=float(s[:-1]))
-    elif s.endswith('h'):
-        return timedelta(hours=float(s[:-1]))
-    else:
-        raise Exception(f'Can not convert "{s}"')
 
 
 class CacheDir:
