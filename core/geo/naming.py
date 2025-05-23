@@ -30,10 +30,12 @@ class _name(object):
         return self.name
     
 class names:
-    rows      = _name("y", "Vertical dimension of rasters", "pixels")
-    columns   = _name("x", "Horizontal dimension of rasters", "pixels")
-    lon       = _name("longitude", "Horizontal earth coordinate axis", "Degrees", -180, 180, 'float32')
-    lat       = _name("latitude", "Vertical earth coordinate axis", "Degrees", -90, 90, 'float32')
+    
+    # Dimensions
+    rows     = _name("y", "Vertical dimension of rasters", "pixels")
+    columns  = _name("x", "Horizontal dimension of rasters", "pixels")
+    lon      = _name("longitude", "Horizontal earth coordinate axis", "Degrees", -180, 180, 'float32')
+    lat      = _name("latitude", "Vertical earth coordinate axis", "Degrees", -90, 90, 'float32')
 
     bands    = _name("bands", "Visible spectral dimension of the acquisition", None)
     bands_ir = _name("bands_ir", "Infrared spectral dimension of the acquisition", None)
@@ -62,7 +64,7 @@ class names:
     raa = _name("raa", "Relative azimuth angle", "Degrees", minv=-180, maxv=180, dtype='float32')
     
     # Flags
-    flags = _name("flags", "Bitmask describing the pixel data", None, dtype='uint16')
+    flags   = _name("flags", "Bitmask describing the pixel data", None, dtype='uint16')
     quality = _name("quality", "Boolean mask describing the pixel quality", None, dtype=bool)
     
     # Attributes

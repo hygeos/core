@@ -93,6 +93,10 @@ def locate(lat, lon, lat0, lon0,
     return [x[0] for x in np.where(dist == dist_min)]
 
 
+def drop_unused_dims(ds): 
+    """Simple function to remove unused dimensions in a xarray.Dataset"""
+    return ds.drop_vars([var for var in ds.coords if var not in ds.dims])
+
 def contains(ds: xr.Dataset, lat: float, lon: float):
     pt = Point(lat, lon)
     area = Polygon(zip(
