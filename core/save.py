@@ -23,6 +23,7 @@ def to_netcdf(
     tmpdir: Optional[Path] = None,
     lock_timeout: int = 0,
     if_exists: Literal["skip", "overwrite", "backup", "error"] = "error",
+    clean_attrs: bool = True,
     **kwargs
 ):
     """
@@ -41,6 +42,8 @@ def to_netcdf(
         tmpdir (Path, optional): use a given temporary directory. Defaults to None.
         lock_timeout (int): timeout in case of existing lock file
         if_exists (str, optional): what to do if output file exists. Defaults to 'error'.
+        clean_attrs: whether to remove attributes in the xarray object, that cannot
+            be written to netcdf.
         other kwargs are passed to ds.to_netcdf
     """
     soluce = ', got an xarray DataArray. Please use .to_dataset method and ' \
@@ -55,6 +58,9 @@ def to_netcdf(
         else None
     )
 
+    if clean_attrs:
+        clean_attributes(ds)
+
     PBar = {True: ProgressBar, False: nullcontext}[verbose]
 
     with PBar():
@@ -68,3 +74,20 @@ def to_netcdf(
             if_exists=if_exists,
             verbose=verbose,
         )(ds.to_netcdf)(filename, engine=engine, encoding=encoding, **kwargs)
+
+
+def clean_attributes(obj: xr.Dataset|xr.DataArray):
+    """
+    Remove attributes that can not be written to netcdf
+    """
+    import numpy as np
+    for attr in list(obj.attrs):
+        if isinstance(obj.attrs[attr], (bool,)):
+            obj.attrs[attr] = str(obj.attrs[attr])
+        elif not isinstance(obj.attrs[attr], (str, float, int, np.ndarray, np.number)):
+            del obj.attrs[attr]
+    
+    # recursively clean attributes in the individual variables
+    if isinstance(obj, xr.Dataset):
+        for var in list(obj):
+            clean_attributes(obj[var])
