@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from contextlib import contextmanager
 import getpass
 import inspect
 import json
@@ -360,3 +361,31 @@ def mdir(directory: Union[Path,str],
             json.dump(data_init, fp, indent=4)
 
     return d
+
+
+@contextmanager
+def temporary_copy(src: Path, enable: bool = True, **kwargs):
+    """
+    Context manager to copy a file/folder to a temporary directory.
+
+    Args:
+        src (Path): Path to the source file/folder to copy.
+        enable (bool): whether to enable the copy, otherwise returns the input
+        Other **kwargs are passed to TemporaryDirectory
+
+    Yields:
+        Path: Path to the temporary file/folder
+    """
+    src = Path(src)
+    if not enable:
+        yield src
+    else:
+        with TemporaryDirectory(**kwargs) as temp_dir:
+            temp_path = Path(temp_dir) / src.name
+            if src.is_dir():
+                shutil.copytree(src, temp_path)
+            elif src.is_file():
+                shutil.copy2(src, temp_path)
+            else:
+                raise ValueError(f"Source path {src} is neither a file nor a directory.")
+            yield temp_path
