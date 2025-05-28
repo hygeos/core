@@ -9,7 +9,7 @@ from typing import Literal, Optional
 import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
-from core.files.fileutils import filegen
+from core.files.fileutils import filegen, get_git_commit
 from core import log
 
 def to_netcdf(
@@ -22,6 +22,7 @@ def to_netcdf(
     verbose: bool = True,
     tmpdir: Optional[Path] = None,
     lock_timeout: int = 0,
+    git_comit: bool = True,
     if_exists: Literal["skip", "overwrite", "backup", "error"] = "error",
     **kwargs
 ):
@@ -39,7 +40,8 @@ def to_netcdf(
         complevel (int, optional): Compression level. Defaults to 5.
         verbose (bool, optional): Verbosity. Defaults to True.
         tmpdir (Path, optional): use a given temporary directory. Defaults to None.
-        lock_timeout (int): timeout in case of existing lock file
+        lock_timeout (int, optional): timeout in case of existing lock file
+        git_commit (bool, optional): Option to add git commit tag to input dataset attributes
         if_exists (str, optional): what to do if output file exists. Defaults to 'error'.
         other kwargs are passed to ds.to_netcdf
     """
@@ -54,12 +56,14 @@ def to_netcdf(
         if zlib
         else None
     )
-
+    
     PBar = {True: ProgressBar, False: nullcontext}[verbose]
 
     with PBar():
         if verbose:
             log.info("Writing:", filename)
+            
+        if git_comit: ds.attrs.update(git_commit=get_git_commit())
 
         filegen(
             0,
