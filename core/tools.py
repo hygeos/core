@@ -964,7 +964,7 @@ def conform(attrname: str, transpose: bool = True):
 
     return decorator
 
-def xr_flat(ds: xr.Dataset):
+def xr_flat(ds: xr.Dataset) -> xr.Dataset:
     """
     A method which flat a xarray.Dataset on a new dimension named 'index'
 
@@ -975,3 +975,26 @@ def xr_flat(ds: xr.Dataset):
     assert 'index' not in dims
     flat_ds = ds.stack(index=dims)
     return flat_ds.reset_index(dims).reset_coords(dims)
+
+def xr_sample(ds: xr.Dataset, nb_sample: int, seed: int = None) -> xr.Dataset:
+    """
+    A method to extract a subset of sample from a flat xarray.Dataset
+
+    Args:
+        ds (xr.Dataset): Input flat dataset
+        nb_sample (int): Number of sample to extract
+        seed (int, optional): Random seed to use. Defaults to None.
+    """
+    
+    if seed: np.random.seed(seed)
+    
+    # Retrieve index dimension
+    size = ds.sizes
+    assert len(size) == 1, f'Input dataset should be flatten, got sizes: {len(size)}'
+    index_dim = list(size)[0]
+    
+    # Sample input dataset
+    length = size[index_dim]
+    if nb_sample > length: nb_sample = length
+    selec = np.random.choice(length, nb_sample, replace=False)
+    return ds.isel({index_dim: selec})
