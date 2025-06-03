@@ -963,3 +963,15 @@ def conform(attrname: str, transpose: bool = True):
         return wrapper
 
     return decorator
+
+def xr_flat(ds: xr.Dataset):
+    """
+    A method which flat a xarray.Dataset on a new dimension named 'index'
+
+    Args:
+        ds (xr.Dataset): Dataset to flat
+    """
+    dims = list(ds.dims)
+    assert 'index' not in dims
+    flat_ds = ds.stack(index=dims)
+    return flat_ds.reset_index(dims).reset_coords(dims)
