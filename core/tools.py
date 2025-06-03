@@ -23,6 +23,7 @@ from collections import OrderedDict
 from dateutil.parser import parse
 
 from core.naming import names
+from core import log
 
 
 flags          = 'flags'
@@ -976,13 +977,13 @@ def xr_flat(ds: xr.Dataset) -> xr.Dataset:
     flat_ds = ds.stack(index=dims)
     return flat_ds.reset_index(dims).reset_coords(dims)
 
-def xr_sample(ds: xr.Dataset, nb_sample: int, seed: int = None) -> xr.Dataset:
+def xr_sample(ds: xr.Dataset, nb_sample: int|float, seed: int = None) -> xr.Dataset:
     """
     A method to extract a subset of sample from a flat xarray.Dataset
 
     Args:
         ds (xr.Dataset): Input flat dataset
-        nb_sample (int): Number of sample to extract
+        nb_sample (int|float): Number or percentage of sample to extract
         seed (int, optional): Random seed to use. Defaults to None.
     """
     
@@ -995,6 +996,10 @@ def xr_sample(ds: xr.Dataset, nb_sample: int, seed: int = None) -> xr.Dataset:
     
     # Sample input dataset
     length = size[index_dim]
+    if isinstance(nb_sample, float): 
+        log.check(nb_sample >= 0 and nb_sample <= 1, 'Invalid number of sample.'
+                  f'If float, should be between 0 and 1, got {nb_sample}')
+        nb_sample = int(length*nb_sample)
     if nb_sample > length: nb_sample = length
     selec = np.random.choice(length, nb_sample, replace=False)
     return ds.isel({index_dim: selec})
