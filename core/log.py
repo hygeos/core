@@ -9,6 +9,7 @@
 # standard library imports
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 from tqdm import tqdm
 import inspect
 import warnings
@@ -19,15 +20,13 @@ if 'ipykernel' in sys.modules: from tqdm.notebook import tqdm
 else: from tqdm import tqdm
         
 # sub package imports
-# ...
+from core import env
+from string import Template
+import os
 
 
 class config:
-    show_level = True
-    show_namespace = False
-    show_time = True
     show_color = True
-    show_level_icon = False
 
 class _color:
     default = '\033[0m'
@@ -55,6 +54,7 @@ class rgb:
     bold        = _color('\033[1m')
     underline   = _color('\033[4m')
     default     = _color(_color.default)
+    gray        = _color('\033[90m')
     
 # set levels enums
 class lvl(Enum):
@@ -73,8 +73,8 @@ lvl.PROMPT.color    = rgb.cyan
 
 lvl.DEBUG.icon     = "(d)"
 lvl.INFO.icon      = "(i)"
-lvl.WARNING.icon   = "(!)"
-lvl.ERROR.icon     = "(x)"
+lvl.WARNING.icon   = "/!\\"
+lvl.ERROR.icon     = "/x\\"
 lvl.PROMPT.icon    = "(?)"
 
 # "/!\\"
@@ -84,20 +84,40 @@ class _internal:
     min_global_level = lvl.DEBUG
     blacklist = {}
     
+    prefix = env.getvar("HYGEOS_LOG_PREFIX", default="%level %time")
+    
+    
     def format_msg(level: lvl, msg: str, mod):
         
-        lvl_prefix = "" # construct prefixes depending on options
-        namespace_prefix = ""
-        time_prefix = ""
+        prefix = _internal.prefix
+                
+        kwargs = {}
+        if "%level" in prefix: # status, level
+            kwargs["level"] = f"{level.color}" + f"[{level.name.lower()}]".ljust(8+2)
+            
+        if "%namespace" in prefix: # namespace
+            mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # because if calling from main mod is None
+            kwargs["namespace"] = f"{rgb.orange}" + f"{mod_name}"
         
-        mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # if calling from main mod is None
+        if "%icon" in prefix: # icon
+            kwargs["icon"] = f"{level.color}" + f"{level.icon}"
+            
+        if "%time" in prefix: # time
+            kwargs["time"] = f"{rgb.green}" +f"{datetime.now().strftime('%H:%M:%S')}"
         
-        if config.show_level_icon:  lvl_prefix += f"{level.icon} "
-        if config.show_level:       lvl_prefix += f"[{level.name}] ".ljust(8+2)
-        if config.show_namespace:   namespace_prefix    += f"({mod_name}) "
-        if config.show_time:        time_prefix         += f"{datetime.now().strftime('%H:%M:%S')} "
+        if "%pid" in prefix:
+            kwargs["pid"] = f"{rgb.orange}" + f"{os.getpid()}"
         
-        string = f"{level.color}{lvl_prefix}{rgb.orange}{namespace_prefix}{rgb.green}{time_prefix}{rgb.default}{msg}"
+        prefix = prefix.format(**kwargs) # add sapce if no whitespace at right hand
+        if len(prefix) > 0 and not prefix[-1].isspace():
+            prefix += " "
+        
+        class t(Template):
+            delimiter = "%"
+        
+        prefix = t(prefix).substitute(**kwargs)
+        string = f"{prefix}{rgb.default}{msg}"
+        
         
         return string
     
@@ -229,9 +249,6 @@ def debug(*args, **kwargs):
     """
     _internal.log(lvl.DEBUG, *args, **kwargs)
 
-
-
-
 def prompt(*args, **kwargs):
     """
     prompt user with log format
@@ -239,3 +256,10 @@ def prompt(*args, **kwargs):
     _internal.log(lvl.PROMPT, *args, **kwargs)
 
     return input()
+
+
+def set_format(fmt: Literal["%level", "%icon", "%time", "%namespace", "%pid"]):
+    """
+    valid keys: 
+    """
+    _internal.prefix = fmt
