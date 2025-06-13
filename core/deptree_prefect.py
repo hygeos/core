@@ -1,12 +1,42 @@
 import asyncio
-from prefect import task
+from prefect import task as prefect_task
 from prefect import get_client
+from prefect.futures import PrefectFuture
 
 
 """
 This module is imported by the deptree module.
 It is used to isolate the part which requires prefect.
 """
+
+def gen_prefect(
+    task,
+    concurrency_limit: dict | None = None,
+    task_runner=None,
+    log_prints: bool = True,
+):
+    """
+    Generate a task in a flow using Prefect
+
+    task (Task): the task to generate
+
+    Note: a prefect server will be started automatically. To use an existing server,
+    you can use the following variable:
+        PREFECT_API_URL=http://127.0.0.1:4200/api
+    (here with a local server started with `prefect server start`)
+
+    task_runner can be a DaskTaskRunner() or DaskTaskRunner(get_htcondor_cluster())
+    """
+    from prefect import flow
+
+    flowname = f'{task.__class__.__name__}'
+    if concurrency_limit is None:
+        concurrency_limit = {}
+    return decorator_concurrency_limit(concurrency_limit)(
+        flow(name=flowname, task_runner=task_runner, log_prints=log_prints)(
+            gen_prefect_node
+        )
+    )(task)
 
 async def set_concurrency_limit(d: dict):
     """
@@ -49,28 +79,48 @@ def decorator_concurrency_limit(d: dict|None):
     return actual_decorator
 
 
-def wraptask(obj):
+def wraptask(task):
     """
-    Wrap a Product so that its dependencies are passed as futures to the wrapped
+    Wrap a task so that its dependencies are passed as futures to the wrapped
     function arguments
     """
-    classname = str(obj.__class__.__name__)
+    classname = str(task.__class__.__name__)
     def wrapper(*args):
         # execute the run method
-        return obj.run()
-    return task(name=classname, tags=[classname])(wrapper)
+        return task.run()
+    return prefect_task(name=classname, tags=[classname])(wrapper)
 
 
-def gen_prefect_flow(prod):
+def gen_prefect_node(task, root=True, all_futures=None) -> PrefectFuture | None:
+    """
+    Generate a Task with Prefect
+
+    If `root`, this is the root node: must wait for the root task to finish, otherwise
+    futures are garbage collected before they finish.
+    """
     
-    if prod.exists():
+    if task.done():
         return None
 
+    if all_futures is None:
+        all_futures = []
+
     # recursively trigger dependencies
-    futures = [gen_prefect_flow(x) for x in prod.dependencies() if not x.exists()]
+    futures = [
+        gen_prefect_node(x, root=False, all_futures=all_futures)
+        for x in task.dependencies()
+        if not x.done()
+    ]
 
     # submit the current task by passing the futures dependencies as arguments
-    future = wraptask(prod).submit(*futures)
+    future = wraptask(task).submit(*futures)
 
+    # this list avoids that future are garbage collected before they are finished, which
+    # raises a warning
+    all_futures.append(future)
+
+    if root:
+        # avoid warning
+        future.wait()
+    
     return future
-
