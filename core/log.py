@@ -24,6 +24,7 @@ from core import env
 from string import Template
 import os
 
+import logging
 
 class config:
     show_color = True
@@ -63,7 +64,7 @@ class lvl(Enum):
     WARNING = 3
     ERROR = 4
     PROMPT = 5
-
+    
 # set levels colors
 lvl.DEBUG.color     = rgb.purple
 lvl.INFO.color      = rgb.blue
@@ -86,17 +87,27 @@ class _internal:
     
     prefix = env.getvar("HYGEOS_LOG_PREFIX", default="%level %time")
     
+    # configure default logger for core.log
+    logger = logging.getLogger("hygeos.core")
+    logger.setLevel(logging.DEBUG)
+    log_format = logging.Formatter('%(message)s')
+
+    # writing to stderr                                 
+    handler = logging.StreamHandler(sys.stderr)                             
+    handler.setLevel(logging.DEBUG)                                        
+    handler.setFormatter(log_format)                                        
+    logger.addHandler(handler)   
     
     def format_msg(level: lvl, msg: str, mod):
         
         prefix = _internal.prefix
+        mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # because if calling from main mod is None
                 
         kwargs = {}
         if "%level" in prefix: # status, level
             kwargs["level"] = f"{level.color}" + f"[{level.name.lower()}]".ljust(8+2)
             
         if "%namespace" in prefix: # namespace
-            mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # because if calling from main mod is None
             kwargs["namespace"] = f"{rgb.orange}" + f"{mod_name}"
         
         if "%icon" in prefix: # icon
@@ -141,8 +152,16 @@ class _internal:
             blname = blmod.__name__
             if blname in mod.__name__ and lvl.value <= _internal.blacklist[blmod].value:
                 return 
-                
-        print(_internal.format_msg(lvl, msg, mod), file=sys.stderr, **kwargs)
+        
+        mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # because if calling from main mod is None
+        
+        # print(_internal.format_msg(lvl, msg, mod), file=sys.stderr, **kwargs)
+        message = _internal.format_msg(lvl, msg, mod)
+         
+        # call default logger
+        output_function = getattr(_internal.logger, (lvl.name).lower())
+        output_function(message)
+        
     
     def _loading_bar(**kwargs):
         frame  = inspect.currentframe().f_back.f_back
@@ -160,10 +179,6 @@ class _internal:
         for arg in args:
             message += str(arg)
         return message + str(rgb.default)
-        
-def stderr(*args):
-    msg = _internal.concat_mess(*args)
-    print(msg, file=sys.stderr)
         
 # filters = ...
 def set_lvl(lvl: lvl):
