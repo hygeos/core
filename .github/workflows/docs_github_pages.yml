@@ -33,6 +33,7 @@ jobs:
           python -m pip install ghp-import
           python -m pip install uv
           python -m uv pip install -r pyproject.toml
+          python -m uv pip install .
           python -m pip install numpydoc
 
       - name: Generate the docs

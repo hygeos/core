@@ -686,8 +686,8 @@ packages:
   timestamp: 1731428454756
 - pypi: .
   name: core
-  version: 1.0.28
-  sha256: 0096d94cd4bb341579a3c7dfcbdcba8eabc2404df872ebbaf7b767ee2f2f6106
+  version: 1.0.29
+  sha256: 81855e7d97ba74ab28f1702dcc386b231a7c8d428aef402eb6e1c5e1aa26dd01
   requires_dist:
   - tqdm
   - xarray
