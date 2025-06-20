@@ -17,8 +17,12 @@ build-backend = "poetry.core.masonry.api"
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
+[tool.pixi.environments]
+default = { features = ["hyp", "sys"], solve-group = "default" }
+
 [tool.pixi.tasks]
 tests = "pytest tests"
+build_docs = "sphinx-build -b html /tmp/tmpb5vx_75v/source /tmp/tmpb5vx_75v/build -q"
 
 [tool.pixi.pypi-dependencies]
 core = { path = ".", editable = true }
@@ -37,5 +41,11 @@ python-dotenv = "*"
 toml = "*"
 matplotlib-base = "*"
 lxml = "*"
+sphinx = "*"
+sphinx_rtd_theme = "*"
+
+[tool.pixi.feature.hyp.dependencies]
+[tool.pixi.feature.sys.dependencies]
+sphinx_rtd_theme = "*"
 # prefect = ">=3.3.4,<4"
 # prefect-dask = ">=0.3.3,<0.4"
