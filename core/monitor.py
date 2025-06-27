@@ -22,10 +22,12 @@ class Chrono:
     
     def __enter__(self):
         self.restart()
+        return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
         self.display(self.unit)
+        return False
     
     def restart(self):
         self.paused = False
@@ -91,10 +93,12 @@ class RAM:
     
     def __enter__(self):
         self.restart()
+        return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
         self.display()
+        return False
     
     def restart(self):
         self.paused = False
@@ -181,15 +185,17 @@ class Monitor:
         if time is None: time = Chrono(self.name)
         
         if ram : self.trackers.append(ram)
-        if time: self.trackers.append(time)         
+        if time: self.trackers.append(time)
     
     def __enter__(self):
         for t in self.trackers:
             t.__enter__()
+        return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         for t in self.trackers:
             t.__exit__(exc_type, exc_val, exc_tb)
+        return False
     
     def restart(self):
         for t in self.trackers:

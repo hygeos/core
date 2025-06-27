@@ -50,7 +50,10 @@ def test_chrono_loop():
     
     assert pytest.approx(c.total_t, rel=1e-1) == 10*0.01
     c.display()
-    
+
+def test_chrono_context():
+    with Chrono() as c:
+        c.stop()    
     
     
 def test_ram_base():
@@ -96,6 +99,9 @@ def test_ram_loop():
     assert pytest.approx(r.peak, 0.01) == 3700
     r.display()
     
+def test_ram_context():
+    with RAM() as r:
+        r.stop()   
     
     
 def test_monitor_base():
@@ -140,3 +146,7 @@ def test_monitor_loop():
         m.pause()
         time.sleep(0.01)
     m.display()
+
+def test_monitor_context():
+    with Monitor() as m:
+        m.stop()   
