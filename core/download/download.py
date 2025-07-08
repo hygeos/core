@@ -49,8 +49,11 @@ def download_nextcloud(product_name: str,
                        output_dir: Path | str, 
                        nextcloud_dir: Path | str = '',
                        sharelink: str = 'https://docs.hygeos.com/s/Fy2bYLpaxGncgPM/', 
+                       wget_opts="",
+                       check_function=None,
                        verbose: bool = True,
-                       if_exists: Literal['skip', 'overwrite', 'backup', 'error'] = 'skip'):
+                       if_exists: Literal['skip', 'overwrite', 'backup', 'error'] = 'skip',
+                       **kwargs):
     """
     Function for downloading data from Nextcloud contained in the data/eoread directory
 
@@ -68,10 +71,26 @@ def download_nextcloud(product_name: str,
     inputpath  = Path(nextcloud_dir)/product_name
     
     url = f'{sharelink}/download?files={inputpath}'
-    outpath = download_url(url, output_dir, wget_opts='-c', verbose=verbose, if_exists=if_exists)
+    target = output_dir/product_name
+    @filegen(if_exists=if_exists, verbose=verbose, **kwargs)
+    def download_target(path):
+        if verbose:
+            log.info('Downloading:', url)
+            log.info('To: ', target)
+
+        cmd = f'wget {wget_opts} {url} -O {path}'
+        # Detect access problem
+        ret = subprocess.call(cmd.split())
+        if ret:
+            raise FileNotFoundError(cmd)
+
+        if check_function is not None:
+            check_function(path)
+
+    download_target(target)
     
     # Uncompress downloaded file 
     if product_name.split('.')[-1] in ['zip','gz']:
-        return uncompress(outpath, output_dir)
+        return uncompress(target, output_dir)
         
-    return outpath
+    return target
