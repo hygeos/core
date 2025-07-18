@@ -59,7 +59,7 @@ class ascii_table:
         colors: is a dictionnary of core.log.rgb colors like {column: rgb.green}
         
         Basic usage:
-                t = ascii_table(res).print()
+                ascii_table(res).print()
         """
         self.df = df
         self._style = style
