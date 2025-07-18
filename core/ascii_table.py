@@ -89,7 +89,8 @@ class ascii_table:
         
         
     def print(self, live_print=False, no_color=False):
-        self.to_string(live_print, no_color)
+        s = self.to_string(live_print, no_color)
+        print(s)
         
     
     def to_string(self, live_print=False, no_color=True):
@@ -248,7 +249,6 @@ class ascii_table:
         fn(_line_separator("bot"))
         fn("")
         
-        
         if not live_print: 
             message = "\n".join(lines)
-            print(message)
+            return message
