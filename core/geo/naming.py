@@ -46,12 +46,10 @@ class names:
     # Radiometry 
     rtoa        = _name("Rtoa", "Top of Atmosphere reflectance", None, dtype='float32')
     ltoa        = _name("Ltoa", "Top of Atmosphere radiance", "W.m-2.sr-1")            
-    
     bt          = _name("BT", "Brightness Temperature", "K", minv=0)
     rho_w       = _name("rho_w", "Water Reflectance", None)
 
     wav         = _name("wav", "Effective wavelength", "nm") 
-    wav_ir      = _name("wav_ir", "Effective wavelength in infrared", "nm")
     cwav        = _name("cwav", "Central (nominal) wavelength", "nm")
 
     F0          = _name("F0", "Solar flux irradiance", "W.m-2.sr-1")
@@ -62,6 +60,8 @@ class names:
     saa = _name("saa", "Sun azimuth angle",      "Degrees", minv=   0, maxv=180, dtype='float32')
     vaa = _name("vaa", "View azimuth angle",     "Degrees", minv=   0, maxv=180, dtype='float32')
     raa = _name("raa", "Relative azimuth angle", "Degrees", minv=-180, maxv=180, dtype='float32')
+    mus = _name("mus", "Cosine of the sun zenith angle",  None, dtype='float32')
+    muv = _name("muv", "Cosine of the view zenith angle", None, dtype='float32')
     
     # Flags
     flags   = _name("flags", "Bitmask describing the pixel data", None, dtype='uint16')
@@ -69,11 +69,12 @@ class names:
     
     # Attributes
     crs             = _name("crs", "Projection")
+    unit            = _name("unit")
     datetime        = _name("datetime")
     platform        = _name("platform")
     sensor          = _name("sensor")
     shortname       = _name("shortname")
-    resolution      = _name("resolution")
+    resolution      = _name("resolution", "Resolution in meter")
     description     = _name("description")
     product_name    = _name("product_name")
     input_directory = _name("input_directory")
