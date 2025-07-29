@@ -506,10 +506,10 @@ def trim_dims(A: xr.Dataset):
     groups = []
     
     # loop over all dimensions sizes
-    for size in set(A.dims.values()):
+    for size in set(A.sizes.values()):
         # list all dimensions with current size
         groups_current = []
-        dims_current = [k for k, v in A.dims.items()
+        dims_current = [k for k, v in A.sizes.items()
                         if v == size]
 
         # for each variable, add its dimensions (intersecting dims_current)
