@@ -147,21 +147,30 @@ def uncompress(filename,
             lst = list(Path(tmpdir).glob('*'))
             if len(lst) == 1:
                 target_tmp = lst[0]
+                target = Path(dirname)/target_tmp.name
+                if dirname.name != target_tmp.name: #First folder is not the same as the target
+                    shutil.move(target_tmp, target)
+                else:
+                    lst = list(Path(target_tmp).glob('*'))
+                    if len(lst) <= 0:
+                        raise ValueError(f'First folder {target_tmp.name} is the same as the target {dirname.name} and contains no files or folders : {lst}')
+                    for tmp in lst:
+                        target = Path(dirname)/tmp.name
+                        shutil.move(tmp, target)
             else:
-                target_tmp = Path(tmpdir)
-                target = Path(dirname)/filename.stem
+                target_tmp = lst
+                for tmp in target_tmp:
+                    target = Path(dirname)/tmp.name
+                    shutil.move(tmp, target)
 
-        # determine target
         if target is None:
             target = Path(dirname)/target_tmp.name
-        assert not target.exists(), f'Error, {target} exists.'
-
-        # move temporary to destination
-        shutil.move(target_tmp, target)
-
+            assert not target.exists(), f'Target {target} already exists.'
+            shutil.move(target_tmp, target)
+        
     assert target.exists()
 
-    return target
+    return Path(dirname)
 
 
 class CacheDir:
