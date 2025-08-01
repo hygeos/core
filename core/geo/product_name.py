@@ -128,6 +128,6 @@ def get_level(name: str, pattern: dict):
     decomp = decompose(name, pattern['regexp'].split(' '))
     fields = [f.strip('{}') for f in pattern['pattern'].split('_')]
     level = {fields[i]: d for i,d in enumerate(decomp)}['level']
-    level = re.search('L[123]', level)
+    level = re.search('[123]', level)
     assert level is not None
-    return int(level[0][1])
+    return int(level[0])
