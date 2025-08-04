@@ -19,16 +19,15 @@ def retrieve_product(product_id: str, fields: dict, pattern: tuple[str] = None) 
     """
     
     # Check fields input
-    if pattern:
-        row = get_pattern(product_id)
-    valid_fields = get_fields(row['pattern'])
+    if pattern is None: pattern = get_pattern(product_id)
+    valid_fields = get_fields(pattern['pattern'])
     assert all(k in valid_fields for k in fields.keys()), \
     f'Invalid fields: keys of fields should be in {valid_fields}, got {fields.keys()}'
     
     # Transform giving fields
     retrieve = []
-    rules = {valid_fields[i]: r for i,r in enumerate(row['regexp'].split(' '))}
-    decompo = decompose(product_id, row['regexp'].split(' '))
+    rules = {valid_fields[i]: r for i,r in enumerate(pattern['regexp'].split(' '))}
+    decompo = decompose(product_id, pattern['regexp'].split(' '))
     for i, field in enumerate(valid_fields):
         if field not in fields: retrieve.append(decompo[i])
         elif check(fields[field], rules[field]):
