@@ -15,4 +15,9 @@ SENTINEL-3-SRAL,    {sensor}_{data}_{level}_{type}_{start}_{stop}_{creation}_{id
 SENTINEL-5P-TROPOMI,{sensor}_{class}_{type}_{instance_id}, S5P [A-Z]{4} [A-Z0-9_]{4}[A-Z0-9_]{6} [A-Z0-9_]*,_
 SENTINEL-6-HR,      {sensor}_{consumer}_{level}_{type}_{start}_{end}_{generation_time}_{instance}_{source}_{environment}_{class_id}, S6[AB_] [A-Z4]{2} [123_][A-Z_] HR[_]{5} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{16} [A-Z_]{4} [A-Z_]{3} [A-Z0-9_]{6},
 SENTINEL-6-LR,      {sensor}_{consumer}_{level}_{type}_{start}_{end}_{generation_time}_{instance}_{source}_{environment}_{class_id}, S6[AB_] [A-Z4]{2} [123_][A-Z_] LR[_]{5} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{16} [A-Z_]{4} [A-Z_]{3} [A-Z0-9_]{6}, 
+SPOT-1,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT1-HR[VG][0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z] V[0-9-]*, 
+SPOT-2,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT2-HR[VG][0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z] V[0-9-]*, 
+SPOT-3,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT3-HR[VG][0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z] V[0-9-]*, 
+SPOT-4,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT4-HR[VG][0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z] V[0-9-]*, 
+SPOT-5,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT5-HR[VG][0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z] V[0-9-]*, 
 VENUS,              {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, VENUS-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [A-Z]* [A-Z] V[0-9-]*, eoread.venus Level_VENUS
