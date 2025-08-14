@@ -1,6 +1,6 @@
 
 Name,               pattern,  regexp, reader
-ECOSTRESS,          {sensor}{product}_{level}_{var}_{orbit}_{id}_{acquisition_time}_{software}_{product_number}, ECOv[0-9]{3} L[123][CGT]* [A-Z]* [0-9]{5} [0-9]{3} [0-9]{8}T[0-9]{6} [0-9]{4} [0-9]{2}, eoread.ecostress Level_ECOSTRESS
+ECOSTRESS,          {sensor}{product}_{level}_{var}_{orbit}_{id}_{acquisition_time}_{software}_{product_number}, ECOv[0-9]{3} L[123][ABCGT]* [A-Z]* [0-9]{5} [0-9]{3} [0-9]{8}T[0-9]{6} [0-9]{4} [0-9]{2}, eoread.ecostress Level_ECOSTRESS
 LANDSAT-1-4-MSS,    {sensor}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LM0[1-4] L[123](TP|PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12]), 
 LANDSAT-5-TM,       {sensor}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LT05 L[123](TP|PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12]), 
 LANDSAT-7-ET,       {sensor}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LE07 L[123](TP|PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12]),
