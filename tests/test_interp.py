@@ -1,6 +1,6 @@
 try:
     from matplotlib import pyplot as plt
-except:
+except ImportError:
     pass
 import numpy as np
 import pytest
@@ -9,7 +9,7 @@ import pytest
 from core.monitor import Chrono
 
 
-from core.math.interpolate import (
+from core.interpolate import (
     Linear_Indexer,
     Nearest_Indexer,
     Spline_Indexer,
@@ -20,7 +20,7 @@ from core.math.interpolate import (
 )
 try:
     from luts import luts 
-except:
+except ImportError:
     pass
 
 from core.tests import conftest
