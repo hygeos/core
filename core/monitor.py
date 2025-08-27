@@ -1,7 +1,10 @@
+import math
 import time
 import tracemalloc
 from datetime import timedelta
 from typing import Literal
+
+import pandas as pd
 
 from core import log
 
@@ -229,3 +232,43 @@ class Monitor:
     def display(self):
         for t in self.trackers:
             t.display()
+
+
+def dask_graph_stats(ds) -> pd.DataFrame:
+    """
+    Get statistics about the dask graph for each variable in the dataset `ds`.
+
+    Returns a pandas DataFrame with the following columns:
+        - var: The name of the variable.
+        - graph_len: The length of the dask graph for the variable.
+        - n_chunks: The number of chunks in the dask graph for the variable.
+        - per_chunk: graph_len/n_chunks.
+
+    Example:
+    >>> print(dask_graph_stats(ds).to_string(index=False))
+    """
+    df = pd.DataFrame()
+
+    for var in ds:
+        data = ds[var].data
+
+        if hasattr(data, 'chunks'):
+            len_graph = len(data.__dask_graph__())
+            nchunks = math.prod([len(x) for x in data.chunks])
+            df = pd.concat(
+                [
+                    df,
+                    pd.DataFrame(
+                        {
+                            "var": [var],
+                            "graph_len": [len_graph],
+                            "n_chunks": [nchunks],
+                            "per_chunk": [len_graph / nchunks],
+                        }
+                    ),
+                ]
+            )
+        else:
+            pass
+    
+    return df
