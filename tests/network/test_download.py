@@ -1,5 +1,5 @@
 from tempfile import TemporaryDirectory
-from core.download.download import *
+from core.network.download import download_nextcloud
 
 
 def test_download_nextcloud():

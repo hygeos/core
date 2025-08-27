@@ -6,7 +6,7 @@ import fnmatch
 
 from tqdm import tqdm
 from core.files.fileutils import filegen
-from core.download.auth import get_auth
+from core.network.auth import get_auth
 
 
 def get_auth_ftp(name) -> Dict:
