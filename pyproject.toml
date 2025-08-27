@@ -22,7 +22,7 @@ default = { features = ["hyp", "sys"], solve-group = "default" }
 
 [tool.pixi.tasks]
 tests = "pytest tests"
-build_docs = "sphinx-build -b html /tmp/tmpb5vx_75v/source /tmp/tmpb5vx_75v/build -q"
+build_docs = "sphinx-build -b html docs/source docs/build"
 
 [tool.pixi.pypi-dependencies]
 core = { path = ".", editable = true }

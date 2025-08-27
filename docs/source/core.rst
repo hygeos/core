@@ -10,11 +10,19 @@ Subpackages
    core.download
    core.files
    core.geo
-   core.math
+   core.monitor
    core.static
    core.tests
 
 ----------
+
+core.ascii\_table
+------------------------
+
+.. automodule:: core.ascii_table
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 core.config
 ------------------
@@ -56,6 +64,22 @@ core.env
    :show-inheritance:
    :undoc-members:
 
+core.fuzzy
+-----------------
+
+.. automodule:: core.fuzzy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.interpolate
+-----------------------
+
+.. automodule:: core.interpolate
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 core.log
 ---------------
 
@@ -76,6 +100,14 @@ core.monitor
 -------------------
 
 .. automodule:: core.monitor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.pseudoinverse
+-------------------------
+
+.. automodule:: core.pseudoinverse
    :members:
    :show-inheritance:
    :undoc-members:
