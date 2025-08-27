@@ -1,4 +1,4 @@
-from core.masks import *
+from core.masks import gen_bitmask, explicit_bitmask
 from numpy import random
 
 import xarray as xr
