@@ -37,8 +37,8 @@ def test_duplicate():
     
 
 def test_free():
-    @singleton
     
+    @singleton
     class Object:
         def __init__(self):
             self.ok = "OK"

@@ -13,11 +13,12 @@ import getpass
 from pathlib import Path
 from functools import wraps
 from zipfile import ZipFile
-from datetime import datetime, timedelta
+from datetime import datetime
 from tempfile import TemporaryDirectory, gettempdir, mkdtemp
+from core.dates import duration, now_isofmt
 
 from core import log
-from core.lock import LockFile
+from core.files.lock import LockFile
 
 class ErrorUncompressed(Exception):
     """
@@ -146,41 +147,30 @@ def uncompress(filename,
             lst = list(Path(tmpdir).glob('*'))
             if len(lst) == 1:
                 target_tmp = lst[0]
+                target = Path(dirname)/target_tmp.name
+                if dirname.name != target_tmp.name: #First folder is not the same as the target
+                    shutil.move(target_tmp, target)
+                else:
+                    lst = list(Path(target_tmp).glob('*'))
+                    if len(lst) <= 0:
+                        raise ValueError(f'First folder {target_tmp.name} is the same as the target {dirname.name} and contains no files or folders : {lst}')
+                    for tmp in lst:
+                        target = Path(dirname)/tmp.name
+                        shutil.move(tmp, target)
             else:
-                target_tmp = Path(tmpdir)
-                target = Path(dirname)/filename.stem
+                target_tmp = lst
+                for tmp in target_tmp:
+                    target = Path(dirname)/tmp.name
+                    shutil.move(tmp, target)
 
-        # determine target
         if target is None:
             target = Path(dirname)/target_tmp.name
-        assert not target.exists(), f'Error, {target} exists.'
-
-        # move temporary to destination
-        shutil.move(target_tmp, target)
-
+            assert not target.exists(), f'Target {target} already exists.'
+            shutil.move(target_tmp, target)
+        
     assert target.exists()
 
-    return target
-
-
-def now_isofmt():
-    """
-    Returns now in iso format
-    """
-    return datetime.now().isoformat()
-
-def duration(s):
-    """
-    Returns a timedelta from a string `s`
-    """
-    if s.endswith('w'):
-        return timedelta(weeks=float(s[:-1]))
-    elif s.endswith('d'):
-        return timedelta(days=float(s[:-1]))
-    elif s.endswith('h'):
-        return timedelta(hours=float(s[:-1]))
-    else:
-        raise Exception(f'Can not convert "{s}"')
+    return Path(dirname)
 
 
 class CacheDir:

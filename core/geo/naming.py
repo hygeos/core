@@ -30,45 +30,51 @@ class _name(object):
         return self.name
     
 class names:
-    rows      = _name("y", "Vertical dimension of rasters", "pixels")
-    columns   = _name("x", "Horizontal dimension of rasters", "pixels")
-    lon       = _name("longitude", "Horizontal earth coordinate axis", "Degrees", -180, 180, 'float32')
-    lat       = _name("latitude", "Vertical earth coordinate axis", "Degrees", -90, 90, 'float32')
+    
+    # Dimensions
+    rows        = _name("y", "Vertical dimension of rasters", "pixels")
+    columns     = _name("x", "Horizontal dimension of rasters", "pixels")
+    lon         = _name("longitude", "Horizontal earth coordinate axis", "Degrees", -180, 180, 'float32')
+    lat         = _name("latitude", "Vertical earth coordinate axis", "Degrees", -90, 90, 'float32')
 
-    bands    = _name("bands", "Visible spectral dimension of the acquisition", None)
-    bands_ir = _name("bands_ir", "Infrared spectral dimension of the acquisition", None)
+    bands       = _name("bands", "spectral dimension of the acquisition", None)
+    bands_nvis  = _name("bands_nvis", "Visible spectral dimension of the acquisition", None)
+    bands_ir    = _name("bands_ir", "Infrared spectral dimension of the acquisition", None)
+    bnames      = _name("bandnames", "Name of bands", None)
+    detector    = _name("detectors", "Index of detector", None)
     
     # Radiometry 
-    rtoa     = _name("Rtoa", "Top of Atmosphere reflectance", None, dtype='float32')
-    ltoa     = _name("Ltoa", "Top of Atmosphere radiance", "W.m-2.sr-1")               
-    ltoa_ir  = _name("Ltoa_ir", "Top of Atmosphere radiance in infrared", "W.m-2.sr-1")
-    
-    bt       = _name("BT", "Brightness Temperature", "K", minv=0)
-    rho_w    = _name("rho_w", "Water Reflectance", None)
-    wav      = _name("wav", "Effective wavelength", "nm") 
+    rtoa        = _name("Rtoa", "Top of Atmosphere reflectance", None, dtype='float32')
+    ltoa        = _name("Ltoa", "Top of Atmosphere radiance", "W.m-2.sr-1")            
+    bt          = _name("BT", "Brightness Temperature", "K", minv=0)
+    rho_w       = _name("rho_w", "Water Reflectance", None)
 
-    wav_ir   = _name("wav_ir", "Effective wavelength in infrared", "nm")
-    cwav     = _name("cwav", "Central (nominal) wavelength", "nm")
+    wav         = _name("wav", "Effective wavelength", "nm") 
+    cwav        = _name("cwav", "Central (nominal) wavelength", "nm")
 
-    F0       = _name("F0", "Solar flux irradiance", "W.m-2.sr-1")
+    F0          = _name("F0", "Solar flux irradiance", "W.m-2.sr-1")
     
-    # TODO CHECK min and max values ! (call François)
+    # Angles 
     sza = _name("sza", "Sun zenith angle",       "Degrees", minv=   0, maxv= 90, dtype='float32')
     vza = _name("vza", "View zenith angle",      "Degrees", minv=   0, maxv= 90, dtype='float32')
     saa = _name("saa", "Sun azimuth angle",      "Degrees", minv=   0, maxv=180, dtype='float32')
     vaa = _name("vaa", "View azimuth angle",     "Degrees", minv=   0, maxv=180, dtype='float32')
     raa = _name("raa", "Relative azimuth angle", "Degrees", minv=-180, maxv=180, dtype='float32')
+    mus = _name("mus", "Cosine of the sun zenith angle",  None, dtype='float32')
+    muv = _name("muv", "Cosine of the view zenith angle", None, dtype='float32')
     
     # Flags
-    flags = _name("flags", "Bitmask describing the pixel data", None, dtype='uint16')
-
+    flags   = _name("flags", "Bitmask describing the pixel data", None, dtype='uint16')
+    quality = _name("quality", "Boolean mask describing the pixel quality", None, dtype=bool)
+    
     # Attributes
     crs             = _name("crs", "Projection")
+    unit            = _name("unit")
     datetime        = _name("datetime")
     platform        = _name("platform")
     sensor          = _name("sensor")
     shortname       = _name("shortname")
-    resolution      = _name("resolution")
+    resolution      = _name("resolution", "Resolution in meter")
     description     = _name("description")
     product_name    = _name("product_name")
     input_directory = _name("input_directory")

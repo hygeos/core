@@ -1,6 +1,6 @@
 import pytest
 
-from core.static.Exceptions import *
+from core.static.Exceptions import ClassIsAbstract, MethodIsAbstract
 from core.static import abstract
 
 

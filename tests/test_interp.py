@@ -1,6 +1,6 @@
 try:
     from matplotlib import pyplot as plt
-except:
+except ImportError:
     pass
 import numpy as np
 import pytest
@@ -20,12 +20,12 @@ from core.interpolate import (
 )
 try:
     from luts import luts 
-except:
+except ImportError:
     pass
 
-from core import conftest
+from core.tests import conftest
 import xarray as xr
-from core.pytest_utils import parametrize_dict
+from core.tests.pytest_utils import parametrize_dict
 
 
 list_interp_functions = {

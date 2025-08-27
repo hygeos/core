@@ -1,6 +1,6 @@
 from inspect import isclass
 
-from .Exceptions import *
+from .Exceptions import WrongUsage
 
 import weakref
 

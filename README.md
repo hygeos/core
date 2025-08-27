@@ -7,8 +7,8 @@ A collection of common procedures for generic programming purposes
 
 To install or update this module from github in your current python environment, use the following command:
 
-    pip install --no-deps --no-cache-dir git+https://github.com/hygeos/core.git
+    pip install --no-cache-dir git+https://github.com/hygeos/core.git
 
 To install it from a cloned folder, in editable mode:
 
-    pip install --no-deps -e <dir/to/core/>
+    pip install -e <dir/to/core/>

@@ -22,7 +22,7 @@ except ImportError:
 from collections import OrderedDict
 from dateutil.parser import parse
 
-from core.naming import names
+from core.geo.naming import names
 from core import log
 
 
@@ -93,6 +93,10 @@ def locate(lat, lon, lat0, lon0,
 
     return [x[0] for x in np.where(dist == dist_min)]
 
+
+def drop_unused_dims(ds): 
+    """Simple function to remove unused dimensions in a xarray.Dataset"""
+    return ds.drop_vars([var for var in ds.coords if var not in ds.dims])
 
 def contains(ds: xr.Dataset, lat: float, lon: float):
     pt = Point(lat, lon)
@@ -503,10 +507,10 @@ def trim_dims(A: xr.Dataset):
     groups = []
     
     # loop over all dimensions sizes
-    for size in set(A.dims.values()):
+    for size in set(A.sizes.values()):
         # list all dimensions with current size
         groups_current = []
-        dims_current = [k for k, v in A.dims.items()
+        dims_current = [k for k, v in A.sizes.items()
                         if v == size]
 
         # for each variable, add its dimensions (intersecting dims_current)

@@ -2,7 +2,7 @@
 import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from core.fileutils import LockFile, filegen, get_git_commit, mdir
+from core.files.fileutils import LockFile, filegen, get_git_commit, mdir
 
 
 def test_lockfile():

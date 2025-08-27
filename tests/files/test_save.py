@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from core.save import to_netcdf
+from core.files.save import to_netcdf
 import xarray as xr
 
 

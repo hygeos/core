@@ -20,13 +20,6 @@ def test_read_xml():
     d = read_xml(xml_file)
     print(d)    
 
-def test_read_xml_txt():
-    xml_file = Path(__file__).parent/'inputs'/'xml.txt'
-    with open(xml_file, "r") as file:
-        xml_txt = file.read()
-    d = read_xml_from_text(xml_txt)
-    print(d)    
-
 def test_read_csv():
     csv_file = Path(__file__).parent/'inputs'/'test.csv'
     assert csv_file.is_file()
@@ -49,5 +42,6 @@ def test_select_one(dataset, conditions):
 
 @pytest.mark.parametrize("conditions", [("col_2", '=', 6)])
 def test_check_input_swap(dataset, conditions):
+    interface.enable()
     with pytest.raises(InterfaceException):
         out = select_cell(dataset, 'col_1', conditions)

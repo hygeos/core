@@ -124,4 +124,3 @@ def gen_prefect_node(task, root=True, all_futures=None) -> PrefectFuture | None:
         future.wait()
     
     return future
-
