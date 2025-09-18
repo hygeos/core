@@ -60,3 +60,12 @@ def duration(s):
         return timedelta(hours=float(s[:-1]))
     else:
         raise Exception(f'Can not convert "{s}"')
+
+def get_month_range(year: int, month: int):
+    """
+    Returns a couple of date corresponding to start and end of the month 
+    """
+    assert month <= 12, f'Invalid month, got {month}'
+    start = date(year, month, 1)
+    next_month = date(year+1,1,1) if month==12 else date(year,month+1,1)
+    return start, next_month-timedelta(1)
