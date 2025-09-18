@@ -39,9 +39,3 @@ def test_select(dataset, conditions, cols):
 def test_select_one(dataset, conditions):
     out = select_cell(dataset, col='col_1', where=conditions)
     assert isinstance(out, np.int64)
-
-@pytest.mark.parametrize("conditions", [("col_2", '=', 6)])
-def test_check_input_swap(dataset, conditions):
-    interface.enable()
-    with pytest.raises(InterfaceException):
-        out = select_cell(dataset, 'col_1', conditions)

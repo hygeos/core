@@ -1,6 +1,4 @@
-from xml.etree import ElementTree as ET
 from lxml import objectify
-from core.static import interface
 from pathlib import Path
 import pandas as pd
 
@@ -37,7 +35,6 @@ def read_csv(path: str|Path, **kwargs) -> pd.DataFrame:
     df.columns = [c.strip() for c in df.columns]
     return df
 
-@interface
 def select(table, where:tuple, cols:str|list = None):
     """
     Selection function in a pandas DataFrame with a condition 
@@ -57,7 +54,6 @@ def select(table, where:tuple, cols:str|list = None):
         result = result[cols]
     return result
 
-@interface
 def select_cell(table, where:tuple, col:str):
     """
     Function for selecting a single cell value in a pandas DataFrame with a condition
