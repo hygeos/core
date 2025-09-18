@@ -1,11 +1,11 @@
 from core.geo.naming import names
 from typing import Literal
 
+import dask.array as da 
 import xarray as xr
-import numpy as np 
 
 
-def convert_latlon_2D(lat: xr.DataArray, lon: xr.DataArray):
+def convert_latlon_2D(lat: da.array, lon: da.array) -> tuple:
     """
     Convert latitude and longitude vectors into 2D representation
     """
@@ -15,13 +15,7 @@ def convert_latlon_2D(lat: xr.DataArray, lon: xr.DataArray):
     assert len(lat_size) == 1 and len(lon_size) == 1, \
     "Latitude and longitude should be 1-dimensional"
     
-    size = (lat_size[0], lon_size[0])
-    new_lat = lat[:,np.newaxis]
-    new_lon = lon[:,np.newaxis]
-    new_lat = np.repeat(new_lat, size[1], axis=1)
-    new_lon = np.repeat(new_lon, size[0], axis=1)
-    
-    return new_lat, new_lon.T
+    return da.meshgrid(lon, lat)
 
 def center_longitude(ds: xr.Dataset, center: Literal[0, 180]=0, lon_name: str=names.lon.name):
     """
