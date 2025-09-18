@@ -4,13 +4,12 @@
 # third party imports
         
 # sub package imports
-from core.static import interface
+
 from core.log import check
 
 
 class _name(object):
     
-    @interface
     def __init__(self, 
                  name: str, 
                  desc: str = None, 

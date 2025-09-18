@@ -1,7 +1,11 @@
+from core.geo.naming import names
+from typing import Literal
+
+import xarray as xr
 import numpy as np 
 
 
-def convert_latlon(lat, lon):
+def convert_latlon_2D(lat: xr.DataArray, lon: xr.DataArray):
     """
     Convert latitude and longitude vectors into 2D representation
     """
@@ -18,3 +22,21 @@ def convert_latlon(lat, lon):
     new_lon = np.repeat(new_lon, size[0], axis=1)
     
     return new_lat, new_lon.T
+
+def center_longitude(ds: xr.Dataset, center: Literal[0, 180]=0, lon_name: str=names.lon.name):
+    """
+    Center longitudes from [0, 360] to [-180, 180] or from [-180, 180] to [0, 360]
+    """
+    
+    assert (center == 0.0) or (center == 180.0)
+    
+    lon = None
+    if center == 0.0:
+        lon = (ds[lon_name].values + 180) % 360 - 180
+    elif center == 180.0:
+        lon = (ds[lon_name].values) % 360
+    
+    ds = ds.assign_coords({lon_name:lon})
+    ds = ds.sortby(lon_name)
+    
+    return ds
