@@ -16,8 +16,6 @@ import warnings
 
 # third party imports
 import sys
-if 'ipykernel' in sys.modules: from tqdm.notebook import tqdm
-else: from tqdm import tqdm
         
 # sub package imports
 from core import env
@@ -25,6 +23,9 @@ from string import Template
 import os
 
 import logging
+
+from core import progressbar as _pbar_module
+from core.progressbar import progressbar as pbar
 
 class config:
     show_color = True
@@ -85,7 +86,7 @@ class _internal:
     min_global_level = lvl.DEBUG
     blacklist = {}
     
-    prefix = env.getvar("HYGEOS_LOG_PREFIX", default="%level %time")
+    prefix = env.getvar("HYGEOS_LOG_PREFIX", default="%icon %time")
     
     # configure default logger for core.log
     logger = logging.getLogger("hygeos.core")
@@ -139,6 +140,10 @@ class _internal:
         log with selected lvl
         """
         
+        # if a progress bar is active, reset screen before printing
+        if _pbar_module.msg_stack.stack:
+            _pbar_module.msg_stack.reset_screen()
+        
         # get calling module full name
         frame  = inspect.currentframe().f_back.f_back
         mod    = inspect.getmodule(frame)
@@ -162,6 +167,10 @@ class _internal:
         output_function = getattr(_internal.logger, (lvl.name).lower())
         output_function(message)
         
+        # if a progress bar is active, reprint it after the message
+        if _pbar_module.msg_stack.stack:
+            _pbar_module.msg_stack.update_and_print_stack()
+        
     
     def _loading_bar(**kwargs):
         frame  = inspect.currentframe().f_back.f_back
@@ -183,22 +192,6 @@ class _internal:
 # filters = ...
 def set_lvl(lvl: lvl):
     _internal.min_global_level = lvl
-
-    
-#interface tqdm please go to https://tqdm.github.io/docs/tqdm/ for documentation
-def pbar(lvl: lvl = lvl.INFO, iterable=None, desc=None, total=None, leave=True, 
-        ncols=None, mininterval=0.1, maxinterval=10.0, miniters=None,
-        ascii=None, disable=False, unit='it', unit_scale=False,
-        dynamic_ncols=False, smoothing=0.3, initial=0, file=None,
-        position=None, postfix=None, unit_divisor=1000, write_bytes=False,
-        lock_args=None, nrows=None, colour=None, delay=0, gui=False,
-        **kwargs):
-    """
-    log a progress bar such as tqdm
-    Args: All arguments are those from tqdm (cf. https://tqdm.github.io/docs/tqdm/)
-    """
-    
-    return _internal._loading_bar(**locals())
 
 
 def silence(module, lvl_and_below : lvl = lvl.ERROR):  # blacklist only below certain level ? e.g Log.silence("core.filegen", bellow_level=lvl.ERROR)

@@ -42,6 +42,7 @@ toml = "*"
 matplotlib-base = "*"
 lxml = "*"
 sphinx = "*"
+ipykernel = "*"
 
 [tool.pixi.feature.hyp.dependencies]
 [tool.pixi.feature.sys.dependencies]
