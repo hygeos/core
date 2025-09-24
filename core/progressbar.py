@@ -220,15 +220,29 @@ class progressbar:
         """
         Generate an ASCII progress bar string.
         - nchars: Length of the progress bar in characters.
-        - bar_style: Style of the progress bar.
-        - border_style: Style of the border around the progress bar.
-        - loading_style: Style of the loading animation.
+        - bar_style: any of:
+            - square_dot  : [■■■···]
+            - square_void : [■■■   ]
+            - block_void  : [███░  ]
+            - block_dot   : [███···]
+            - hash_dash   : [###---]
+            - hash_void   : [###   ]
+            - equal_void  : [===   ]
+        - border_style: any of:
+            - brackets : [bar]
+            - pipes    : |bar|
+            - none     : bar
+        - loading_style: any of:
+            - dots  : ⣠
+            - vbar  : ▁▂▃▄▅▆▇█
+            - moon  : 🌗
+            - earth : 🌍
         - fmt can contain:
-            %icon : loading animation
-            %pct     : percentage completed
-            %bar     : the progress bar itself
-            %itr     : current iteration / total iterations
-            %time    : elapsed time and estimated remaining time
+            - %icon : loading animation
+            - %pct     : percentage completed
+            - %bar     : the progress bar itself
+            - %itr     : current iteration / total iterations
+            - %time    : elapsed time and estimated remaining time
             
         - if any of the style parameters is None, it will try to get it from the env var HYGEOS_PBAR_STYLE
           which is a string like "fmt|bar_style|border_style|icon_style"
@@ -247,9 +261,9 @@ class progressbar:
         env_border_style  = parts[2] if parts[2] else None
         env_icon_style    = parts[3] if parts[3] else None
         
-        default_fmt = "%icon %pct %bar %itr %time"
+        default_fmt = "%itr %icon %pct %bar %time"
         default_bar_style = "square_dot"
-        default_border_style = "brackets"
+        default_border_style = "none"
         default_icon_style = "dots"
         
         # Apply priority: params > env > default
