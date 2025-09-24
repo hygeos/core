@@ -70,6 +70,7 @@ class msg_stack:
         
         if len(msg_stack.stack) == 1 and msg_stack.stack[0].finished: 
             msg_stack.reset_screen()
+            msg_stack.stack = []
             return
         
         meta_msg = ""
