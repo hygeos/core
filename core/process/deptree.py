@@ -11,20 +11,41 @@ from core import log
 
 class Task:
     """
-    Base class for tasks, which defines its dependencies and can be generated with the
-    `gen` function.
+    Base class for tasks implementing a dependency tree structure for execution workflow.
 
-    Should typically hold an attribute `output` for storing the task output,
-    if any (optional).
+    This class provides the foundation for creating tasks that can be organized in a
+    dependency graph and executed in the correct order. Tasks can be generated and run
+    using the `gen` function with different execution modes (sync, executor, or prefect).
 
-    Check the `sample` function which gives an example of Task definition.
+    Attributes:
+        output: Optional attribute for storing the task's output path or result.
+        deps: Optional list of Task instances that this task depends on.
+
+    Methods:
+        dependencies(): Returns the list of dependent tasks. The default implementation
+            returns the `deps` attribute, if it exists.
+        run(): Implements the actual execution code
+        done(): Checks if the task is completed. The default implementation checks if
+            the `output` Path exists, if defined.
+
+    Usage:
+        Subclass Task and implement at minimum:
+        - The `run()` method with your task's execution logic
+        - Optionally override `dependencies()` if your task has dependencies
+        - Set `output` attribute if your task produces output files
+
+    Example:
+        See the `sample` function for a complete example of Task definition and usage.
     """
 
     def dependencies(self) -> list:
         """
         Returns a list of dependencies, each being a `Task`.
         """
-        return []
+        if hasattr(self, "deps"):
+            return getattr(self, "deps")
+        else:
+            return []
 
     def run(self):
         """
@@ -173,7 +194,7 @@ class TaskList(Task):
         """
         Construct a Task that depends on a list of dependencies (other tasks)
 
-        Ex: List([MyTask1(), MyTask2()])
+        Ex: TaskList([MyTask1(), MyTask2()])
         depends on [
             MyTask1(),
             MyTask2(),
@@ -194,7 +215,7 @@ class TaskProduct(Task):
 
         cls: a class that inherits from Task
 
-        Ex: Product(MyTask, {
+        Ex: TaskProduct(MyTask, {
             'a': [1, 2],
             'b': [3, 4],
         })
