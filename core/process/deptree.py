@@ -5,6 +5,7 @@ from sys import argv
 from time import sleep
 from typing import Literal
 
+from core.interpolate import product_dict
 from core import log
 
 
@@ -165,6 +166,54 @@ def gen_executor(
         if verbose:
             log.info(f"Generating {task}...")
         return future.result()
+
+
+class TaskList(Task):
+    def __init__(self, deps: list):
+        """
+        Construct a Task that depends on a list of dependencies (other tasks)
+
+        Ex: List([MyTask1(), MyTask2()])
+        depends on [
+            MyTask1(),
+            MyTask2(),
+        ]
+        """
+        self.deps = deps
+
+    def dependencies(self):
+        return self.deps
+
+
+class TaskProduct(Task):
+    def __init__(self, cls, others={}, **kwargs):
+        """
+        Construct a Task that depends on the cartesian product of
+        the given arguments.
+        The `other` arguments are passed directly to the class.
+
+        cls: a class that inherits from Task
+
+        Ex: Product(MyTask, {
+            'a': [1, 2],
+            'b': [3, 4],
+        })
+        depends on [
+            MyTask(a=1, b=3),
+            MyTask(a=1, b=4),
+            MyTask(a=2, b=3),
+            MyTask(a=2, b=4),
+        ]
+        """
+        self.cls = cls
+        for k, v in kwargs.items():
+            assert isinstance(v, list)
+            assert k not in others
+        self.kwargs = kwargs
+        self.others = others
+
+    def dependencies(self):
+        return [self.cls(**d, **self.others) for d in product_dict(**self.kwargs)]
 
 
 def sample():
