@@ -7,7 +7,7 @@ authors = [
     {name = "Joackim Orcière", email = "joackim.orciere@hygeos.com"},
     {name = "Nathan Capon", email = "nathan.capon@hygeos.com"}
 ]
-dependencies = ["tqdm", "xarray", "dask", "scipy", "h5netcdf", "python-dotenv", "toml", "lxml"]
+dependencies = ["tqdm", "xarray", "dask", "scipy", "h5netcdf", "python-dotenv", "toml", "lxml", "ipywidgets"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -43,6 +43,7 @@ matplotlib-base = "*"
 lxml = "*"
 sphinx = "*"
 ipykernel = "*"
+ipywidgets = "*"
 
 [tool.pixi.feature.hyp.dependencies]
 [tool.pixi.feature.sys.dependencies]

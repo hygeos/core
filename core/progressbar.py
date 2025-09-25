@@ -6,6 +6,14 @@ from core import log
 from core import env
 import shutil
 
+# Add IPython support for notebooks
+try:
+    from IPython.display import clear_output
+    from IPython import get_ipython
+    HAS_IPYTHON = True
+except ImportError:
+    HAS_IPYTHON = False
+
 
 
 class _utils:
@@ -13,6 +21,16 @@ class _utils:
     def get_terminal_width():
         size = shutil.get_terminal_size((80, 20))
         return size.columns
+    
+    def inside_notebook():
+        """Detect if we're running in a Jupyter notebook"""
+        if not HAS_IPYTHON:
+            return False
+        try:
+            shell = get_ipython().__class__.__name__
+            return shell == 'ZMQInteractiveShell'  # Jupyter notebook
+        except (NameError, AttributeError):
+            return False
         
 
 class msg_stack:

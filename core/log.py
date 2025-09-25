@@ -31,18 +31,19 @@ class config:
 
 class _color:
     default = '\033[0m'
-    silenced = False
     
     def __init__(self, value):
         self.string = value
 
     def __str__(self):
-        return self.string if config.show_color else ""
+        return self.string if config.show_color == False else ""
     
     def __call__(self, string):
         """
         boxes the provided string with its color, and reset to default afterward
         """
+        if config.show_color == False:
+            return str(string)
         return self.string + str(string) + _color.default
 
 class rgb:
