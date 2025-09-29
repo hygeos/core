@@ -45,6 +45,12 @@ def ftp_download(ftp: FTP,
 
     The file name on the server is determined by `file_local.name`
 
+    Example:
+        ftp = FTP(**get_auth_ftp('my_server'))
+        local_file = Path('./data.txt')
+        ftp_download(ftp, local_file, '/remote/folder')
+        ftp.quit()
+
     Refs:
         https://stackoverflow.com/questions/19692739/
         https://stackoverflow.com/questions/73534659/
