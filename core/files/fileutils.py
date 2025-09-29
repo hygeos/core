@@ -253,7 +253,6 @@ class filegen:
 
                     if self.uncompress:
                         uncompressed = uncomp(tfile, Path(tmpd))
-                        tfile.unlink() # Remove archive
                         safe_move(uncompressed, ofile)
                     else:
                         safe_move(tfile, ofile)

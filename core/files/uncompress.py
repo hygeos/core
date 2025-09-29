@@ -145,10 +145,12 @@ def uncompress(filename,
         target = None
         if target_tmp is None:
             lst = list(Path(tmpdir).glob('*'))
+            
+            # Specific behavior if uncompressed folder contains only one file or folder
             if len(lst) == 1:
                 target_tmp = lst[0]
                 target = Path(dirname)/target_tmp.name
-                if dirname.name != target_tmp.name: #First folder is not the same as the target
+                if dirname.name != target_tmp.name: # First folder is not the same as the target
                     shutil.move(target_tmp, target)
                 else:
                     lst = list(Path(target_tmp).glob('*'))
@@ -162,16 +164,16 @@ def uncompress(filename,
                 for tmp in target_tmp:
                     target = Path(dirname)/tmp.name
                     shutil.move(tmp, target)
+                return Path(dirname)
 
         if target is None:
             target = Path(dirname)/target_tmp.name
             assert not target.exists(), f'Target {target} already exists.'
             shutil.move(target_tmp, target)
-        
+    
     assert target.exists()
-
-    return Path(dirname)
-
+    return target
+        
 
 class CacheDir:
     """

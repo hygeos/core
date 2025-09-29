@@ -10,7 +10,6 @@
 from datetime import datetime
 from enum import Enum
 from typing import Literal
-from tqdm import tqdm
 import inspect
 import warnings
 
@@ -170,18 +169,6 @@ class _internal:
         # if a progress bar is active, reprint it after the message
         if _pbar_module.msg_stack.stack:
             _pbar_module.msg_stack.update_and_print_stack()
-        
-    
-    def _loading_bar(**kwargs):
-        frame  = inspect.currentframe().f_back.f_back
-        mod = inspect.getmodule(frame)
-        
-        lvl = kwargs.pop('lvl')
-        prefix = _internal.format_msg(lvl, '', mod)
-        # kwargs['bar_format'] = prefix+'{l_bar}{bar}{r_bar}'
-        kwargs['bar_format'] = '{l_bar}{bar}{r_bar}'
-        kwargs.pop('kwargs')
-        return tqdm(**kwargs)
     
     def concat_mess(*args):
         message = ""
