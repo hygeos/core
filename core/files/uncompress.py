@@ -265,3 +265,46 @@ class CacheDir:
                     shutil.move(tmp_uncompressed, uncompressed)
         
         return Path(uncompressed)
+
+def get_compression_ext(f: str|Path):
+    """
+    Detect the compression format of a file using the system 'file' command.
+    
+    This function uses the Unix 'file' command to determine the compression format
+    of a file based on its content (magic numbers), not just its extension.
+    
+    Parameters:
+    -----------
+    f : str or Path
+        Path to the file to analyze
+        
+    Returns:
+    --------
+    str or None
+        The detected compression extension ('.zip', '.tar', '.tar.gz', '.tgz', 
+        '.gz', '.bz2', '.Z') or None if no compression is detected
+    """
+    # Use file module to deduce format
+    result = subprocess.run(['file', str(f)], capture_output=True, text=True)
+    file_type = result.stdout.lower()
+    
+    # Check for various compression formats based on file command output
+    if 'zip archive' in file_type: 
+        return '.zip'
+    if 'gzip compressed' in file_type:
+        # Check if it's a tar.gz by looking for tar content
+        if 'tar archive' in file_type or str(f).endswith(('.tar.gz', '.tgz')):
+            return '.tar.gz' if str(f).endswith('.tar.gz') else '.tgz'
+        return '.gz'
+    if 'bzip2 compressed' in file_type:
+        # Check if it's a tar.bz2
+        if 'tar archive' in file_type or str(f).endswith('.tar.bz2'):
+            return '.tar.bz2'
+        return '.bz2'
+    if 'compress\'d data' in file_type or 'unix compress' in file_type:
+        return '.Z'
+    if 'tar archive' in file_type:
+        return '.tar'
+    
+    # Return None if no compression is detected
+    return None
