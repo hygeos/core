@@ -6,7 +6,24 @@ from typing import Dict, Iterable, List, Literal, Callable
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
-from scipy.interpolate._rgi_cython import find_indices
+
+# from scipy.interpolate._rgi_cython import find_indices as scipy_find_indices
+
+try:
+    from numba import njit, jit, prange
+    from numba.typed import List
+    
+except ImportError:
+    # Numba is not available
+    # -> Replace all import by native Python alternive
+    
+    List = list
+    def njit(func: Callable) -> Callable: # no-op decorator
+        return func
+    def jit(func: Callable) -> Callable: # no-op decorator
+        return func
+    prange = range
+
 
 
 def interp(da: xr.DataArray, **kwargs):
@@ -152,6 +169,65 @@ def interp_block(
     return ret
 
 
+@jit(nopython=True, parallel=True)
+def find_indices(grid, xi) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Multi-dimensional grid interpolation preprocessing.
+    
+    Args:
+        grid: Tuple of 1D arrays defining grid coordinates for each dimension
+        xi: 2D array where each row represents a dimension and each column a query point
+        
+    Returns:
+        indices: Grid interval indices for each query point in each dimension
+        distances: Normalized distances within each interval
+    """
+    n_dims, n_points = xi.shape
+    
+    # Use np.intp for indices and np.float64 for distances
+    indices = np.empty((n_dims, n_points), dtype=np.intp)
+    distances = np.empty((n_dims, n_points), dtype=np.float32)
+    
+    # NOTE: changing the parallelization strategy could improve performance
+    for dim in prange(n_dims):  # parallel over dimensions
+        coordinates = grid[dim]
+        coord_size = len(coordinates)
+        
+        # Handle length-1 grid special case
+        if coord_size == 1:
+            for j in range(n_points):
+                indices[dim, j] = -1  # Special hack value for downstream processing
+                distances[dim, j] = 0.0
+            continue # exit ealy
+            
+        # Process each point in this dimension
+        for j in range(n_points):
+            value = xi[dim, j]
+            
+            # Handle NaN values
+            if value != value:  # NaN check (numba compatible)
+                indices[dim, j] = 0  # Safe fallback index
+                distances[dim, j] = np.nan
+                continue
+                
+            # Find interval using searchsorted
+            index = np.searchsorted(coordinates, value, side="left") - 1
+            
+            # Handle extrapolation by bringing index back to valid bounds
+            if index < 0:
+                index = 0
+            elif index >= coord_size - 1:
+                index = coord_size - 2
+                
+            indices[dim, j] = index
+            
+            # Calculate normalized distance within interval
+            left_val = coordinates[index]
+            right_val = coordinates[index + 1]
+            distances[dim, j] = (value - left_val) / (right_val - left_val)
+    
+    return (indices, distances)
+
 class Locator:
     """
     The purpose of these classes is to locate values in coordinate axes.
@@ -258,6 +334,9 @@ class Locator_Regular(Locator):
             )
     
     def locate_index_weight(self, values):
+        """
+        Optimized version of locate_index_weight for regular grid coords
+        """
         if self.inversion_func is not None:
             values = self.inversion_func(values)
 
@@ -525,6 +604,9 @@ class Linear_Indexer:
             spacing=self.spacing,
             period=period,
         )
+        
+        print(self.locator)
+        
 
     def __call__(self, values: NDArray) -> List:
         """
@@ -631,10 +713,10 @@ class Nearest_Indexer:
         idx = idx.clip(0, len(coords) - 1)
 
         # distance to the inf/sup bounds
-        dist_inf = np.abs(mvalues - coords[idx-1]) # EDGE CASE TO BE HANDLED ? [idx = 0]
+        dist_inf = np.abs(mvalues - coords[idx-1]) # NOTE: EDGE CASE TO BE HANDLED ? [idx = 0]
         dist_sup = np.abs(coords[idx] - mvalues)
         
-        #EDGE CASE HANDLING ?
+        # NOTE: EDGE CASE HANDLING ?
         mask_idx_neg = (idx -1) < 0
 
         dist_inf = np.where(mask_idx_neg, dist_sup + 1, dist_inf)
