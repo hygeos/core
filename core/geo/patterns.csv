@@ -20,4 +20,5 @@ SPOT-2,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{versi
 SPOT-3,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT3-HR[VG][0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z]*, 
 SPOT-4,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT4-HRVIR[0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z]*, 
 SPOT-5,             {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, SPOT5-HR[VG][0-9]-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [0-9]{3}-[0-9]{3}-[0-9] [A-Z]*, 
-VENUS,              {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, VENUS-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [A-Z]* [A-Z] V[0-9-]*, eoread.venus Level_VENUS
+VENUS-VM5,          {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, VENUS-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [A-Z]* [A-Z] V5*, eoread.venus Level_VENUS
+VENUS,              {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, VENUS-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [A-Z]* [A-Z] V[1-4]*, eoread.venus Level_VENUS
