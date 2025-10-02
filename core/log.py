@@ -36,14 +36,14 @@ class _color:
         self.string = value
 
     def __str__(self):
-        return self.string if config.show_color == False else ""
+        if not config.show_color: return ""
+        return self.string
     
     def __call__(self, string):
         """
         boxes the provided string with its color, and reset to default afterward
         """
-        if config.show_color == False:
-            return str(string)
+        if config.show_color == False: return str(string)
         return self.string + str(string) + _color.default
 
 class rgb:
