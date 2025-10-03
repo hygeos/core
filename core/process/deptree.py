@@ -7,6 +7,8 @@ from typing import Literal
 
 from core.interpolate import product_dict
 from core import log
+from core.ascii_table import ascii_table
+import pandas as pd
 
 
 class Task:
@@ -20,6 +22,7 @@ class Task:
     Attributes:
         output: Optional attribute for storing the task's output path or result.
         deps: Optional list of Task instances that this task depends on.
+        status: Task execution status
 
     Methods:
         dependencies(): Returns the list of dependent tasks. The default implementation
@@ -105,12 +108,81 @@ def gen_sync(
         return task.run()
 
 
+def print_execution_summary(tasks: list):
+    """
+    Print a summary table showing count of tasks by status and class name.
+    
+    Args:
+        tasks: List of Task instances to summarize
+    """
+    print('')
+    print("=== EXECUTION SUMMARY ===")
+    
+    # Get unique statuses and classes directly from list comprehensions + set
+    all_statuses = sorted(set(getattr(task, 'status', 'unknown') for task in tasks))
+    all_classes = sorted(set(task.__class__.__name__ for task in tasks))
+    
+    if all_classes and all_statuses:
+        # Create DataFrame directly using double nested loop
+        columns = ['Class'] + all_statuses + ['Total']
+        
+        # Initialize DataFrame with the right shape
+        df = pd.DataFrame(index=range(len(all_classes) + 1), columns=columns)
+        
+        # Fill rows for each class
+        for i, class_name in enumerate(all_classes):
+            df.iloc[i, 0] = class_name  # Class column
+            class_total = 0
+            
+            for j, status in enumerate(all_statuses):
+                # Count directly from tasks list
+                count = sum(1 for task in tasks 
+                           if task.__class__.__name__ == class_name 
+                           and getattr(task, 'status', 'unknown') == status)
+                df.iloc[i, j + 1] = str(count) if count > 0 else ''
+                class_total += count
+            
+            df.iloc[i, -1] = str(class_total)  # Total column
+        
+        # Fill totals row
+        totals_row_idx = len(all_classes)
+        df.iloc[totals_row_idx, 0] = 'TOTAL'
+        grand_total = 0
+        
+        for j, status in enumerate(all_statuses):
+            # Count directly from tasks list
+            status_total = sum(1 for task in tasks 
+                             if getattr(task, 'status', 'unknown') == status)
+            df.iloc[totals_row_idx, j + 1] = str(status_total)
+            grand_total += status_total
+        
+        df.iloc[totals_row_idx, -1] = str(grand_total)
+        
+        # Replace NaN with empty strings
+        df = df.fillna('')
+        
+        print("\nTask Summary by Status and Class:")
+        ascii_table(df).print()
+    
+    # Count and display failed tasks
+    failed_tasks = [t for t in tasks if getattr(t, 'status', None) == 'error']
+    nfailed = 5  # number of displayed failed tasks
+    if failed_tasks:
+        print(f"\nFailed tasks ({len(failed_tasks)}):")
+        for t in failed_tasks[:nfailed]:
+            print(f"  - {t} with error {str(t.__class__)}")
+        if len(failed_tasks) > 5:
+            print("[...]")
+        print("=========================")
+
+
 def gen_executor(
     task: Task,
     executors: dict | None = None,
     default_executor=None,
     graph_executor=None,
     verbose: bool = False,
+    _tasks: list | None = None,
 ):
     """
     Recursively generate dependencies of `task`, then call its `run` method in a
@@ -124,6 +196,8 @@ def gen_executor(
         graph_executor: an instance of ThreadPoolExecutor used for traversing the
             dependency tree with the `gen` function. It is useful to override the
             default ThreadPoolExecutor(512) if the tree is too large.
+        _tasks: internal parameter to track of the tasks status and to provide an
+            execution summary.
 
     Example:
         from concurrent.futures import ThreadPoolExecutor
@@ -143,12 +217,21 @@ def gen_executor(
     # non-serializable code, and task can be serialized (for example by the dask
     # distributed executor).
 
+    is_root_call = _tasks is None
+    if _tasks is None:
+        _tasks = []
+
     if graph_executor is None:
         graph_executor = ThreadPoolExecutor(512)
     
     if default_executor is None:
         default_executor = ThreadPoolExecutor()
 
+    # Set initial status
+    if not hasattr(task, "status"):
+        setattr(task, "status", "pending")
+
+    _tasks.append(task)
     if not task.done():
         # run all dependencies on the graph executor
         deps = task.dependencies()
@@ -166,6 +249,7 @@ def gen_executor(
                 default_executor=default_executor,
                 graph_executor=graph_executor,
                 verbose = verbose,
+                _tasks=_tasks,
             )
             for d in deps
         ]
@@ -175,18 +259,41 @@ def gen_executor(
         for t in futures:
             t.result()
 
-        # get the executor for current `task`
-        clsname = task.__class__.__name__
-        if (executors is not None) and (clsname in executors):
-            executor = executors[clsname]
-        else:
-            executor = default_executor
+        # Check if any dependency has an error status
+        for dep in deps:
+            if dep.status in ["error", "canceled"]:
+                setattr(task, "status", "canceled")
+                if verbose:
+                    log.info(f"Task {task} canceled due to dependency error")
 
-        # execute `task.run` on this executor and wait for result
-        future = executor.submit(task.run)
-        if verbose:
-            log.info(f"Generating {task}...")
-        return future.result()
+        if getattr(task, "status") != "canceled":
+            # get the executor for current `task`
+            clsname = task.__class__.__name__
+            if (executors is not None) and (clsname in executors):
+                executor = executors[clsname]
+            else:
+                executor = default_executor
+
+            # execute `task.run` on this executor and wait for result
+            future = executor.submit(task.run)
+            if verbose:
+                log.info(f"Generating {task}...")
+            try:
+                result = future.result()
+                setattr(task, "status", "success")
+                if not is_root_call:
+                    return result
+            except Exception as e:
+                setattr(task, "status", "error")
+                if verbose:
+                    log.warning(f"Task {task.__class__} failed with error {str(e.__class__)}")
+    else:
+        # Task is already done, mark as skipped if no status set
+        if not hasattr(task, "status"):
+            setattr(task, "status", "skipped")
+    
+    if is_root_call and verbose:
+        print_execution_summary(_tasks)
 
 
 class TaskList(Task):
@@ -248,7 +355,7 @@ def sample():
         def run(self):
             log.info(f"Downloading level1 {self.id}")
             sleep(1)
-
+        
     class Level2(Task):
         def __init__(self, id, **kwargs):
             self.id = id
@@ -283,9 +390,9 @@ def sample():
 
 if __name__ == "__main__":
     """
-    python -m core.deptree sync
-    python -m core.deptree executor
-    python -m core.deptree prefect
+    python -m core.process.deptree sync
+    python -m core.process.deptree executor
+    python -m core.process.deptree prefect
     """
 
     composite = sample()
@@ -296,6 +403,7 @@ if __name__ == "__main__":
         gen_executor(
             composite,
             executors={"Level1": ThreadPoolExecutor(2)},
+            verbose=True,
             # default_executor=get_htcondor_client(),
         )
     else:
