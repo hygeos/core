@@ -1,0 +1,966 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.interpolate &mdash; core 1.0.28 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=b9bd3573"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            core
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.interpolate</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.interpolate</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Callable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+
+<span class="c1"># from scipy.interpolate._rgi_cython import find_indices as scipy_find_indices</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">numba</span><span class="w"> </span><span class="kn">import</span> <span class="n">njit</span><span class="p">,</span> <span class="n">jit</span><span class="p">,</span> <span class="n">prange</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">numba.typed</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+    
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="c1"># Numba is not available</span>
+    <span class="c1"># -&gt; Replace all import by native Python alternive</span>
+    
+    <span class="n">List</span> <span class="o">=</span> <span class="nb">list</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">njit</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span> <span class="c1"># no-op decorator</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">jit</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span> <span class="c1"># no-op decorator</span>
+        <span class="k">return</span> <span class="n">func</span>
+    <span class="n">prange</span> <span class="o">=</span> <span class="nb">range</span>
+
+
+
+<div class="viewcode-block" id="interp">
+<a class="viewcode-back" href="../../core.html#core.interpolate.interp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">interp</span><span class="p">(</span><span class="n">da</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpolate/select a DataArray onto new coordinates.</span>
+
+<span class="sd">    This function is similar to xr.interp and xr.sel, but:</span>
+<span class="sd">        - Supports dask-based coordinates inputs without triggering immediate</span>
+<span class="sd">          computation as is done by xr.interp</span>
+<span class="sd">        - Supports combinations of selection and interpolation. This is faster and more</span>
+<span class="sd">          memory efficient than performing independently the selection and interpolation.</span>
+<span class="sd">        - Supports pointwise indexing/interpolation using dask arrays</span>
+<span class="sd">          (see https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing)</span>
+<span class="sd">        - Supports per-dimension options (nearest neighbour selection, linear/spline</span>
+<span class="sd">          interpolation, out-of-bounds behaviour, cyclic dimensions...)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        da (xr.DataArray): The input DataArray</span>
+<span class="sd">        **kwargs: definition of the selection/interpolation coordinates for each</span>
+<span class="sd">            dimension, using the following classes:</span>
+<span class="sd">                - Linear: linear interpolation (like xr.DataArray.interp)</span>
+<span class="sd">                - Nearest: nearest neighbour selection (like xr.DataArray.sel)</span>
+<span class="sd">                - Index: integer index selection (like xr.DataArray.isel)</span>
+<span class="sd">            These classes store the coordinate data in their `.values` attribute and have</span>
+<span class="sd">            a `.get_indexer` method which returns an indexer for the passed coordinates.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; interp(</span>
+<span class="sd">        ...     data,  # input DataArray with dimensions (a, b, c)</span>
+<span class="sd">        ...     a = Linear(           # perform linear interpolation along dimension `a`</span>
+<span class="sd">        ...          a_values,        # `a_values` is a DataArray with dimension (x, y);</span>
+<span class="sd">        ...          bounds=&#39;clip&#39;),  # clip out-of-bounds values to the axis min/max.</span>
+<span class="sd">        ...     b = Nearest(b_values), # perform nearest neighbour selection along</span>
+<span class="sd">        ...                            # dimension `b`; `b_values` is a DataArray</span>
+<span class="sd">        ...                            # with dimension (x, y)</span>
+<span class="sd">        ... ) # returns a DataArray with dimensions (x, y, c)</span>
+<span class="sd">        No interpolation or selection is performed along dimension `c` thus it is</span>
+<span class="sd">        left as-is.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        xr.DataArray: DataArray on the new coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">chunks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">chunks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="p">),</span> <span class="s2">&quot;Input DataArray should not be dask-based&quot;</span>
+
+    <span class="c1"># merge all indexing DataArrays in a single Dataset</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+
+    <span class="c1"># get interpolators along all dimensions</span>
+    <span class="n">indexers</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">get_indexer</span><span class="p">(</span><span class="n">da</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># prevent common dimensions between da and the pointwise indexing dimensions</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+
+    <span class="c1"># transpose ds to get fixed dimension ordering</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">*</span><span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+    
+    <span class="n">out_dims</span> <span class="o">=</span> <span class="n">determine_output_dimensions</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">map_blocks</span><span class="p">(</span>
+        <span class="n">interp_block</span><span class="p">,</span>
+        <span class="n">ds</span><span class="p">,</span>
+        <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;da&quot;</span><span class="p">:</span> <span class="n">da</span><span class="p">,</span>
+            <span class="s2">&quot;out_dims&quot;</span><span class="p">:</span> <span class="n">out_dims</span><span class="p">,</span>
+            <span class="s2">&quot;indexers&quot;</span><span class="p">:</span> <span class="n">indexers</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">ret</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">attrs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+
+<div class="viewcode-block" id="product_dict">
+<a class="viewcode-back" href="../../core.html#core.interpolate.product_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">product_dict</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cartesian product of a dictionary of lists</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># https://stackoverflow.com/questions/5228158/</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">instance</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="interp_block">
+<a class="viewcode-back" href="../../core.html#core.interpolate.interp_block">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">interp_block</span><span class="p">(</span>
+    <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">da</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">out_dims</span><span class="p">,</span> <span class="n">indexers</span><span class="p">:</span> <span class="n">Dict</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function is called by map_blocks in function `interp`, and performs the</span>
+<span class="sd">    indexing and interpolation at the numpy level.</span>
+
+<span class="sd">    It relies on the indexers to perform index searching and weight calculation, and</span>
+<span class="sd">    performs a linear combination of the sub-arrays.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get broadcasted data from ds (all with the same number of dimensions)</span>
+    <span class="n">np_indexers</span> <span class="o">=</span> <span class="n">broadcast_numpy</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+    
+    <span class="c1"># get the shapes for broadcasting each weight against the output dimensions</span>
+    <span class="n">w_shape</span> <span class="o">=</span> <span class="n">broadcast_shapes</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">out_dims</span><span class="p">)</span>
+
+    <span class="c1"># apply index searching over all dimensions (ie, v(values))</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">indices_weights</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">(</span><span class="n">np_indexers</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">indexers</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">time_find_index</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+
+    <span class="c1"># cartesian product of the combination of lower and upper indices (in case of</span>
+    <span class="c1"># linear interpolation) for each dimension</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">data_values</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">for</span> <span class="n">iw</span> <span class="ow">in</span> <span class="n">product_dict</span><span class="p">(</span><span class="o">**</span><span class="n">indices_weights</span><span class="p">):</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="mi">1</span> <span class="k">if</span> <span class="n">iw</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">iw</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">w_shape</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">iw</span>
+        <span class="p">]</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">iw</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">iw</span> <span class="k">else</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">+=</span> <span class="n">data_values</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">keys</span><span class="p">)]</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">time_interp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+    
+    <span class="c1"># determine output coords</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">out_dims</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+            <span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+            <span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+
+    <span class="c1"># create output DataArray</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">result</span><span class="p">,</span>
+        <span class="n">dims</span><span class="o">=</span><span class="n">out_dims</span><span class="p">,</span>
+        <span class="n">coords</span><span class="o">=</span><span class="n">coords</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">ret</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;time_find_index&quot;</span><span class="p">:</span> <span class="n">time_find_index</span><span class="p">,</span>
+            <span class="s2">&quot;time_interp&quot;</span><span class="p">:</span> <span class="n">time_interp</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+
+<div class="viewcode-block" id="find_indices">
+<a class="viewcode-back" href="../../core.html#core.interpolate.find_indices">[docs]</a>
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_indices</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">xi</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Multi-dimensional grid interpolation preprocessing.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        grid: Tuple of 1D arrays defining grid coordinates for each dimension</span>
+<span class="sd">        xi: 2D array where each row represents a dimension and each column a query point</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        indices: Grid interval indices for each query point in each dimension</span>
+<span class="sd">        distances: Normalized distances within each interval</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_dims</span><span class="p">,</span> <span class="n">n_points</span> <span class="o">=</span> <span class="n">xi</span><span class="o">.</span><span class="n">shape</span>
+    
+    <span class="c1"># Use np.intp for indices and np.float64 for distances</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">n_points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">)</span>
+    <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">n_points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    
+    <span class="c1"># NOTE: changing the parallelization strategy could improve performance</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">prange</span><span class="p">(</span><span class="n">n_dims</span><span class="p">):</span>  <span class="c1"># parallel over dimensions</span>
+        <span class="n">coordinates</span> <span class="o">=</span> <span class="n">grid</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+        <span class="n">coord_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span>
+        
+        <span class="c1"># Handle length-1 grid special case</span>
+        <span class="k">if</span> <span class="n">coord_size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_points</span><span class="p">):</span>
+                <span class="n">indices</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>  <span class="c1"># Special hack value for downstream processing</span>
+                <span class="n">distances</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">continue</span> <span class="c1"># exit ealy</span>
+            
+        <span class="c1"># Process each point in this dimension</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_points</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">xi</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+            
+            <span class="c1"># Handle NaN values</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>  <span class="c1"># NaN check (numba compatible)</span>
+                <span class="n">indices</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Safe fallback index</span>
+                <span class="n">distances</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="k">continue</span>
+                
+            <span class="c1"># Find interval using searchsorted</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            
+            <span class="c1"># Handle extrapolation by bringing index back to valid bounds</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">elif</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="n">coord_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">coord_size</span> <span class="o">-</span> <span class="mi">2</span>
+                
+            <span class="n">indices</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+            
+            <span class="c1"># Calculate normalized distance within interval</span>
+            <span class="n">left_val</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">right_val</span> <span class="o">=</span> <span class="n">coordinates</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">distances</span><span class="p">[</span><span class="n">dim</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">left_val</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">right_val</span> <span class="o">-</span> <span class="n">left_val</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">distances</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Locator">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Locator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Locator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The purpose of these classes is to locate values in coordinate axes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+
+        <span class="k">if</span> <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmin</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmax</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmin</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmax</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">bounds</span> <span class="o">==</span> <span class="s2">&quot;cycle&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Cannot use bounds=&quot;cycle&quot; with irregular locator&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Locator.handle_oob">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Locator.handle_oob">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_oob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        handle out of bound values</span>
+
+<span class="sd">        Note: when bounds == &quot;cycle&quot;, does nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">==</span> <span class="s2">&quot;clip&quot;</span><span class="p">:</span>
+            <span class="c1"># FIXME: manage the case where coords and values</span>
+            <span class="c1"># have incompatible types (eg, int and float)</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vmax</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;nan&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]:</span>
+            <span class="c1"># bounds is either &quot;nan&quot; or &quot;error&quot;</span>
+            <span class="n">oob</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">vmin</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">values</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">vmax</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">oob</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">==</span> <span class="s2">&quot;nan&quot;</span><span class="p">:</span>
+                    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">oob</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">values</span></div>
+
+        
+    
+<div class="viewcode-block" id="Locator.locate_index_weight">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Locator.locate_index_weight">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">locate_index_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find indices and dist of values for linear and spline interpolation in self.coords</span>
+
+<span class="sd">        Returns a list of indices, dist (float 0 to 1) and oob</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle_oob</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="n">shp</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">indices</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">find_indices</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">,),</span> <span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;double&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="c1"># Note: a clip is performed because</span>
+                                                     <span class="c1"># -1 is obtained in presence of NaN</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">indices</span><span class="p">,</span> <span class="n">dist</span></div>
+
+
+<div class="viewcode-block" id="Locator.locate_index">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Locator.locate_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">locate_index</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+    
+    
+<div class="viewcode-block" id="Locator_Regular">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Locator_Regular">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Locator_Regular</span><span class="p">(</span><span class="n">Locator</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">inversion_func</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inversion_func</span> <span class="o">=</span> <span class="n">inversion_func</span>
+        <span class="k">if</span> <span class="n">inversion_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">inversion_func</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+
+        <span class="c1"># Check that the coords are regular, otherwise raise a ValueError</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_time</span> <span class="o">=</span> <span class="s1">&#39;timedelta&#39;</span> <span class="ow">in</span> <span class="n">diff</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_time</span><span class="p">:</span>
+            <span class="n">regular</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">diff</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">diff</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">regular</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">diff</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">diff</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">regular</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">vstart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vstart</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">vend</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vstart</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vend</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vend</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vstart</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+
+        <span class="n">deltat</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vend</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">vstart</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_time</span><span class="p">:</span>
+            <span class="n">deltat</span> <span class="o">=</span> <span class="n">deltat</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scal</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">deltat</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">period</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">period</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scal</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected a period of </span><span class="si">{</span><span class="n">period</span><span class="si">}</span><span class="s2">, but a period of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">scal</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="s2">&quot;has been derived from the coords&quot;</span>
+            <span class="p">)</span>
+    
+<div class="viewcode-block" id="Locator_Regular.locate_index_weight">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Locator_Regular.locate_index_weight">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">locate_index_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optimized version of locate_index_weight for regular grid coords</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inversion_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inversion_func</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handle_oob</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        
+        <span class="c1"># calculate floating index (scale to [0, N-1])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_time</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">vstart</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scal</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">vstart</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scal</span>
+        <span class="n">i_inf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">)</span>
+
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">i_inf</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">!=</span> <span class="s2">&quot;cycle&quot;</span><span class="p">:</span>
+            <span class="c1"># Deals with indexing the last coordinate item</span>
+            <span class="n">mask_idk</span> <span class="o">=</span> <span class="n">i_inf</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">i_inf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask_idk</span><span class="p">,</span> <span class="n">i_inf</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i_inf</span><span class="p">)</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask_idk</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">dist</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">i_inf</span><span class="p">,</span> <span class="n">dist</span></div>
+
+    
+    <span class="c1">#For Nearest ?</span>
+<div class="viewcode-block" id="Locator_Regular.locate_index">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Locator_Regular.locate_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">locate_index</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="create_locator">
+<a class="viewcode-back" href="../../core.html#core.interpolate.create_locator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_locator</span><span class="p">(</span>
+    <span class="n">coords</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">spacing</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Locator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Locator factory    </span>
+
+<span class="sd">    The purpose of this method is to instantiate the appropriate &quot;Locator&quot; class.</span>
+
+<span class="sd">    The args are passed from the indexers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">spacing</span> <span class="o">!=</span> <span class="s2">&quot;irregular&quot;</span><span class="p">:</span>
+        <span class="c1"># regular, auto, or callable</span>
+        <span class="n">ifunc</span> <span class="o">=</span> <span class="n">spacing</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">spacing</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Locator_Regular</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">inversion_func</span><span class="o">=</span><span class="n">ifunc</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">period</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">spacing</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># regular or callable: raise the exception</span>
+                <span class="k">raise</span>
+
+    <span class="k">return</span> <span class="n">Locator</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Spline">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Spline">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Spline</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">values</span><span class="p">,</span> 
+        <span class="n">tension</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> 
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;nan&quot;</span><span class="p">,</span> <span class="s2">&quot;clip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span> 
+        <span class="n">spacing</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;regular&quot;</span><span class="p">,</span> <span class="s2">&quot;irregular&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span><span class="o">|</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span> 
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A proxy class for Spline indeting.</span>
+
+<span class="sd">        The purpose of this class is to provide a convenient interface to the</span>
+<span class="sd">        interp function, by initializing an indexer class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            bounds (str): how to deal with out-of-bounds values:</span>
+<span class="sd">                - error: raise a ValueError</span>
+<span class="sd">                - nan: replace by NaNs</span>
+<span class="sd">                - clip: clip values to the extrema</span>
+<span class="sd">            spacing: how to deal with regular grids</span>
+<span class="sd">                - &quot;regular&quot;: assume a regular grid, raise an error if not</span>
+<span class="sd">                - &quot;irregular&quot;: assume an irregular grid</span>
+<span class="sd">                - &quot;auto&quot;: detect if grid is regular or not</span>
+<span class="sd">                - if a function is provided, it is assumed that the grid is regular</span>
+<span class="sd">                after applying this function. </span>
+<span class="sd">                (for example if the coords follow x² you need to feed sqrt)</span>
+<span class="sd">            tension (float): how tight the rope between points is (1 very tight, 0 very loose)</span>
+<span class="sd">                - 0: Very tight rope</span>
+<span class="sd">                - 1: Very lose rope</span>
+<span class="sd">                The points between indexes 0 and 1 and N - 1 and N will have a tightness of 0.5</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tension</span> <span class="o">=</span> <span class="n">tension</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="n">spacing</span>
+
+<div class="viewcode-block" id="Spline.get_indexer">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Spline.get_indexer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="n">cval</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cval</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;You need to have at least 3 points to spline in between&quot;</span><span class="p">)</span> <span class="c1">#AJOUTER LA BONNE ERREUR</span>
+        <span class="k">return</span> <span class="n">Spline_Indexer</span><span class="p">(</span><span class="n">cval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tension</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Spline_Indexer">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Spline_Indexer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Spline_Indexer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">spacing</span><span class="p">,</span> <span class="n">tension</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="n">spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tension_matrix_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span>             <span class="mi">1</span><span class="p">,</span>              <span class="mi">0</span><span class="p">,</span>                  <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="n">tension</span><span class="p">,</span>      <span class="mi">0</span><span class="p">,</span>              <span class="n">tension</span><span class="p">,</span>            <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">tension</span><span class="p">,</span>   <span class="o">-</span><span class="mi">5</span> <span class="o">*</span> <span class="n">tension</span><span class="p">,</span>   <span class="mi">4</span> <span class="o">*</span> <span class="n">tension</span><span class="p">,</span>        <span class="o">-</span><span class="n">tension</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="n">tension</span><span class="p">,</span>      <span class="mi">3</span> <span class="o">*</span> <span class="n">tension</span><span class="p">,</span>    <span class="o">-</span><span class="mi">3</span> <span class="o">*</span> <span class="n">tension</span><span class="p">,</span>       <span class="n">tension</span><span class="p">],</span>
+        <span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">tension_matrix_early</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">tension_matrix_late</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">locator</span> <span class="o">=</span> <span class="n">create_locator</span><span class="p">(</span>
+            <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">spacing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find indices of values for linear interpolation in self.coords</span>
+
+<span class="sd">        Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">N_min_1</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">locator</span><span class="o">.</span><span class="n">locate_index_weight</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        
+        <span class="c1">#init indices (-2 -1 +1 +2)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">N_min_1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span> 
+            <span class="n">N_min_1</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">N_min_1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">N_min_1</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span>
+        <span class="p">])</span>
+        
+        <span class="n">mask_first_negative</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="c1">#early (-1 +1 +2)</span>
+        
+        <span class="n">mask_last_oob</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#late (-2 -1 +1)</span>
+
+        <span class="n">mask_normal</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="n">mask_first_negative</span> <span class="o">|</span> <span class="n">mask_last_oob</span><span class="p">)</span> <span class="c1">#middle (-2 -1 +1 +2)</span>
+        
+        <span class="c1"># Initialize weights matrix</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">tension_matrix_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">dist</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="c1"># Calculate and assign weights based on masks</span>
+        <span class="k">if</span> <span class="n">mask_normal</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">t_normal</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="n">mask_normal</span><span class="p">]</span>
+            <span class="n">x_vector_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">t_normal</span><span class="p">),</span> <span class="n">t_normal</span><span class="p">,</span> <span class="n">t_normal</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">t_normal</span> <span class="o">**</span> <span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">weights</span><span class="p">[:,</span> <span class="n">mask_normal</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tension_matrix_full</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">x_vector_full</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">mask_first_negative</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">t_early</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="n">mask_first_negative</span><span class="p">]</span>
+            <span class="n">x_vector_half_early</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">t_early</span><span class="p">),</span> <span class="n">t_early</span><span class="p">,</span> <span class="n">t_early</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">t_early</span><span class="p">)))</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">weights</span><span class="p">[:,</span> <span class="n">mask_first_negative</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tension_matrix_early</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">x_vector_half_early</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">mask_last_oob</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">t_late</span> <span class="o">=</span> <span class="n">dist</span><span class="p">[</span><span class="n">mask_last_oob</span><span class="p">]</span>
+            <span class="n">x_vector_half_late</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">t_late</span><span class="p">),</span> <span class="n">t_late</span><span class="p">,</span> <span class="n">t_late</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">t_late</span><span class="p">)))</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">weights</span><span class="p">[:,</span> <span class="n">mask_last_oob</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tension_matrix_late</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">x_vector_half_late</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+        <span class="c1">#we change indices like we changed the weights</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">mask_first_negative</span><span class="p">):</span>
+                    <span class="n">indices</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">mask_last_oob</span><span class="p">):</span>
+                 <span class="n">indices</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+                <span class="n">indices</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">mask_first_negative</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">mask_first_negative</span><span class="p">]</span>
+            <span class="n">indices</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="n">mask_last_oob</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        
+            
+        <span class="k">return</span> <span class="p">[(</span><span class="n">indices</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">))]</span></div>
+
+    
+        
+
+<div class="viewcode-block" id="Linear">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Linear">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Linear</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+        <span class="n">bounds</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;nan&quot;</span><span class="p">,</span> <span class="s2">&quot;clip&quot;</span><span class="p">,</span> <span class="s2">&quot;cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span>
+        <span class="n">spacing</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;regular&quot;</span><span class="p">,</span> <span class="s2">&quot;irregular&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span>
+        <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="n">period</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A proxy class for Linear indexing.</span>
+
+<span class="sd">        The purpose of this class is to provide a convenient interface to the</span>
+<span class="sd">        interp function, by initializing an indexer class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            bounds (str): how to deal with out-of-bounds values:</span>
+<span class="sd">                - &quot;error&quot;: raise a ValueError</span>
+<span class="sd">                - &quot;nan&quot;: replace by NaNs</span>
+<span class="sd">                - &quot;clip&quot;: clip values to the extrema</span>
+<span class="sd">                - &quot;cycle&quot;: the axis is considered cyclic</span>
+<span class="sd">                    e.g.: longitudes between -180 and 179</span>
+<span class="sd">                    allows indexing values in the range of [-180, 180] or even [0, 360].</span>
+<span class="sd">                    The &quot;period&quot; argument can be used to check the period inferred</span>
+<span class="sd">                    from the coord values, for example period=360.</span>
+<span class="sd">            spacing: how to deal with regular grids</span>
+<span class="sd">                - &quot;regular&quot;: assume a regular grid, raise an error if not</span>
+<span class="sd">                - &quot;irregular&quot;: assume an irregular grid</span>
+<span class="sd">                - &quot;auto&quot;: detect if grid is regular or not</span>
+<span class="sd">                - if a function is provided, it is assumed that the grid is regular</span>
+<span class="sd">                  after applying this function. </span>
+<span class="sd">                  (for example if the coords follow x² you need to feed sqrt)</span>
+<span class="sd">                The index lookup is optimized for regular grids, using the</span>
+<span class="sd">                Locator_Regular class.</span>
+<span class="sd">            period (optional, float): if provided, we verify that the period inferred</span>
+<span class="sd">                from the coordinates is equal to this value.</span>
+<span class="sd">                (only when bounds=&quot;cycle&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="n">spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="n">period</span>
+    
+<div class="viewcode-block" id="Linear.get_indexer">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Linear.get_indexer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="n">cval</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cval</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cannot apply linear indexing to an axis of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cval</span><span class="p">)</span><span class="si">}</span><span class="s2"> values&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Linear_Indexer</span><span class="p">(</span><span class="n">cval</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Linear_Indexer">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Linear_Indexer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Linear_Indexer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">spacing</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="n">spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="n">period</span>
+
+        <span class="c1"># check ascending/descending order</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">zero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">diff</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="n">zero</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ascending</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">diff</span> <span class="o">&lt;</span> <span class="n">zero</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ascending</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Input coords should be monotonous.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">locator</span> <span class="o">=</span> <span class="n">create_locator</span><span class="p">(</span>
+            <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+            <span class="n">spacing</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span>
+            <span class="n">period</span><span class="o">=</span><span class="n">period</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">locator</span><span class="p">)</span>
+        
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find indices of `values` for linear interpolation in self.coords</span>
+
+<span class="sd">        Returns a list of tuples [(idx_inf, weights), (idx_sup, weights)]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">indices</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">locator</span><span class="o">.</span><span class="n">locate_index_weight</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ascending</span><span class="p">:</span>
+            <span class="n">iinf</span> <span class="o">=</span> <span class="n">indices</span>
+            <span class="n">winf</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">dist</span>
+            <span class="n">isup</span> <span class="o">=</span> <span class="n">indices</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">wsup</span> <span class="o">=</span> <span class="n">dist</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">iinf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">indices</span>
+            <span class="n">isup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">indices</span>
+            <span class="n">winf</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">dist</span>
+            <span class="n">wsup</span> <span class="o">=</span> <span class="n">dist</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="o">==</span> <span class="s2">&quot;cycle&quot;</span><span class="p">:</span>
+            <span class="n">iinf</span> <span class="o">=</span> <span class="n">iinf</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span>
+            <span class="n">isup</span> <span class="o">=</span> <span class="n">isup</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span>
+
+        <span class="k">return</span> <span class="p">[(</span><span class="n">iinf</span><span class="p">,</span> <span class="n">winf</span><span class="p">),</span> <span class="p">(</span><span class="n">isup</span><span class="p">,</span> <span class="n">wsup</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="Index">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Index">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Proxy class for integer index-based selection (isel)</span>
+
+<span class="sd">        Does not require a separate Indexer class, since the coords are not used;</span>
+<span class="sd">        the values are returned as-is, they are already integer indices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
+    
+<div class="viewcode-block" id="Index.get_indexer">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Index.get_indexer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+        <span class="c1"># We can simply return self to avoid another class, since coords are not used.</span>
+        <span class="c1"># The __call__ method of the Indexer is implemented in this class.</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+        
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">values</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="Nearest">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Nearest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Nearest</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+        <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">spacing</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;auto&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Proxy class for value selection (sel)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            values (xr.DataArray): values for selection</span>
+<span class="sd">            tolerance (float, optional): absolute tolerance for inexact search</span>
+<span class="sd">            spacing(str | Callable): </span>
+<span class="sd">                - &quot;auto&quot; : will take the value of the nearest valid value</span>
+<span class="sd">                - lambda x: f(x) : will take the value of the nearest valid value after</span>
+<span class="sd">                    inverting the x axis values based on lambda</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span> <span class="o">=</span> <span class="n">tolerance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="n">spacing</span>
+    
+<div class="viewcode-block" id="Nearest.get_indexer">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Nearest.get_indexer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Nearest_Indexer</span><span class="p">(</span><span class="n">coords</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Nearest_Indexer">
+<a class="viewcode-back" href="../../core.html#core.interpolate.Nearest_Indexer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Nearest_Indexer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span><span class="o">|</span><span class="kc">None</span><span class="p">,</span> <span class="n">spacing</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="n">Callable</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span> <span class="o">=</span> <span class="n">tolerance</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spacing</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spacing</span><span class="p">,</span> <span class="n">Callable</span><span class="p">)</span> <span class="p">:</span>
+            <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Spacing is of the wrong type, waiting for str or Callable&quot;</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="n">spacing</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ascending</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ascending</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Input coords should be monotonous.&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">):</span>
+        <span class="n">mvalues</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+            <span class="n">mvalues</span> <span class="o">=</span> <span class="n">values</span>
+            <span class="n">coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coords</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">,</span> <span class="n">Callable</span><span class="p">):</span>
+            <span class="n">mvalues</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;spacing isn&#39;t &#39;auto&#39; or a Callable (lambda x: f(x))&quot;</span><span class="p">)</span>
+        
+        
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">mvalues</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">idx</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># distance to the inf/sup bounds</span>
+        <span class="n">dist_inf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mvalues</span> <span class="o">-</span> <span class="n">coords</span><span class="p">[</span><span class="n">idx</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="c1"># NOTE: EDGE CASE TO BE HANDLED ? [idx = 0]</span>
+        <span class="n">dist_sup</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">mvalues</span><span class="p">)</span>
+        
+        <span class="c1"># NOTE: EDGE CASE HANDLING ?</span>
+        <span class="n">mask_idx_neg</span> <span class="o">=</span> <span class="p">(</span><span class="n">idx</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>
+
+        <span class="n">dist_inf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask_idx_neg</span><span class="p">,</span> <span class="n">dist_sup</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dist_inf</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">dist_inf</span><span class="p">,</span> <span class="n">dist_sup</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+
+        <span class="n">idx_closest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dist_inf</span> <span class="o">&lt;</span> <span class="n">dist_sup</span><span class="p">,</span> <span class="n">idx</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ascending</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">idx_closest</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">idx_closest</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="broadcast_numpy">
+<a class="viewcode-back" href="../../core.html#core.interpolate.broadcast_numpy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">broadcast_numpy</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns all data variables in `ds` as numpy arrays</span>
+<span class="sd">    broadcastable against each other</span>
+<span class="sd">    (with new single-element dimensions)</span>
+
+<span class="sd">    This requires the input to be broadcasted to common dimensions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">([</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">])</span>
+        <span class="p">]</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="broadcast_shapes">
+<a class="viewcode-back" href="../../core.html#core.interpolate.broadcast_shapes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">broadcast_shapes</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">dims</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For each data variable in `ds`, returns the shape for broadcasting</span>
+<span class="sd">    in the dimensions defined by dims</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span> <span class="k">else</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="determine_output_dimensions">
+<a class="viewcode-back" href="../../core.html#core.interpolate.determine_output_dimensions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">determine_output_dimensions</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">dims_sel_interp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    determine output dimensions</span>
+<span class="sd">    based on numpy&#39;s advanced indexing rules</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out_dims</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dims_added</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dims_sel_interp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dims_added</span><span class="p">:</span>
+                <span class="n">out_dims</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">))</span>
+                <span class="n">dims_added</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out_dims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">out_dims</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

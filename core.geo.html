@@ -1,0 +1,425 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.geo package &mdash; core 1.0.28 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=b9bd3573"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.monitor package" href="core.monitor.html" />
+    <link rel="prev" title="core.files package" href="core.files.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.download.html">core.download package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">core.geo package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.geo.convert">core.geo.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.geo.naming">core.geo.naming</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.geo.product_name">core.geo.product_name</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html">core.monitor package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.ascii_table">core.ascii_table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.config">core.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.dates">core.dates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.deptree">core.deptree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#core-deptree-prefect">core.deptree_prefect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.env">core.env</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.fuzzy">core.fuzzy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.interpolate">core.interpolate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.log">core.log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.masks">core.masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.monitor">core.monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.pseudoinverse">core.pseudoinverse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.table">core.table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.tools">core.tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.xrtags">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+      <li class="breadcrumb-item active">core.geo package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.geo.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-geo-package">
+<h1>core.geo package<a class="headerlink" href="#core-geo-package" title="Link to this heading"></a></h1>
+<hr class="docutils" />
+<section id="module-core.geo.convert">
+<span id="core-geo-convert"></span><h2>core.geo.convert<a class="headerlink" href="#module-core.geo.convert" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.convert.center_longitude">
+<span class="sig-prename descclassname"><span class="pre">core.geo.convert.</span></span><span class="sig-name descname"><span class="pre">center_longitude</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">180</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'longitude'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/geo/convert.html#center_longitude"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.convert.center_longitude" title="Link to this definition"></a></dt>
+<dd><p>Center longitudes from [0, 360] to [-180, 180] or from [-180, 180] to [0, 360]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.convert.convert_latlon_2D">
+<span class="sig-prename descclassname"><span class="pre">core.geo.convert.</span></span><span class="sig-name descname"><span class="pre">convert_latlon_2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="reference internal" href="_modules/core/geo/convert.html#convert_latlon_2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.convert.convert_latlon_2D" title="Link to this definition"></a></dt>
+<dd><p>Convert latitude and longitude vectors into 2D representation</p>
+</dd></dl>
+
+</section>
+<section id="module-core.geo.naming">
+<span id="core-geo-naming"></span><h2>core.geo.naming<a class="headerlink" href="#module-core.geo.naming" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.naming.add_var">
+<span class="sig-prename descclassname"><span class="pre">core.geo.naming.</span></span><span class="sig-name descname"><span class="pre">add_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/geo/naming.html#add_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.naming.add_var" title="Link to this definition"></a></dt>
+<dd><p>Add a new variable to a xarray.Dataset with it attributes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xr.Dataset</em>) – Dataset to complete</p></li>
+<li><p><strong>var</strong> (<em>xr.DataArray</em>) – Array to add</p></li>
+<li><p><strong>attrs</strong> (<em>_name</em>) – Attributes to join to the new variable</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.geo.naming.names">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">core.geo.naming.</span></span><span class="sig-name descname"><span class="pre">names</span></span><a class="reference internal" href="_modules/core/geo/naming.html#names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.naming.names" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.F0">
+<span class="sig-name descname"><span class="pre">F0</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.F0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.bands">
+<span class="sig-name descname"><span class="pre">bands</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.bands" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.bands_ir">
+<span class="sig-name descname"><span class="pre">bands_ir</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.bands_ir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.bands_nvis">
+<span class="sig-name descname"><span class="pre">bands_nvis</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.bands_nvis" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.bnames">
+<span class="sig-name descname"><span class="pre">bnames</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.bnames" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.bt">
+<span class="sig-name descname"><span class="pre">bt</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.bt" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.columns">
+<span class="sig-name descname"><span class="pre">columns</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.columns" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.crs">
+<span class="sig-name descname"><span class="pre">crs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.crs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.cwav">
+<span class="sig-name descname"><span class="pre">cwav</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.cwav" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.datetime">
+<span class="sig-name descname"><span class="pre">datetime</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.datetime" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.detector">
+<span class="sig-name descname"><span class="pre">detector</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.detector" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.flags">
+<span class="sig-name descname"><span class="pre">flags</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.flags" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.input_directory">
+<span class="sig-name descname"><span class="pre">input_directory</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.input_directory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.lat">
+<span class="sig-name descname"><span class="pre">lat</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.lat" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.lon">
+<span class="sig-name descname"><span class="pre">lon</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.lon" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.ltoa">
+<span class="sig-name descname"><span class="pre">ltoa</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.ltoa" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.mus">
+<span class="sig-name descname"><span class="pre">mus</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.mus" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.muv">
+<span class="sig-name descname"><span class="pre">muv</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.muv" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.platform">
+<span class="sig-name descname"><span class="pre">platform</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.platform" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.product_name">
+<span class="sig-name descname"><span class="pre">product_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.product_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.quality">
+<span class="sig-name descname"><span class="pre">quality</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.quality" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.raa">
+<span class="sig-name descname"><span class="pre">raa</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.raa" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.resolution">
+<span class="sig-name descname"><span class="pre">resolution</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.resolution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.rho_w">
+<span class="sig-name descname"><span class="pre">rho_w</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.rho_w" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.rows">
+<span class="sig-name descname"><span class="pre">rows</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.rows" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.rtoa">
+<span class="sig-name descname"><span class="pre">rtoa</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.rtoa" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.saa">
+<span class="sig-name descname"><span class="pre">saa</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.saa" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.sensor">
+<span class="sig-name descname"><span class="pre">sensor</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.sensor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.shortname">
+<span class="sig-name descname"><span class="pre">shortname</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.shortname" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.sza">
+<span class="sig-name descname"><span class="pre">sza</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.sza" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.unit">
+<span class="sig-name descname"><span class="pre">unit</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.unit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.vaa">
+<span class="sig-name descname"><span class="pre">vaa</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.vaa" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.vza">
+<span class="sig-name descname"><span class="pre">vza</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.vza" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.geo.naming.names.wav">
+<span class="sig-name descname"><span class="pre">wav</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;core.geo.naming._name</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#core.geo.naming.names.wav" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-core.geo.product_name">
+<span id="core-geo-product-name"></span><h2>core.geo.product_name<a class="headerlink" href="#module-core.geo.product_name" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.product_name.check">
+<span class="sig-prename descclassname"><span class="pre">core.geo.product_name.</span></span><span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/core/geo/product_name.html#check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.product_name.check" title="Link to this definition"></a></dt>
+<dd><p>Check if name satisfies regular expression</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.product_name.decompose">
+<span class="sig-prename descclassname"><span class="pre">core.geo.product_name.</span></span><span class="sig-name descname"><span class="pre">decompose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'_'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/core/geo/product_name.html#decompose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.product_name.decompose" title="Link to this definition"></a></dt>
+<dd><p>Decompose a string according to the list of regexp,
+assumming that every regexp block are splitted by sep</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.product_name.get_fields">
+<span class="sig-prename descclassname"><span class="pre">core.geo.product_name.</span></span><span class="sig-name descname"><span class="pre">get_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/geo/product_name.html#get_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.product_name.get_fields" title="Link to this definition"></a></dt>
+<dd><p>Returns every field name that can be change in product name</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.product_name.get_level">
+<span class="sig-prename descclassname"><span class="pre">core.geo.product_name.</span></span><span class="sig-name descname"><span class="pre">get_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/geo/product_name.html#get_level"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.product_name.get_level" title="Link to this definition"></a></dt>
+<dd><p>Returns the level of a product based on its name</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.product_name.get_pattern">
+<span class="sig-prename descclassname"><span class="pre">core.geo.product_name.</span></span><span class="sig-name descname"><span class="pre">get_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/core/geo/product_name.html#get_pattern"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.product_name.get_pattern" title="Link to this definition"></a></dt>
+<dd><p>Get pattern that match product name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Product name or id</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary containing sensor name, pattern and regular expression</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.geo.product_name.retrieve_product">
+<span class="sig-prename descclassname"><span class="pre">core.geo.product_name.</span></span><span class="sig-name descname"><span class="pre">retrieve_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/core/geo/product_name.html#retrieve_product"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.geo.product_name.retrieve_product" title="Link to this definition"></a></dt>
+<dd><p>Function retrieve a product base on another one.
+For example, retrieve Level-2 product based on Level-1</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product_id</strong> (<em>str</em>) – Product considered as base</p></li>
+<li><p><strong>fields</strong> (<em>dict</em>) – Fields to change</p></li>
+<li><p><strong>pattern</strong> (<em>tuple</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Pattern of &lt;product_id&gt;. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New product id</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.files.html" class="btn btn-neutral float-left" title="core.files package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.monitor.html" class="btn btn-neutral float-right" title="core.monitor package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
