@@ -162,7 +162,29 @@ def print_execution_summary(tasks: list):
         df = df.fillna('')
         
         print("\nTask Summary by Status and Class:")
-        ascii_table(df).print()
+        
+        colors = dict(
+            Class       = log.rgb.blue,
+            Pending     = log.rgb.orange,
+            Success     = log.rgb.green,
+            Error       = log.rgb.red,
+            Skipped     = log.rgb.blue,
+            Canceled    = log.rgb.red,
+            Total       = log.rgb.blue,
+        )
+        
+        sides = dict(
+            Class       = "left",
+            Pending     = "right",
+            Success     = "right",
+            Error       = "right",
+            Skipped     = "right",
+            Canceled    = "right",
+            Total       = "right",
+        )
+        
+        table = ascii_table(df, colors=colors, sides=sides)
+        table.print()
     
     # Count and display failed tasks
     failed_tasks = [t for t in tasks if getattr(t, 'status', None) == 'error']

@@ -51,7 +51,7 @@ class ascii_table:
         
             self.live_print_target_time = 0.100 # s
     
-    def __init__(self, df, style=style(), colors={}, max_width: int|None=35):
+    def __init__(self, df, style=style(), colors={}, sides={}, max_width: int|None=35):
         """
         Ascii table constructor
         df: source table, pd.DataFrame
@@ -73,11 +73,20 @@ class ascii_table:
         # NOTE: could use interactive / dynamic ranges, more complex tough
         # self.terminal = shutil.get_terminal_size()
         
-        for c in self.columns:
-            if c not in colors:
-                colors[c] = None
+        # lowercase the columns keys
+        colors = {k.lower(): v for k, v in colors.items()}
+        sides = {k.lower(): v for k, v in sides.items()}
         
-        self.colors = [colors[i] for i in self.columns]
+        
+        for c in self.columns:
+            if c.lower() not in colors: # no colors by default
+                colors[c.lower()] = None
+                
+            if c.lower() not in sides: # left side by default
+                sides[c.lower()] = "left"
+        
+        self.colors = [colors[i.lower()] for i in self.columns]
+        self.sides = [sides[i.lower()] for i in self.columns]
         
         # limiting column max width
         self.max_width = max_width
@@ -126,6 +135,7 @@ class ascii_table:
     
         spaces = self.spaces.copy()
         colors = self.colors.copy()
+        sides = self.sides.copy()
     
         # Precompute common strings
         hhp = h * hp
@@ -214,7 +224,13 @@ class ascii_table:
             sep = shp + ivbc + shp
             if not ivb: sep = shp
         
-            mids = [_color_str(_format_str(str(w)).ljust(spaces[i]), i) for i, w in enumerate(line)]
+            def align_text(text, width, side):
+                return text.ljust(width) if side == "left" else text.rjust(width)
+
+            mids = [
+                _color_str(align_text(_format_str(str(w)), spaces[i], sides[i]), i) 
+                for i, w in enumerate(line)
+]
             line = v + shp + sep.join(mids) + shp + v
             return line
     
