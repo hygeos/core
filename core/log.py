@@ -191,7 +191,11 @@ def silence(module, lvl_and_below : lvl = lvl.ERROR):  # blacklist only below ce
 
 def disp(*args, **kwargs):
     msg = _internal.concat_mess(*args)
-    print(msg, file=sys.stderr, **kwargs)
+    
+    # call default logger
+    output_function = getattr(_internal.logger, "info")
+    output_function(msg)
+    # print(msg, file=sys.stderr, **kwargs)
 
 def log(lvl: lvl, *args, **kwargs):
     """

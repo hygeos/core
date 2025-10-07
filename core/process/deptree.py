@@ -1,14 +1,22 @@
+from datetime import datetime
 import socket
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from sys import argv
-from time import sleep
+from time import sleep, time
 from typing import Literal
 
 from core.interpolate import product_dict
 from core import log
 from core.ascii_table import ascii_table
 import pandas as pd
+
+
+import contextlib
+import logging
+import sys
+import threading
+from io import StringIO
 
 
 class Task:
@@ -107,16 +115,59 @@ def gen_sync(
             log.info(f"Generating {task}...")
         return task.run()
 
+def format_time(t):
+    if t == "?": return t
+    if t < 60:
+        return f"{t:.0f}s"
+    elif t < 3600:
+        m = t // 60
+        s = t % 60
+        return f"{m:.0f}m {s:.0f}s"
+    else:
+        h = t // 3600
+        m = (t % 3600) // 60
+        s = t % 60
+        
+        parts = []
+        if h > 0:
+            parts.append(f"{h:.0f}h")
+            
+        if m > 0:
+            parts.append(f"{m:02.0f}m")
+            
+        if s > 0 and h == 0: # only show seconds if no hours
+            parts.append(f"{s:02.0f}s")
+            
+        return "".join(parts)
 
-def print_execution_summary(tasks: list):
+def print_execution_summary(tasks: list, start_time: float, finished: bool = False):
     """
     Print a summary table showing count of tasks by status and class name.
     
     Args:
         tasks: List of Task instances to summarize
     """
-    print('')
-    print("=== EXECUTION SUMMARY ===")
+    l, r = 16, 15
+    msg = log.rgb.orange("=======[ Execution Log ]=======") + "\n"
+    
+    # dislay status of the overall execution
+    s = "Finished" if finished else "Running"
+    # find color based on errors
+    c = log.rgb.orange 
+    if any(getattr(t, 'status', None) == 'error' for t in tasks):
+        c = log.rgb.red
+    else:
+        if finished: c = log.rgb.green # finished without errors
+        
+    msg +=  log.rgb.orange(f"Status: ".ljust(l))  + c(s.rjust(r)) + "\n"
+    elapsed = time() - start_time
+    
+    # datetime from epoch
+    start = datetime.fromtimestamp(start_time)
+    
+    msg += log.rgb.orange(f"Time spent: ".ljust(l)) + format_time(elapsed).rjust(r) + "\n"
+    msg += log.rgb.orange(f"Start:".ljust(l)) + start.strftime('%H:%M:%S').rjust(r) + "\n"
+    msg += log.rgb.orange(f"Date: ".ljust(l))  + datetime.now().strftime('%Y-%m-%d').rjust(r) + "\n"
     
     # Get unique statuses and classes directly from list comprehensions + set
     all_statuses = sorted(set(getattr(task, 'status', 'unknown') for task in tasks))
@@ -160,17 +211,14 @@ def print_execution_summary(tasks: list):
         
         # Replace NaN with empty strings
         df = df.fillna('')
-        
-        print("\nTask Summary by Status and Class:")
-        
         colors = dict(
-            Class       = log.rgb.blue,
+            Class       = log.rgb.default,
             Pending     = log.rgb.orange,
             Success     = log.rgb.green,
             Error       = log.rgb.red,
-            Skipped     = log.rgb.blue,
-            Canceled    = log.rgb.red,
-            Total       = log.rgb.blue,
+            Skipped     = log.rgb.cyan,
+            Canceled    = log.rgb.orange,
+            Total       = log.rgb.cyan,
         )
         
         sides = dict(
@@ -184,19 +232,36 @@ def print_execution_summary(tasks: list):
         )
         
         table = ascii_table(df, colors=colors, sides=sides)
-        table.print()
+        table_msg = table.to_string(live_print=False, no_color=False)
+        
+        msg += table_msg + "\n"
+
     
     # Count and display failed tasks
     failed_tasks = [t for t in tasks if getattr(t, 'status', None) == 'error']
     nfailed = 5  # number of displayed failed tasks
     if failed_tasks:
-        print(f"\nFailed tasks ({len(failed_tasks)}):")
+        msg += log.rgb.orange(f"Failed tasks ({len(failed_tasks)}):")  + "\n"
         for t in failed_tasks[:nfailed]:
-            print(f"  - {t} with error {str(t.__class__)}")
+            e_msg = "" if not hasattr(t, "error_msg") else f"{t.error_msg}"
+            msg += f"  - {t.__class__} {log.rgb.red(e_msg)}" + "\n"
         if len(failed_tasks) > 5:
-            print("[...]")
-        print("=========================")
-
+            msg += "..."  + "\n"
+        msg += str(log.rgb.orange) + "========================="  + "\n"
+    # log.disp(msg)
+    
+    # pad the output by one space left
+    msg = msg.split("\n")
+    msg = "\n ".join(msg)
+    msg = " " + msg
+    
+    # using a lock shared accross threads to avoid race conditions
+    file_lock = threading.Lock()
+    with file_lock:
+        # overwrite the output to a local file called /tmp/deptreelog
+        with open("/tmp/deptreelog", "w") as f:
+            f.write(msg)
+        
 
 def gen_executor(
     task: Task,
@@ -238,10 +303,11 @@ def gen_executor(
     # Note: `gen` is defined as a function instead of an task method because it includes
     # non-serializable code, and task can be serialized (for example by the dask
     # distributed executor).
-
+    _start_time = time()
     is_root_call = _tasks is None
     if _tasks is None:
         _tasks = []
+        _start_time = time()
 
     if graph_executor is None:
         graph_executor = ThreadPoolExecutor(512)
@@ -252,7 +318,9 @@ def gen_executor(
     # Set initial status
     if not hasattr(task, "status"):
         setattr(task, "status", "pending")
-
+    
+    print_execution_summary(_tasks, _start_time)
+    
     _tasks.append(task)
     if not task.done():
         # run all dependencies on the graph executor
@@ -287,6 +355,8 @@ def gen_executor(
                 setattr(task, "status", "canceled")
                 if verbose:
                     log.info(f"Task {task} canceled due to dependency error")
+    
+        # print_execution_summary(_tasks, _start_time)
 
         if getattr(task, "status") != "canceled":
             # get the executor for current `task`
@@ -304,18 +374,23 @@ def gen_executor(
                 result = future.result()
                 setattr(task, "status", "success")
                 if not is_root_call:
+                    print_execution_summary(_tasks, _start_time)
                     return result
             except Exception as e:
                 setattr(task, "status", "error")
+                setattr(task, "error_msg", str(e))
+                print_execution_summary(_tasks, _start_time)
                 if verbose:
                     log.warning(f"Task {task.__class__} failed with error {str(e.__class__)}")
     else:
         # Task is already done, mark as skipped if no status set
         if not hasattr(task, "status"):
             setattr(task, "status", "skipped")
+            # print_execution_summary(_tasks, _start_time)
     
     if is_root_call and verbose:
-        print_execution_summary(_tasks)
+        print_execution_summary(_tasks, _start_time, finished=True)
+
 
 
 class TaskList(Task):
