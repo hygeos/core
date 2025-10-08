@@ -196,9 +196,7 @@ def disp(*args, **kwargs):
     msg = _internal.concat_mess(*args)
     
     # call default logger
-    output_function = getattr(_internal.logger, "info")
-    output_function(msg)
-    # print(msg, file=sys.stderr, **kwargs)
+    print(msg, file=sys.stderr, **kwargs)
 
 def log(lvl: lvl, *args, **kwargs):
     """
