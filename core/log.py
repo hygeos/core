@@ -164,7 +164,10 @@ class _internal:
         message = _internal.format_msg(lvl, msg, mod)
          
         # call default logger
-        output_function = getattr(_internal.logger, (lvl.name).lower())
+        if (lvl.name).lower() == "prompt":
+            output_function = getattr(_internal.logger, "info")
+        else:
+            output_function = getattr(_internal.logger, (lvl.name).lower())
         output_function(message)
         
         # if a progress bar is active, reprint it after the message
