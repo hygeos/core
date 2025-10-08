@@ -3,10 +3,7 @@ name: docs
 # execute this workflow automatically when a we push to master
 on:
   push:
-    branches: [ main ]
-
-  # To run the workflow manually
-  workflow_dispatch:
+    branches: [ main ] # ⚠️ Renseigner le nom de votre branche principale
  
 jobs:
  
@@ -19,47 +16,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.x
-
-      # - name: install pandoc 
-      #   run: sudo apt-get update && sudo apt-get install -y pandoc
+          python-version: 3.x # ⚠️ Vérifier que la version python est conforme
  
       - name: Install dependencies
         run: |
-          python -m pip install -U sphinx
-          python -m pip install sphinx-rtd-theme
-          python -m pip install nbsphinx
-          python -m pip install sphinxcontrib-napoleon
-          python -m pip install ghp-import
           python -m pip install uv
+          python -m uv pip install sphinx sphinx-rtd-theme sphinxcontrib-napoleon
+          python -m uv pip install nbsphinx numpydoc
+          python -m uv pip install ghp-import
           python -m uv pip install -r pyproject.toml
-          python -m uv pip install .
-          python -m pip install numpydoc
+          python -m uv pip install .[git]
 
       - name: Generate the docs
         run: |
-          make -C docs clean 
-          make -C docs html
+          sphinx-build docs/source docs/build -b html -q
         
       - name: Run ghp-import
         run: |
-          ghp-import -n -p -f docs/build/html
-
-
-      # - name: Init new repo in dist folder and commit generated files
-      #   run: |
-      #     cd docs/_build/html/
-      #     git init
-      #     touch .nojekyll
-      #     git add -A
-      #     git config --local user.email "action@github.com"
-      #     git config --local user.name "GitHub Action"
-      #     git commit -m 'deploy'
-
-      # - name: Force push to destination branch
-      #   uses: ad-m/github-push-action@v0.8.0
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     branch: gh-pages
-      #     force: true
-      #     directory: ./docs/_build/html
+          ghp-import -n -p -f docs/build
