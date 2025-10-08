@@ -605,7 +605,7 @@ class Linear_Indexer:
             period=period,
         )
         
-        print(self.locator)
+        # print(self.locator)
         
 
     def __call__(self, values: NDArray) -> List:
