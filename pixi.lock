@@ -799,7 +799,7 @@ packages:
 - pypi: ./
   name: core
   version: 1.1.0
-  sha256: 0d47ee41412881d4f9b57709ecc66042c51359789d66845424652c0254c9de3e
+  sha256: e7ceb9b77e6d081b81a83f064cda12af5bc9d11a3cc4abaa9e19284329fb97a0
   requires_dist:
   - tqdm
   - xarray

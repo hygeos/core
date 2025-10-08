@@ -48,3 +48,4 @@ numba = "*"
 [tool.pixi.feature.hyp.dependencies]
 [tool.pixi.feature.sys.dependencies]
 sphinx_rtd_theme = "*"
+sphinx = "*"

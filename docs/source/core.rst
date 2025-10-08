@@ -7,10 +7,10 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   core.download
    core.files
    core.geo
-   core.monitor
+   core.network
+   core.process
    core.static
    core.tests
 
@@ -24,10 +24,42 @@ core.ascii\_table
    :show-inheritance:
    :undoc-members:
 
+core.auth
+----------------
+
+.. automodule:: core.auth
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.cache
+-----------------
+
+.. automodule:: core.cache
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.condor
+------------------
+
+.. automodule:: core.condor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 core.config
 ------------------
 
 .. automodule:: core.config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.conftest
+--------------------
+
+.. automodule:: core.conftest
    :members:
    :show-inheritance:
    :undoc-members:
@@ -56,10 +88,34 @@ core.deptree\_prefect
    :show-inheritance:
    :undoc-members:
 
+core.download
+--------------------
+
+.. automodule:: core.download
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 core.env
 ---------------
 
 .. automodule:: core.env
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.fileutils
+---------------------
+
+.. automodule:: core.fileutils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.ftp
+---------------
+
+.. automodule:: core.ftp
    :members:
    :show-inheritance:
    :undoc-members:
@@ -76,6 +132,14 @@ core.interpolate
 -----------------------
 
 .. automodule:: core.interpolate
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.lock
+----------------
+
+.. automodule:: core.lock
    :members:
    :show-inheritance:
    :undoc-members:
@@ -104,10 +168,34 @@ core.monitor
    :show-inheritance:
    :undoc-members:
 
+core.progressbar
+-----------------------
+
+.. automodule:: core.progressbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 core.pseudoinverse
 -------------------------
 
 .. automodule:: core.pseudoinverse
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.pytest\_utils
+-------------------------
+
+.. automodule:: core.pytest_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.save
+----------------
+
+.. automodule:: core.save
    :members:
    :show-inheritance:
    :undoc-members:
@@ -124,6 +212,14 @@ core.tools
 -----------------
 
 .. automodule:: core.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+core.uncompress
+----------------------
+
+.. automodule:: core.uncompress
    :members:
    :show-inheritance:
    :undoc-members:
