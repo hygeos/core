@@ -140,13 +140,17 @@ def format_time(t):
             
         return "".join(parts)
 
-def print_execution_summary(tasks: list, start_time: float, finished: bool = False):
+def print_execution_summary(tasks: list, start_time: float, log_file: Path, finished: bool = False):
     """
     Print a summary table showing count of tasks by status and class name.
     
     Args:
         tasks: List of Task instances to summarize
     """
+    
+    if not finished and not log_file:
+        return
+    
     l, r = 16, 15
     msg = log.rgb.orange("=======[ Execution Log ]=======") + "\n"
     
@@ -259,7 +263,7 @@ def print_execution_summary(tasks: list, start_time: float, finished: bool = Fal
     file_lock = threading.Lock()
     with file_lock:
         # overwrite the output to a local file called /tmp/deptreelog
-        with open("/tmp/deptreelog", "w") as f:
+        with open(log_file, "w") as f:
             f.write(msg)
         
 
@@ -270,6 +274,7 @@ def gen_executor(
     graph_executor=None,
     verbose: bool = False,
     _tasks: list | None = None,
+    log_file: Path|None = None,
 ):
     """
     Recursively generate dependencies of `task`, then call its `run` method in a
@@ -303,6 +308,9 @@ def gen_executor(
     # Note: `gen` is defined as a function instead of an task method because it includes
     # non-serializable code, and task can be serialized (for example by the dask
     # distributed executor).
+    
+    if type(log_file) == str: log_file = Path(log_file)
+    
     _start_time = time()
     is_root_call = _tasks is None
     if _tasks is None:
@@ -319,7 +327,7 @@ def gen_executor(
     if not hasattr(task, "status"):
         setattr(task, "status", "pending")
     
-    print_execution_summary(_tasks, _start_time)
+    print_execution_summary(_tasks, _start_time, log_file)
     
     _tasks.append(task)
     if not task.done():
@@ -340,6 +348,7 @@ def gen_executor(
                 graph_executor=graph_executor,
                 verbose = verbose,
                 _tasks=_tasks,
+                log_file=log_file,
             )
             for d in deps
         ]
@@ -374,12 +383,12 @@ def gen_executor(
                 result = future.result()
                 setattr(task, "status", "success")
                 if not is_root_call:
-                    print_execution_summary(_tasks, _start_time)
+                    print_execution_summary(_tasks, _start_time, log_file)
                     return result
             except Exception as e:
                 setattr(task, "status", "error")
                 setattr(task, "error_msg", str(e))
-                print_execution_summary(_tasks, _start_time)
+                print_execution_summary(_tasks, _start_time, log_file)
                 if verbose:
                     log.warning(f"Task {task.__class__} failed with error {str(e.__class__)}")
     else:
@@ -388,8 +397,7 @@ def gen_executor(
             setattr(task, "status", "skipped")
             # print_execution_summary(_tasks, _start_time)
     
-    if is_root_call and verbose:
-        print_execution_summary(_tasks, _start_time, finished=True)
+    print_execution_summary(_tasks, _start_time, log_file, finished=is_root_call)
 
 
 
