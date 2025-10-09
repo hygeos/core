@@ -16,7 +16,6 @@ from typing import Literal, Optional, Union
 
 from core.files.lock import LockFile
 from core import log
-from core.files.uncompress import uncompress as uncomp
 
 
 def safe_move(src, dst, makedirs=True):
@@ -154,7 +153,6 @@ class filegen:
                  tmpdir: Optional[Path] = None,
                  lock_timeout: int = 0,
                  if_exists: Literal['skip', 'overwrite', 'backup', 'error'] = 'error',
-                 uncompress: Optional[str] = None,
                  verbose: bool = True,
                  ):
         """
@@ -167,7 +165,6 @@ class filegen:
         - Detect existing file (if_exists='skip', 'overwrite', 'backup' or 'error')
         - Use output file lock when multiple functions may produce the same file
         The timeout for this lock is determined by argument `lock_timeout`.
-        - Optional decompression
         
         Args:
             arg: int ot str (default 0)
@@ -177,8 +174,6 @@ class filegen:
             tmpdir: which temporary directory to use
             lock_timeout (int): timeout in case of existing lock file
             if_exists (str): what to do in case of existing file
-            uncompress (str): if specified, the wrapped function produces a file with the
-                specified extension, typically '.zip'. This file is then uncompressed.
             verbose (bool): verbosity control
 
         Example:
@@ -197,7 +192,6 @@ class filegen:
         self.tmpdir = tmpdir
         self.lock_timeout = lock_timeout
         self.if_exists = if_exists
-        self.uncompress = uncompress
         self.verbose = verbose
         
     def __call__(self, f):
@@ -224,10 +218,7 @@ class filegen:
             with TemporaryDirectory(dir=self.tmpdir) as tmpd:
                 
                 # target (intermediary) file
-                if self.uncompress:
-                    tfile = Path(tmpd)/(ofile.name+self.uncompress)
-                else:
-                    tfile = Path(tmpd)/ofile.name
+                tfile = Path(tmpd)/ofile.name
 
                 with LockFile(ofile,
                             timeout=self.lock_timeout,
@@ -251,12 +242,7 @@ class filegen:
                     # because the function call may be skipped upon existing file
                     assert ret is None
 
-                    if self.uncompress:
-                        uncompressed = uncomp(tfile, Path(tmpd))
-                        tfile.unlink() # Remove archive
-                        safe_move(uncompressed, ofile)
-                    else:
-                        safe_move(tfile, ofile)
+                    safe_move(tfile, ofile)
             return
         return wrapper
 
