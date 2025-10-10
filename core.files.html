@@ -1,0 +1,484 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.files package &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.geo package" href="core.geo.html" />
+    <link rel="prev" title="core package" href="core.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">core.files package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.files.cache">core.files.cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.files.fileutils">core.files.fileutils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.files.lock">core.files.lock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.files.save">core.files.save</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.files.uncompress">core.files.uncompress</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.html">core.geo package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.html">core.network package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.ascii_table">core.ascii_table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.auth">core.auth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.cache">core.cache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.condor">core.condor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.config">core.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#core-conftest">core.conftest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.dates">core.dates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.deptree">core.deptree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#core-deptree-prefect">core.deptree_prefect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.download">core.download</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.env">core.env</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.fileutils">core.fileutils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.ftp">core.ftp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.fuzzy">core.fuzzy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.interpolate">core.interpolate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.lock">core.lock</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.log">core.log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.masks">core.masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.monitor">core.monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.progressbar">core.progressbar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.pseudoinverse">core.pseudoinverse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.pytest_utils">core.pytest_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.save">core.save</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.table">core.table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.tools">core.tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.uncompress">core.uncompress</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.xrtags">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+      <li class="breadcrumb-item active">core.files package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.files.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-files-package">
+<h1>core.files package<a class="headerlink" href="#core-files-package" title="Link to this heading"></a></h1>
+<hr class="docutils" />
+<section id="module-core.files.cache">
+<span id="core-files-cache"></span><h2>core.files.cache<a class="headerlink" href="#module-core.files.cache" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.cache.cache_dataframe">
+<span class="sig-prename descclassname"><span class="pre">core.files.cache.</span></span><span class="sig-name descname"><span class="pre">cache_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'check'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'store'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ignore'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'check'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/cache.html#cache_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.cache.cache_dataframe" title="Link to this definition"></a></dt>
+<dd><p>A decorator that caches the result of a function, which is a pandas DataFrame</p>
+<dl class="simple">
+<dt>inputs:</dt><dd><p>“check” [default]: store and check the function inputs
+“store”: store but don’t check the function inputs
+“ignore”: ignore the function inputs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.cache.cache_dataset">
+<span class="sig-prename descclassname"><span class="pre">core.files.cache.</span></span><span class="sig-name descname"><span class="pre">cache_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/cache.html#cache_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.cache.cache_dataset" title="Link to this definition"></a></dt>
+<dd><p>A decorator that caches the dataset returned by a function in a netcdf file</p>
+<p>The attribute dictionary <cite>attrs</cite> is stored in the file, and verified upon
+reading.</p>
+<p>Other kwargs (ex: chunks) are passed to xr.open_dataset</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.cache.cache_json">
+<span class="sig-prename descclassname"><span class="pre">core.files.cache.</span></span><span class="sig-name descname"><span class="pre">cache_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'check'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'store'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ignore'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'check'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/cache.html#cache_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.cache.cache_json" title="Link to this definition"></a></dt>
+<dd><p>A decorator that caches the result of a function to a json file.</p>
+<dl class="simple">
+<dt>inputs:</dt><dd><p>“check” [default]: store and check the function inputs
+“store”: store but don’t check the function inputs
+“ignore”: ignore the function inputs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.cache.cache_pickle">
+<span class="sig-prename descclassname"><span class="pre">core.files.cache.</span></span><span class="sig-name descname"><span class="pre">cache_pickle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_file:</span> <span class="pre">~pathlib._local.Path</span> <span class="pre">|</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs:</span> <span class="pre">~typing.Literal['check'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'store'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'ignore']</span> <span class="pre">=</span> <span class="pre">'check'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_out=&lt;function</span> <span class="pre">&lt;lambda&gt;&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/cache.html#cache_pickle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.cache.cache_pickle" title="Link to this definition"></a></dt>
+<dd><p>A decorator that caches the result of a function to a pickle file.</p>
+<dl class="simple">
+<dt>inputs:</dt><dd><p>“check” [default]: store and check the function inputs
+“store”: store but don’t check the function inputs
+“ignore”: ignore the function inputs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.cache.cachefunc">
+<span class="sig-prename descclassname"><span class="pre">core.files.cache.</span></span><span class="sig-name descname"><span class="pre">cachefunc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">writer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fg_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/cache.html#cachefunc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.cache.cachefunc" title="Link to this definition"></a></dt>
+<dd><p>A decorator that caches the return of a function in a file, with
+customizable format</p>
+<dl class="simple">
+<dt>reader: a function that reads inputs/output from the cache file</dt><dd><p>reader(filename) -&gt; {‘output’: …, ‘input’: …}</p>
+</dd>
+<dt>writer: a function that writes the inputs/output to the cache file</dt><dd><p>writer(filename, output, input_args, input_kwargs)</p>
+</dd>
+<dt>check_in: a custom function to test the equality of the inputs</dt><dd><p>checker(obj1, obj2) -&gt; bool
+(defaults to None -&gt; no checking)</p>
+</dd>
+<dt>check_out: a custom function to test the equality of the outputs</dt><dd><p>checker(obj1, obj2) -&gt; bool
+(defaults to ==)</p>
+</dd>
+</dl>
+<p>fg_kwargs: kwargs passed to filegen (ex: lock_timeout=-1)</p>
+</dd></dl>
+
+</section>
+<section id="module-core.files.fileutils">
+<span id="core-files-fileutils"></span><h2>core.files.fileutils<a class="headerlink" href="#module-core.files.fileutils" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="core.files.fileutils.PersistentList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">core.files.fileutils.</span></span><span class="sig-name descname"><span class="pre">PersistentList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">concurrent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/fileutils.html#PersistentList"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.fileutils.PersistentList" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+<p>A list that saves its content in <cite>filename</cite> on each modification. The extension
+must be <cite>.json</cite>.</p>
+<dl class="simple">
+<dt><cite>concurrent</cite>: whether to activate concurrent mode. In this mode, the</dt><dd><p>file is also read before each access.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.files.fileutils.filegen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">core.files.fileutils.</span></span><span class="sig-name descname"><span class="pre">filegen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmpdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lock_timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'skip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'overwrite'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'backup'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'error'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/fileutils.html#filegen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.fileutils.filegen" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.fileutils.get_git_commit">
+<span class="sig-prename descclassname"><span class="pre">core.files.fileutils.</span></span><span class="sig-name descname"><span class="pre">get_git_commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/fileutils.html#get_git_commit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.fileutils.get_git_commit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.fileutils.mdir">
+<span class="sig-prename descclassname"><span class="pre">core.files.fileutils.</span></span><span class="sig-name descname"><span class="pre">mdir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdir_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mdir.json'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="_modules/core/files/fileutils.html#mdir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.fileutils.mdir" title="Link to this definition"></a></dt>
+<dd><p>Create or access a managed directory with path <cite>directory</cite>
+Returns the directory path, so that it can be used in directories definition:</p>
+<blockquote>
+<div><p>dir_data = mdir(‘/path/to/data/’)</p>
+</div></blockquote>
+<dl class="simple">
+<dt>tag it with a file <cite>mdir.json</cite>, containing:</dt><dd><ul class="simple">
+<li><p>The creation date</p></li>
+<li><p>The last access date</p></li>
+<li><p>The python file and module that was run during access</p></li>
+<li><p>The username</p></li>
+<li><p>The current git commit if available</p></li>
+<li><dl class="simple">
+<dt>Any other kwargs, such as:</dt><dd><ul>
+<li><p>project</p></li>
+<li><p>version</p></li>
+<li><p>description</p></li>
+<li><p>etc</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<p>mdir_filename: default=’mdir.json’</p>
+<dl>
+<dt>strict: boolean</dt><dd><p>False: metadata is updated
+True: metadata is checked or added (default)</p>
+<blockquote>
+<div><p>(remove file content to override)</p>
+</div></blockquote>
+</dd>
+</dl>
+<p>create: whether directory is automatically created (default True)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.fileutils.safe_move">
+<span class="sig-prename descclassname"><span class="pre">core.files.fileutils.</span></span><span class="sig-name descname"><span class="pre">safe_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">makedirs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/fileutils.html#safe_move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.fileutils.safe_move" title="Link to this definition"></a></dt>
+<dd><p>Move <cite>src</cite> file to <cite>dst</cite></p>
+<p>if <cite>makedirs</cite>: create directory if necessary</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.fileutils.skip">
+<span class="sig-prename descclassname"><span class="pre">core.files.fileutils.</span></span><span class="sig-name descname"><span class="pre">skip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'skip'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/fileutils.html#skip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.fileutils.skip" title="Link to this definition"></a></dt>
+<dd><p>Utility function to check whether to skip an existing file</p>
+<dl class="simple">
+<dt>if_exists:</dt><dd><p>‘skip’: skip the existing file
+‘error’: raise an error on existing file
+‘overwrite’: overwrite existing file
+‘backup’: move existing file to a backup ‘<em>.1’, ‘</em>.2’…</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.fileutils.temporary_copy">
+<span class="sig-prename descclassname"><span class="pre">core.files.fileutils.</span></span><span class="sig-name descname"><span class="pre">temporary_copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/fileutils.html#temporary_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.fileutils.temporary_copy" title="Link to this definition"></a></dt>
+<dd><p>Context manager to copy a file/folder to a temporary directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>Path</em>) – Path to the source file/folder to copy.</p></li>
+<li><p><strong>enable</strong> (<a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><em>bool</em></a>) – whether to enable the copy, otherwise returns the input</p></li>
+<li><p><strong>TemporaryDirectory</strong> (<em>Other **kwargs are passed to</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Path</em> – Path to the temporary file/folder</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-core.files.lock">
+<span id="core-files-lock"></span><h2>core.files.lock<a class="headerlink" href="#module-core.files.lock" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.lock.LockFile">
+<span class="sig-prename descclassname"><span class="pre">core.files.lock.</span></span><span class="sig-name descname"><span class="pre">LockFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locked_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.lock'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/lock.html#LockFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.lock.LockFile" title="Link to this definition"></a></dt>
+<dd><p>Create a blocking context with a lock file</p>
+<dl class="simple">
+<dt>timeout: timeout in seconds, waiting to the lock to be released.</dt><dd><p>If negative, disable lock files entirely.</p>
+</dd>
+</dl>
+<p>interval: interval in seconds</p>
+<p class="rubric">Example</p>
+<dl class="simple">
+<dt>with LockFile(‘/dir/to/file.txt’):</dt><dd><p># create a file ‘/dir/to/file.txt.lock’ including a filesystem lock
+# the context will enter once the lock is released</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-core.files.save">
+<span id="core-files-save"></span><h2>core.files.save<a class="headerlink" href="#module-core.files.save" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.save.clean_attributes">
+<span class="sig-prename descclassname"><span class="pre">core.files.save.</span></span><span class="sig-name descname"><span class="pre">clean_attributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/save.html#clean_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.save.clean_attributes" title="Link to this definition"></a></dt>
+<dd><p>Remove attributes that can not be written to netcdf</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.save.to_netcdf">
+<span class="sig-prename descclassname"><span class="pre">core.files.save.</span></span><span class="sig-name descname"><span class="pre">to_netcdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'h5netcdf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zlib</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">complevel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmpdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lock_timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">git_comit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'skip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'overwrite'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'backup'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'error'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_attrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/save.html#to_netcdf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.save.to_netcdf" title="Link to this definition"></a></dt>
+<dd><p>Write an xarray Dataset <cite>ds</cite> using <cite>.to_netcdf</cite> with several additional features:</p>
+<ul class="simple">
+<li><p>Use file compression</p></li>
+<li><p>Wrapped by filegen: use temporary files, detect existing output files…</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xr.Dataset</em>) – Input dataset</p></li>
+<li><p><strong>filename</strong> (<em>Path</em>) – Output file path</p></li>
+<li><p><strong>engine</strong> (<em>str</em><em>, </em><em>optional</em>) – Engine driver to use. Defaults to ‘h5netcdf’.</p></li>
+<li><p><strong>zlib</strong> (<a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><em>bool</em></a><em>, </em><em>optional</em>) – activate zlib. Defaults to True.</p></li>
+<li><p><strong>complevel</strong> (<a class="reference internal" href="core.static.html#core.static.constraint.int" title="core.static.constraint.int"><em>int</em></a><em>, </em><em>optional</em>) – Compression level. Defaults to 5.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><em>bool</em></a><em>, </em><em>optional</em>) – Verbosity. Defaults to True.</p></li>
+<li><p><strong>tmpdir</strong> (<em>Path</em><em>, </em><em>optional</em>) – use a given temporary directory. Defaults to None.</p></li>
+<li><p><strong>lock_timeout</strong> (<a class="reference internal" href="core.static.html#core.static.constraint.int" title="core.static.constraint.int"><em>int</em></a><em>, </em><em>optional</em>) – timeout in case of existing lock file</p></li>
+<li><p><strong>git_commit</strong> (<a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><em>bool</em></a><em>, </em><em>optional</em>) – Option to add git commit tag to input dataset attributes</p></li>
+<li><p><strong>if_exists</strong> (<em>str</em><em>, </em><em>optional</em>) – what to do if output file exists. Defaults to ‘error’.</p></li>
+<li><p><strong>clean_attrs</strong> – whether to remove attributes in the xarray object, that cannot
+be written to netcdf.</p></li>
+<li><p><strong>ds.to_netcdf</strong> (<em>other kwargs are passed to</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-core.files.uncompress">
+<span id="core-files-uncompress"></span><h2>core.files.uncompress<a class="headerlink" href="#module-core.files.uncompress" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="core.files.uncompress.CacheDir">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">core.files.uncompress.</span></span><span class="sig-name descname"><span class="pre">CacheDir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/uncompress.html#CacheDir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.CacheDir" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A cache directory for uncompressing files</p>
+<p class="rubric">Example</p>
+<p># by default, CacheDir stores data in /tmp/uncompress_cache_&lt;user&gt;
+uncompressed = CacheDir().uncompress(compressed_file)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.files.uncompress.CacheDir.find">
+<span class="sig-name descname"><span class="pre">find</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_compressed</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/uncompress.html#CacheDir.find"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.CacheDir.find" title="Link to this definition"></a></dt>
+<dd><p>Finds the directory containing <cite>file_compressed</cite>
+and returns the related uncompressed file (or None)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.files.uncompress.CacheDir.read_info">
+<span class="sig-name descname"><span class="pre">read_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/uncompress.html#CacheDir.read_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.CacheDir.read_info" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.files.uncompress.CacheDir.uncompress">
+<span class="sig-name descname"><span class="pre">uncompress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">purge_after</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1w'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/uncompress.html#CacheDir.uncompress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.CacheDir.uncompress" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.files.uncompress.CacheDir.write_info">
+<span class="sig-name descname"><span class="pre">write_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/uncompress.html#CacheDir.write_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.CacheDir.write_info" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="core.files.uncompress.ErrorUncompressed">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">core.files.uncompress.</span></span><span class="sig-name descname"><span class="pre">ErrorUncompressed</span></span><a class="reference internal" href="_modules/core/files/uncompress.html#ErrorUncompressed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.ErrorUncompressed" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Raised when input file is already not compressed</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.uncompress.get_compression_ext">
+<span class="sig-prename descclassname"><span class="pre">core.files.uncompress.</span></span><span class="sig-name descname"><span class="pre">get_compression_ext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/uncompress.html#get_compression_ext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.get_compression_ext" title="Link to this definition"></a></dt>
+<dd><p>Detect the compression format of a file using the system ‘file’ command.</p>
+<p>This function uses the Unix ‘file’ command to determine the compression format
+of a file based on its content (magic numbers), not just its extension.</p>
+<section id="parameters">
+<h3>Parameters:<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>f<span class="classifier">str or Path</span></dt><dd><p>Path to the file to analyze</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns:<a class="headerlink" href="#returns" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>str or None</dt><dd><p>The detected compression extension (‘.zip’, ‘.tar’, ‘.tar.gz’, ‘.tgz’,
+‘.gz’, ‘.bz2’, ‘.Z’) or None if no compression is detected</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.uncompress.uncompress">
+<span class="sig-prename descclassname"><span class="pre">core.files.uncompress.</span></span><span class="sig-name descname"><span class="pre">uncompress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dirname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_uncompressed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'error'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_out_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="_modules/core/files/uncompress.html#uncompress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.uncompress" title="Link to this definition"></a></dt>
+<dd><p>Uncompress <cite>filename</cite> to <cite>dirname</cite></p>
+<section id="arguments">
+<h3>Arguments:<a class="headerlink" href="#arguments" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>on_uncompressed: str</dt><dd><p>determines what to do if <cite>filename</cite> is not compressed
+- ‘error’: raise an error (default)
+- ‘copy’: copy uncompressed file
+- ‘bypass’: returns the input file</p>
+</dd>
+<dt>create_out_dir: bool</dt><dd><p>create output directory if it does not exist</p>
+</dd>
+</dl>
+<p>Returns the path to the uncompressed file</p>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.files.uncompress.uncompress_decorator">
+<span class="sig-prename descclassname"><span class="pre">core.files.uncompress.</span></span><span class="sig-name descname"><span class="pre">uncompress_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.core_uncompress_mapping'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/files/uncompress.html#uncompress_decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.files.uncompress.uncompress_decorator" title="Link to this definition"></a></dt>
+<dd><p>A decorator that uncompresses the result of function <cite>f</cite></p>
+<dl class="simple">
+<dt>Signature of <cite>f</cite> is assumed to be as follows:</dt><dd><p>f(identifier, dirname, <a href="#id3"><span class="problematic" id="id4">*</span></a>args, <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs)</p>
+</dd>
+</dl>
+<p>The file returned by <cite>f</cite> is uncompressed to dirname</p>
+<p>The mapping of “identifier -&gt; uncompressed” is stored in dirname/filename</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.html" class="btn btn-neutral float-left" title="core package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.geo.html" class="btn btn-neutral float-right" title="core.geo package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.network package &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.process package" href="core.process.html" />
+    <link rel="prev" title="core.geo package" href="core.geo.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.html">core.geo package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">core.network package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.network.auth">core.network.auth</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.network.download">core.network.download</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-core.network.ftp">core.network.ftp</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.ascii_table">core.ascii_table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.auth">core.auth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.cache">core.cache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.condor">core.condor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.config">core.config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#core-conftest">core.conftest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.dates">core.dates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.deptree">core.deptree</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#core-deptree-prefect">core.deptree_prefect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.download">core.download</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.env">core.env</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.fileutils">core.fileutils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.ftp">core.ftp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.fuzzy">core.fuzzy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.interpolate">core.interpolate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.lock">core.lock</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.log">core.log</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.masks">core.masks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.monitor">core.monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.progressbar">core.progressbar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.pseudoinverse">core.pseudoinverse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.pytest_utils">core.pytest_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.save">core.save</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.table">core.table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.tools">core.tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.uncompress">core.uncompress</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-core.xrtags">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+      <li class="breadcrumb-item active">core.network package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.network.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-network-package">
+<h1>core.network package<a class="headerlink" href="#core-network-package" title="Link to this heading"></a></h1>
+<hr class="docutils" />
+<section id="module-core.network.auth">
+<span id="core-network-auth"></span><h2>core.network.auth<a class="headerlink" href="#module-core.network.auth" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.auth.get_auth">
+<span class="sig-prename descclassname"><span class="pre">core.network.auth.</span></span><span class="sig-name descname"><span class="pre">get_auth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/core/network/auth.html#get_auth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.auth.get_auth" title="Link to this definition"></a></dt>
+<dd><p>Returns a dictionary with credentials, using .netrc</p>
+<p><cite>name</cite> is the identifier (= <cite>machine</cite> in .netrc). This allows for several accounts
+on a single machine.
+The url is returned as <cite>account</cite></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.auth.get_auth_dhus">
+<span class="sig-prename descclassname"><span class="pre">core.network.auth.</span></span><span class="sig-name descname"><span class="pre">get_auth_dhus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/auth.html#get_auth_dhus"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.auth.get_auth_dhus" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-core.network.download">
+<span id="core-network-download"></span><h2>core.network.download<a class="headerlink" href="#module-core.network.download" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.download.download_nextcloud">
+<span class="sig-prename descclassname"><span class="pre">core.network.download.</span></span><span class="sig-name descname"><span class="pre">download_nextcloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nextcloud_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharelink</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'https://docs.hygeos.com/s/Fy2bYLpaxGncgPM/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wget_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'skip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'overwrite'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'backup'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'skip'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/download.html#download_nextcloud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.download.download_nextcloud" title="Link to this definition"></a></dt>
+<dd><p>Function for downloading data from Nextcloud contained in the data/eoread directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product_name</strong> (<em>str</em>) – Name of the product with the extension</p></li>
+<li><p><strong>output_dir</strong> (<em>Path</em><em> | </em><em>str</em>) – Directory where to store downloaded data</p></li>
+<li><p><strong>nextcloud_dir</strong> (<em>Path</em><em> | </em><em>str</em><em>, </em><em>optional</em>) – Sub Nextcloud repository in which the product are stored. Defaults to ‘’.</p></li>
+<li><p><strong>sharelink</strong> (<em>str</em><em>, </em><em>optional</em>) – Nextcloud public link. By defaults, it is public link to eoread repository.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output path of the downloaded data</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.download.download_url">
+<span class="sig-prename descclassname"><span class="pre">core.network.download.</span></span><span class="sig-name descname"><span class="pre">download_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dirname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wget_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'skip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'overwrite'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'backup'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'skip'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="_modules/core/network/download.html#download_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.download.download_url" title="Link to this definition"></a></dt>
+<dd><p>Download <cite>url</cite> to <cite>dirname</cite> with wget</p>
+<p>Options <cite>wget_opts</cite> are added to wget
+Uses a <cite>filegen</cite> wrapper
+Other kwargs are passed to <cite>filegen</cite> (lock_timeout, tmpdir, if_exists)</p>
+<p>Returns the path to the downloaded file</p>
+</dd></dl>
+
+</section>
+<section id="module-core.network.ftp">
+<span id="core-network-ftp"></span><h2>core.network.ftp<a class="headerlink" href="#module-core.network.ftp" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_create_dir">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_create_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_create_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_create_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_download">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_local</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_download" title="Link to this definition"></a></dt>
+<dd><p>Downloads <cite>file_local</cite> on ftp, from server directory <cite>dir_server</cite></p>
+<p>The file name on the server is determined by <cite>file_local.name</cite></p>
+<p class="rubric">Example</p>
+<p>ftp = FTP(<a href="#id1"><span class="problematic" id="id2">**</span></a>get_auth_ftp(‘my_server’))
+local_file = Path(‘./data.txt’)
+ftp_download(ftp, local_file, ‘/remote/folder’)
+ftp.quit()</p>
+<dl class="simple">
+<dt>Refs:</dt><dd><p><a class="reference external" href="https://stackoverflow.com/questions/19692739/">https://stackoverflow.com/questions/19692739/</a>
+<a class="reference external" href="https://stackoverflow.com/questions/73534659/">https://stackoverflow.com/questions/73534659/</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_file_exists">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_file_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="core.static.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_file_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_file_exists" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_list">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'*'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_list" title="Link to this definition"></a></dt>
+<dd><p>Returns the list of fles matching <cite>pattern</cite> on <cite>dir_server</cite></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_upload">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_upload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_local</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'skip'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocksize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8192</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_upload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_upload" title="Link to this definition"></a></dt>
+<dd><p>FTP upload function</p>
+<ul class="simple">
+<li><p>Use temporary files</p></li>
+<li><p>Create remote directories</p></li>
+<li><dl class="simple">
+<dt>if_exists:</dt><dd><p>‘skip’: skip the existing file
+‘error’: raise an error on existing file
+‘overwrite’: overwrite existing file</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.get_auth_ftp">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">get_auth_ftp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span></span></span><a class="reference internal" href="_modules/core/network/ftp.html#get_auth_ftp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.get_auth_ftp" title="Link to this definition"></a></dt>
+<dd><p>get netrc credentials for use with pyfilesystem’s
+FTPFS or ftplib’s FTP</p>
+<p>Ex: FTP(<a href="#id3"><span class="problematic" id="id4">**</span></a>get_auth_ftp(&lt;name&gt;))</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.get_url_ftpfs">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">get_url_ftpfs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#get_url_ftpfs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.get_url_ftpfs" title="Link to this definition"></a></dt>
+<dd><p>get netrc credentials for use with pyfilesystem’s fs.open_fs</p>
+<p>Ex: fs.open_fs(get_url_ftpfs(&lt;name&gt;))</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.geo.html" class="btn btn-neutral float-left" title="core.geo package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.process.html" class="btn btn-neutral float-right" title="core.process package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
