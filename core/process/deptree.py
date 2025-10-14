@@ -10,13 +10,7 @@ from core.interpolate import product_dict
 from core import log
 from core.ascii_table import ascii_table
 import pandas as pd
-
-
-import contextlib
-import logging
-import sys
 import threading
-from io import StringIO
 
 
 class Task:
@@ -140,7 +134,9 @@ def format_time(t):
             
         return "".join(parts)
 
-def print_execution_summary(tasks: list, start_time: float, log_file: Path, finished: bool = False):
+def print_execution_summary(
+    tasks: list, start_time: float, log_file: Path | None = None, finished: bool = False
+):
     """
     Print a summary table showing count of tasks by status and class name.
     
@@ -161,17 +157,18 @@ def print_execution_summary(tasks: list, start_time: float, log_file: Path, fini
     if any(getattr(t, 'status', None) == 'error' for t in tasks):
         c = log.rgb.red
     else:
-        if finished: c = log.rgb.green # finished without errors
-        
-    msg +=  log.rgb.orange(f"Status: ".ljust(l))  + c(s.rjust(r)) + "\n"
+        if finished:
+            c = log.rgb.green  # finished without errors
+
+    msg +=  log.rgb.orange("Status: ".ljust(l))  + c(s.rjust(r)) + "\n"
     elapsed = time() - start_time
     
     # datetime from epoch
     start = datetime.fromtimestamp(start_time)
     
-    msg += log.rgb.orange(f"Time spent: ".ljust(l)) + format_time(elapsed).rjust(r) + "\n"
-    msg += log.rgb.orange(f"Start:".ljust(l)) + start.strftime('%H:%M:%S').rjust(r) + "\n"
-    msg += log.rgb.orange(f"Date: ".ljust(l))  + datetime.now().strftime('%Y-%m-%d').rjust(r) + "\n"
+    msg += log.rgb.orange("Time spent: ".ljust(l)) + format_time(elapsed).rjust(r) + "\n"
+    msg += log.rgb.orange("Start:".ljust(l)) + start.strftime('%H:%M:%S').rjust(r) + "\n"
+    msg += log.rgb.orange("Date: ".ljust(l))  + datetime.now().strftime('%Y-%m-%d').rjust(r) + "\n"
     
     # Get unique statuses and classes directly from list comprehensions + set
     all_statuses = sorted(set(getattr(task, 'status', 'unknown') for task in tasks))
@@ -252,19 +249,21 @@ def print_execution_summary(tasks: list, start_time: float, log_file: Path, fini
         if len(failed_tasks) > 5:
             msg += "..."  + "\n"
         msg += str(log.rgb.orange) + "========================="  + "\n"
-    # log.disp(msg)
-    
+
     # pad the output by one space left
     msg = msg.split("\n")
     msg = "\n ".join(msg)
     msg = " " + msg
     
     # using a lock shared accross threads to avoid race conditions
-    file_lock = threading.Lock()
-    with file_lock:
-        # overwrite the output to a local file called /tmp/deptreelog
-        with open(log_file, "w") as f:
-            f.write(msg)
+    if log_file is not None:
+        file_lock = threading.Lock()
+        with file_lock:
+            # overwrite the output to a local file called /tmp/deptreelog
+            with open(log_file, "w") as f:
+                f.write(msg)
+    else:
+        log.disp(msg)
         
 
 def gen_executor(
@@ -308,8 +307,6 @@ def gen_executor(
     # Note: `gen` is defined as a function instead of an task method because it includes
     # non-serializable code, and task can be serialized (for example by the dask
     # distributed executor).
-    
-    if type(log_file) == str: log_file = Path(log_file)
     
     _start_time = time()
     is_root_call = _tasks is None
