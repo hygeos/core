@@ -32,11 +32,13 @@ class Task:
         run(): Implements the actual execution code
         done(): Checks if the task is completed. The default implementation checks if
             the `output` Path exists, if defined.
+        cleanup(): Optional cleanup method executed when all parent tasks have finished
 
     Usage:
         Subclass Task and implement at minimum:
-        - The `run()` method with your task's execution logic
-        - Optionally override `dependencies()` if your task has dependencies
+        - The `run()` method with your task's execution logic (if any)
+        - Optionally override `dependencies()` or self.deps if your task has dependencies
+        - Optionally override `cleanup()` if your task needs cleanup after execution
         - Set `output` attribute if your task produces output files
 
     Example:
@@ -55,6 +57,12 @@ class Task:
     def run(self):
         """
         Implements the actual execution code
+        """
+        pass
+
+    def cleanup(self):
+        """
+        Optional cleanup method executed after the task finishes running
         """
         pass
 
@@ -101,13 +109,24 @@ def gen_sync(
 
     Args:
         task (Task): The task to generate
+        verbose (bool): Whether to print verbose output
     """
     if not task.done():
-        for d in task.dependencies():
+        # Ensure reference counts are initialized for this task and its dependencies
+        _ensure_ref_count_initialized(task)
+        
+        deps = task.dependencies()
+        for d in deps:
             gen_sync(d, verbose=verbose)
         if verbose:
             log.info(f"Generating {task}...")
-        return task.run()
+        try:
+            result = task.run()
+            return result
+        finally:
+            # Try to cleanup each dependency (will only cleanup if all dependent tasks are done)
+            for d in deps:
+                _try_cleanup_dependency(d)
 
 def format_time(t):
     if t == "?": 
@@ -290,8 +309,8 @@ def gen_executor(
         graph_executor: an instance of ThreadPoolExecutor used for traversing the
             dependency tree with the `gen` function. It is useful to override the
             default ThreadPoolExecutor(512) if the tree is too large.
-        _tasks: internal parameter to track of the tasks status and to provide an
-            execution summary.
+        _tasks: internal parameter to track tasks status and provide an execution 
+            summary. Also used to avoid duplicate task submissions.
 
     Example:
         from concurrent.futures import ThreadPoolExecutor
@@ -323,6 +342,12 @@ def gen_executor(
     if default_executor is None:
         default_executor = ThreadPoolExecutor()
 
+    # Check if task is already being processed by checking if it's in _tasks
+    # Use object identity comparison which is efficient and correct for task deduplication
+    if task in _tasks:
+        # Task is already submitted, just return without reprocessing
+        return
+    
     # Set initial status
     if not hasattr(task, "status"):
         setattr(task, "status", "pending")
@@ -331,6 +356,9 @@ def gen_executor(
     
     _tasks.append(task)
     if not task.done():
+        # Ensure reference counts are initialized for this task and its dependencies
+        _ensure_ref_count_initialized(task)
+        
         # run all dependencies on the graph executor
         deps = task.dependencies()
         if len(deps) > graph_executor._max_workers:
@@ -380,7 +408,8 @@ def gen_executor(
                 setattr(task, "status", "running")
                 if verbose:
                     log.info(f"Generating {task}...")
-                return task.run()
+                result = task.run()
+                return result
 
             # Keep status as pending until the task actually starts running
             # execute wrapped function on this executor and wait for result
@@ -388,12 +417,18 @@ def gen_executor(
             try:
                 result = future.result()
                 setattr(task, "status", "success")
+                # Try to cleanup each dependency (will only cleanup if all dependent tasks are done)
+                for dep in deps:
+                    _try_cleanup_dependency(dep)
                 if not is_root_call:
                     print_execution_summary(_tasks, _start_time, log_file)
                     return result
             except Exception as e:
                 setattr(task, "status", "error")
                 setattr(task, "error_msg", str(e))
+                # Try to cleanup each dependency even if the task failed
+                for dep in deps:
+                    _try_cleanup_dependency(dep)
                 print_execution_summary(_tasks, _start_time, log_file)
                 if verbose:
                     log.warning(f"Task {task.__class__} failed with error {str(e.__class__)}")
@@ -453,6 +488,37 @@ class TaskProduct(Task):
 
     def dependencies(self):
         return [self.cls(**d, **self.others) for d in product_dict(**self.kwargs)]
+
+
+def _ensure_ref_count_initialized(task):
+    """
+    Ensure that a task's immediate dependencies have reference counts initialized.
+    This is called lazily when a task is about to be processed.
+    Only initializes the immediate dependencies, not their sub-dependencies.
+    """
+    if not hasattr(task, '_ref_count_initialized'):
+        # Mark this task as having its dependencies processed
+        task._ref_count_initialized = True
+        
+        deps = task.dependencies()
+        for dep in deps:
+            # Initialize ref count for dependency if not already done
+            if not hasattr(dep, '_ref_count'):
+                dep._ref_count = 0
+            # Count this task as a dependent of the dependency
+            dep._ref_count += 1
+
+
+def _try_cleanup_dependency(dep):
+    """
+    Try to cleanup a dependency. Only cleanup if all tasks that depend on it have finished.
+    """
+    if hasattr(dep, '_ref_count'):
+        dep._ref_count -= 1
+        if dep._ref_count <= 0:
+            # All dependent tasks have finished, safe to cleanup
+            if hasattr(dep, 'cleanup') and callable(getattr(dep, 'cleanup')):
+                dep.cleanup()
 
 
 def sample():

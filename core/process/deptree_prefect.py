@@ -2,6 +2,7 @@ import asyncio
 from prefect import task as prefect_task
 from prefect import get_client
 from prefect.futures import PrefectFuture
+from core.process.deptree import _ensure_ref_count_initialized, _try_cleanup_dependency
 
 
 """
@@ -86,8 +87,15 @@ def wraptask(task):
     """
     classname = str(task.__class__.__name__)
     def wrapper(*args):
+        # Ensure reference counts are initialized for this task and its dependencies
+        _ensure_ref_count_initialized(task)
+        
         # execute the run method
-        return task.run()
+        result = task.run()
+        # Try to cleanup each dependency (will only cleanup if all dependent tasks are done)
+        for dep in task.dependencies():
+            _try_cleanup_dependency(dep)
+        return result
     return prefect_task(name=classname, tags=[classname])(wrapper)
 
 
