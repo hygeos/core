@@ -110,7 +110,8 @@ def gen_sync(
         return task.run()
 
 def format_time(t):
-    if t == "?": return t
+    if t == "?": 
+        return t
     if t < 60:
         return f"{t:.0f}s"
     elif t < 3600:
@@ -215,6 +216,7 @@ def print_execution_summary(
         colors = dict(
             Class       = log.rgb.default,
             Pending     = log.rgb.orange,
+            Running     = log.rgb.blue,
             Success     = log.rgb.green,
             Error       = log.rgb.red,
             Skipped     = log.rgb.cyan,
@@ -225,6 +227,7 @@ def print_execution_summary(
         sides = dict(
             Class       = "left",
             Pending     = "right",
+            Running     = "right",
             Success     = "right",
             Error       = "right",
             Skipped     = "right",
@@ -372,10 +375,16 @@ def gen_executor(
             else:
                 executor = default_executor
 
-            # execute `task.run` on this executor and wait for result
-            future = executor.submit(task.run)
-            if verbose:
-                log.info(f"Generating {task}...")
+            def run_with_status_update():
+                """Wrapper function that sets status to running when actually executing"""
+                setattr(task, "status", "running")
+                if verbose:
+                    log.info(f"Generating {task}...")
+                return task.run()
+
+            # Keep status as pending until the task actually starts running
+            # execute wrapped function on this executor and wait for result
+            future = executor.submit(run_with_status_update)
             try:
                 result = future.result()
                 setattr(task, "status", "success")
@@ -389,8 +398,8 @@ def gen_executor(
                 if verbose:
                     log.warning(f"Task {task.__class__} failed with error {str(e.__class__)}")
     else:
-        # Task is already done, mark as skipped if no status set
-        if not hasattr(task, "status"):
+        # Task is already done, mark as skipped if status is pending
+        if getattr(task, "status", None) == "pending":
             setattr(task, "status", "skipped")
             # print_execution_summary(_tasks, _start_time)
     
