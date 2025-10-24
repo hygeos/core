@@ -49,8 +49,13 @@ def datetime(ds: xr.Dataset):
         raise AttributeError
 
 
-def haversine(lat1: float, lon1: float, lat2: float, lon2: float, 
-              radius: float = 6371):
+def haversine(
+    lat1: float | np.ndarray,
+    lon1: float | np.ndarray,
+    lat2: float,
+    lon2: float,
+    radius: float = 6371,
+):
     '''
     Calculate the great circle distance between two points (specified in
     decimal degrees) on a sphere of a given radius
@@ -70,18 +75,25 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float,
     return dist
 
 
-def locate(lat, lon, lat0, lon0,
-           dist_min_km: float = None,
-           verbose: bool = False):
+def locate(
+    lat: xr.DataArray,
+    lon: xr.DataArray,
+    lat0: float,
+    lon0: float,
+    dist_min_km: float | None = None,
+    verbose: bool = False,
+) -> Dict:
     """
-    Locate `lat0`, `lon0` within `lat`, `lon`
+    Locate `lat0`, `lon0` within `lat`, `lon` (xr.DataArrays)
 
     if dist_min_km is specified and if the minimal distance
     exceeds it, a ValueError is raised
+
+    returns a dictionary of the pixel coordinates
     """
     if verbose:
         print(f'Locating lat={lat0}, lon={lon0}')
-    dist = haversine(lat, lon, lat0, lon0)
+    dist = haversine(lat.values, lon.values, lat0, lon0)
     dist_min = np.array(np.nanmin(dist))
 
     if np.isnan(dist_min):
@@ -91,7 +103,9 @@ def locate(lat, lon, lat0, lon0,
         raise ValueError(f'locate: minimal distance is {dist_min}, '
                          f'should be at most {dist_min_km}')
 
-    return [x[0] for x in np.where(dist == dist_min)]
+    coords = [x[0] for x in np.where(dist == dist_min)]
+
+    return {dim: coords[idim] for idim, dim in enumerate(lat.dims)}
 
 
 def drop_unused_dims(ds): 

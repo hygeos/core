@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import xarray as xr
-from core.tools import reglob, xr_filter_decorator, xr_unfilter, xr_filter
+from core.tools import locate, reglob, xr_filter_decorator, xr_unfilter, xr_filter
 
 
 @pytest.mark.parametrize("regexp", [".*.py", "[a-z]+.*"])
@@ -65,3 +65,20 @@ def test_xr_filter_decorator(transparent: bool, with_xy_coords: bool):
 
     # Check that the coords are preserved
     assert len(ds.coords) == len(res.coords)
+
+
+def test_locate():
+    lat_min = 0
+    lat_max = 10
+    lon_min = 0
+    lon_max = 10
+    lat, lon = xr.broadcast(
+        xr.DataArray(np.linspace(lat_min, lat_max, 100), dims=["lat"]),
+        xr.DataArray(np.linspace(lon_min, lon_max, 100), dims=["lon"]),
+    )
+    locate(lat, lon, 5.0, 5.0)
+    locate(lat, lon, 15.0, 15.0)
+
+    locate(lat, lon, 5.0, 5.0, dist_min_km=10)
+    with pytest.raises(ValueError):
+        locate(lat, lon, 15.0, 15.0, dist_min_km=10)
