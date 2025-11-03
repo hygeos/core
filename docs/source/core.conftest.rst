@@ -1,7 +1,7 @@
-core.download
+core.conftest
 ====================
 
-.. automodule:: core.download
+.. automodule:: core.conftest
    :members:
    :show-inheritance:
    :undoc-members:

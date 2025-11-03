@@ -1,7 +1,7 @@
-core.monitor
+core.deptree
 ===================
 
-.. automodule:: core.monitor
+.. automodule:: core.deptree
    :members:
    :show-inheritance:
    :undoc-members:
