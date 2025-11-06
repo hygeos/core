@@ -84,44 +84,21 @@ lvl.PROMPT.icon    = "(?)"
 # "/!\\"
 
 class _internal:
-    
-    def get_logger(name="hygeos.core"):
-        """Get logger that works with or without Hydra"""
-        logger = logging.getLogger(name)
-        
-        # Only configure if Hydra hasn't already done it
-        try:
-            from hydra.core.hydra_config import HydraConfig
-            # Check if Hydra is initialized
-            logger = logging.getLogger("hygeos.core")
-            # Hydra is running, it handles logging
-            
-            mode = "hydra"
-            return logger, mode
-        except:
-            
-            # Hydra not running, use your custom config
-            if not logger.handlers:
-                logger.setLevel(logging.DEBUG)
-                log_format = logging.Formatter('%(message)s')
-                handler = logging.StreamHandler()
-                handler.setLevel(logging.DEBUG)
-                handler.setFormatter(log_format)
-                logger.addHandler(handler)
-            
-            mode = "default"
-            return logger, mode
-            
     min_global_level = lvl.DEBUG
     blacklist = {}
     
     prefix = env.getvar("HYGEOS_LOG_PREFIX", default="%icon %time")
     
     # configure default logger for core.log
-    logger, mode = get_logger("hygeos.core")
-    
-    if mode == "hydra":
-        config.show_color = False
+    logger = logging.getLogger("hygeos.core")
+    logger.setLevel(logging.DEBUG)
+    log_format = logging.Formatter('%(message)s')
+
+    # writing to stderr                                 
+    handler = logging.StreamHandler(sys.stderr)                             
+    handler.setLevel(logging.DEBUG)                                        
+    handler.setFormatter(log_format)                                        
+    logger.addHandler(handler)   
     
     def format_msg(level: lvl, msg: str, mod):
         
@@ -152,10 +129,8 @@ class _internal:
             delimiter = "%"
         
         prefix = t(prefix).substitute(**kwargs)
-        if _internal.mode == "hydra":
-            prefix = ""  # disable prefixing in hydra mode
-            
         string = f"{prefix}{rgb.default}{msg}"
+        
         
         return string
     
