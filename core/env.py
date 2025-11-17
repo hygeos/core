@@ -9,8 +9,8 @@ load_dotenv(dotenv_path=find_dotenv(usecwd=True))
 
 def getvar(
     envvar: str,
-    default = None,
-    ):
+    default: str|None = None,
+    ) -> str:
     """
     Returns the value of environment variable `envvar`. If this variable is not defined, returns default.
 
@@ -25,7 +25,6 @@ def getvar(
         the requested environment variable or the default if the var is not defined and a default has been provided.
     """
     variable = None
-    use_default = envvar not in environ
     if envvar in environ:
         variable = environ[envvar]
         
