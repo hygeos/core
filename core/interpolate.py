@@ -76,12 +76,9 @@ def interp(da: xr.DataArray, **kwargs):
     # get interpolators along all dimensions
     indexers = {k: v.get_indexer(da[k]) for k, v in kwargs.items()}
 
-    # prevent common dimensions between da and the pointwise indexing dimensions
-    assert not set(ds.dims).intersection(da.dims)
-    
     # get unique dimensions from all variables in the dataset (preserving order)
     # we use this because ds.dims may change the order of dimensions
-    ds_dims = list(dict.fromkeys(chain(*[ds[var].dims for var in ds])))
+    ds_dims = list(dict.fromkeys(chain(*[ds[var].dims for var in ds.variables])))
 
     # transpose ds to get fixed dimension ordering
     ds = ds.transpose(*ds_dims)
@@ -151,10 +148,11 @@ def interp_block(
     # determine output coords
     coords = {}
     for dim in out_dims:
-        if dim in da.coords:
-            coords[dim] = da.coords[dim]
-        elif dim in ds.coords:
+        # in case dim is present in both da and ds, take the coords from ds in priority
+        if dim in ds.coords:
             coords[dim] = ds.coords[dim]
+        elif dim in da.coords:
+            coords[dim] = da.coords[dim]
 
     # create output DataArray
     ret = xr.DataArray(
@@ -748,7 +746,7 @@ def broadcast_numpy(ds: xr.Dataset) -> Dict:
     This requires the input to be broadcasted to common dimensions.
     """
     result = {}
-    for var in ds:
+    for var in ds.variables:
         result[var] = ds[var].data[
             tuple([slice(None) if d in ds[var].dims else None for d in ds.dims])
         ]
@@ -761,7 +759,7 @@ def broadcast_shapes(ds: xr.Dataset, dims) -> Dict:
     in the dimensions defined by dims
     """
     result = {}
-    for var in ds:
+    for var in ds.variables:
         result[var] = tuple(
             [
                 ds[var].shape[ds[var].dims.index(d)] if d in ds[var].dims else 1

@@ -468,6 +468,9 @@ def test_interp_1D(request, indexer_factory):
 
 
 def test_interp_same_dimensions():
-    a = [105.0, 104.0, 103.0, 102.0, 101.0]
-    data = xr.DataArray(np.array(a), dims=["a"],coords={"a": a})
-    interp(data, a=Linear(data.a))
+    data = xr.DataArray(
+        np.zeros(10), dims=["a"], coords={"a": np.linspace(100, 110, 10)}
+    )
+    interp(
+        data, a=Linear(xr.DataArray([105.0, 104.0, 103.0, 102.0, 101.0], dims=["a"]))
+    )
