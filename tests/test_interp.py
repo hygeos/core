@@ -465,3 +465,9 @@ def test_interp_1D(request, indexer_factory):
     plt.plot(Xi.values, Ys.values, '-')
     plt.grid(True)
     conftest.savefig(request)
+
+
+def test_interp_same_dimensions():
+    a = [105.0, 104.0, 103.0, 102.0, 101.0]
+    data = xr.DataArray(np.array(a), dims=["a"],coords={"a": a})
+    interp(data, a=Linear(data.a))
