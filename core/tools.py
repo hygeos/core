@@ -1021,3 +1021,24 @@ def xr_sample(ds: xr.Dataset, nb_sample: int|float, seed: int = None) -> xr.Data
     if nb_sample > length: nb_sample = length
     selec = np.random.choice(length, nb_sample, replace=False)
     return ds.isel({index_dim: selec})
+
+
+def str_to_bool(value: str) -> bool:
+    """
+    Convert a string representation to a boolean value.
+    
+    Args:
+        value: String value to convert. Case-insensitive comparison with 'true'.
+        
+    Returns:
+        True if the lowercase value equals 'true', False otherwise.
+        
+    Example:
+        >>> str_to_bool('True')
+        True
+        >>> str_to_bool('false')
+        False
+        >>> str_to_bool('TRUE')
+        True
+    """
+    return value.lower() == 'true'
