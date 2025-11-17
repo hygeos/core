@@ -1,6 +1,6 @@
 from datetime import datetime
 from functools import reduce
-from itertools import product
+from itertools import chain, product
 from typing import Dict, Iterable, List, Literal, Callable
 
 import numpy as np
@@ -78,11 +78,15 @@ def interp(da: xr.DataArray, **kwargs):
 
     # prevent common dimensions between da and the pointwise indexing dimensions
     assert not set(ds.dims).intersection(da.dims)
+    
+    # get unique dimensions from all variables in the dataset (preserving order)
+    # we use this because ds.dims may change the order of dimensions
+    ds_dims = list(dict.fromkeys(chain(*[ds[var].dims for var in ds])))
 
     # transpose ds to get fixed dimension ordering
-    ds = ds.transpose(*ds.dims)
+    ds = ds.transpose(*ds_dims)
     
-    out_dims = determine_output_dimensions(da, ds, kwargs.keys())
+    out_dims = determine_output_dimensions(da, ds_dims, kwargs.keys())
 
     ret = xr.map_blocks(
         interp_block,
@@ -767,17 +771,35 @@ def broadcast_shapes(ds: xr.Dataset, dims) -> Dict:
     return result
 
 
-def determine_output_dimensions(data, ds, dims_sel_interp):
+def determine_output_dimensions(
+    data: xr.DataArray, ds_dims: list, dims_sel_interp: Iterable
+) -> list:
     """
-    determine output dimensions
-    based on numpy's advanced indexing rules
+    Determine output dimensions for interpolated/selected DataArray.
+    
+    This function implements numpy's advanced indexing rules to determine the final
+    dimension ordering of the output DataArray after interpolation/selection operations.
+    
+    The key principle is that when advanced indexing is applied to some dimensions
+    of an array, those dimensions are replaced by the dimensions of the indexing arrays,
+    and these new dimensions are inserted at the position of the first indexed dimension.
+    
+    Args:
+        data (xr.DataArray): The input DataArray being interpolated/selected
+        ds_dims (list): List of dimension names from the indexing Dataset (the new
+            dimensions that will replace the indexed dimensions)
+        dims_sel_interp (set or list): Set/list of dimension names from `data` that
+            are being interpolated or selected (i.e., dimensions with advanced indexing)
+    
+    Returns:
+        list: Ordered list of dimension names for the output DataArray
     """
     out_dims = []
     dims_added = False
     for dim in data.dims:
         if dim in dims_sel_interp:
             if not dims_added:
-                out_dims.extend(list(ds.dims))
+                out_dims.extend(list(ds_dims))
                 dims_added = True
         else:
             out_dims.append(dim)
