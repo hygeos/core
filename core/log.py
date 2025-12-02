@@ -154,12 +154,12 @@ class _internal:
         if lvl.value < _internal.min_global_level.value: # and section not in LOG.filters:
             return
         
+        mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # because if calling from main mod is None
+        
         for blmod in _internal.blacklist: # blacklisted module
             blname = blmod.__name__
-            if blname in mod.__name__ and lvl.value <= _internal.blacklist[blmod].value:
+            if blname in mod_name and lvl.value <= _internal.blacklist[blmod].value:
                 return 
-        
-        mod_name = "main" if not hasattr(mod, "__name__") else mod.__name__ # because if calling from main mod is None
         
         # print(_internal.format_msg(lvl, msg, mod), file=sys.stderr, **kwargs)
         message = _internal.format_msg(lvl, msg, mod)
