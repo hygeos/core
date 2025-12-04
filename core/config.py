@@ -7,6 +7,9 @@ from core.static import constraint
 from core.static import interface
 from core import log
 
+from warnings import warn
+
+warn('core.config will be deprecated.', DeprecationWarning)
 
 """
 Generic project configuration module.
