@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 from core import log
 
 
-def uncompress_decorator(target_name_func, verbose=True):
+def uncompress_decorator(target_name_func=None, verbose=True):
     """
     A decorator that uncompresses the result of function `f`
     
@@ -24,12 +24,19 @@ def uncompress_decorator(target_name_func, verbose=True):
     
     Parameters:
     -----------
-    target_name_func : callable
+    target_name_func : callable, optional
         A function that takes an identifier and returns the target name/path
         for the uncompressed file. The identifier can be a URL or any string.
+        If None, defaults to using Path(identifier).stem.
     verbose : bool
         Whether to display verbose output during uncompression
     """
+    # Provide default target_name_func if none is given
+    if target_name_func is None:
+        def default_target_name_func(identifier):
+            return Path(identifier).stem
+        target_name_func = default_target_name_func
+    
     def decorator(f):
         @wraps(f)
         def wrapper(identifier, dirname, *args, **kwargs):
