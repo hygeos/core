@@ -6,21 +6,11 @@ import bz2
 import gzip
 import shutil
 import subprocess
-import json
-import getpass
-
-from pathlib import Path
 from functools import wraps
-from datetime import datetime
-from tempfile import TemporaryDirectory, gettempdir, mkdtemp
-from core.dates import duration, now_isofmt
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from core import log
-
-class ErrorUncompressed(Exception):
-    """
-    Raised when input file is already not compressed
-    """
 
 
 def uncompress_decorator(target_name_func, verbose=True):
@@ -198,97 +188,6 @@ def uncompress(filename,
     assert target.exists()
     return target
 
-
-class CacheDir:
-    """
-    A cache directory for uncompressing files
-
-    Example:
-        # by default, CacheDir stores data in /tmp/uncompress_cache_<user>
-        uncompressed = CacheDir().uncompress(compressed_file)
-    """
-    def __init__(self, directory=None):
-        directory = directory or Path(gettempdir())/f'uncompress_cache_{getpass.getuser()}'
-        self.directory = Path(directory)
-        self.directory.mkdir(exist_ok=True)
-        self.readme_path = self.directory/'README.TXT'
-        self.prefix = 'cache_'
-        self.info_file = 'info.json'
-
-        # initialize readme file
-        if self.readme_path.exists():
-            assert self.readme_path.is_file()
-        else:
-            with open(self.readme_path, 'w') as fp:
-                fp.write(f'This directory was created by {__file__} on {datetime.now()}')
-
-    def read_info(self, directory):
-        info_file = directory/self.info_file
-        with open(info_file) as fp:
-            info = json.load(fp)
-        return info
-    
-    def write_info(self, directory, info):
-        info_file = directory/self.info_file
-        with TemporaryDirectory() as tmpdir:
-            tmpfile = Path(tmpdir)/info_file.name
-            with open(tmpfile, 'w') as fp:
-                json.dump(info, fp, indent=4)
-            shutil.move(tmpfile, info_file)
-
-    def find(self, file_compressed):
-        '''
-        Finds the directory containing `file_compressed`
-        and returns the related uncompressed file (or None)
-        '''
-        file_uncompressed = None
-        for d in self.directory.glob(self.prefix+'*'):
-            info = self.read_info(d)
-            if Path(file_compressed).resolve() == Path(info['path_compressed']):
-                file_uncompressed = info['path_uncompressed']
-                info['accessed'] = now_isofmt()
-                self.write_info(d, info)
-            
-            # check if file must be purged
-            accessed = datetime.fromisoformat(info['accessed'])
-            purge_after = duration(info['purge_after'])
-            if accessed + purge_after < datetime.now():
-                shutil.rmtree(d)
-        
-        return file_uncompressed
-
-
-    def uncompress(self, filename, purge_after='1w'):
-        filename = Path(filename)
-        uncompressed = self.find(filename)
-
-        if uncompressed is None:
-            with TemporaryDirectory(dir=self.directory, prefix='uncompressing_') as tmpdir:
-                try:
-                    tmp_uncompressed = uncompress(filename, tmpdir)
-                except ErrorUncompressed:
-                    return Path(filename)
-            
-                # check that no other thread uncompressed the same file meanwhile
-                uncompressed = self.find(filename)
-                if uncompressed is None:
-                    # create the new directory
-                    directory = Path(mkdtemp(dir=self.directory,
-                                            prefix=self.prefix+'_'+filename.name+'_'))
-                    uncompressed = directory/tmp_uncompressed.name
-
-                    info = {
-                        'path_compressed': str(filename),
-                        'path_uncompressed': str(uncompressed),
-                        'purge_after': purge_after,
-                        'created': now_isofmt(),
-                        'accessed': now_isofmt(),
-                    }
-                    self.write_info(directory, info)
-
-                    shutil.move(tmp_uncompressed, uncompressed)
-        
-        return Path(uncompressed)
 
 def get_compression_ext(f: str|Path):
     """
