@@ -8,7 +8,7 @@ Various utility functions for modifying xarray object
 from functools import wraps
 import re
 from pathlib import Path
-from typing import Callable, Union, overload, Dict, List, Tuple
+from typing import Callable, Union, overload, Dict, List, Tuple, Any
 import xarray as xr
 import numpy as np
 from dask import array as da
@@ -378,6 +378,8 @@ def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition=None):
         If None, the flag values are unchanged ; the flag is simple registered in the
         attributes.
     """
+    if not np.issubdtype(A.dtype, np.integer):
+        raise ValueError(f"raiseflag can only be used on integer DataArrays, got {A.dtype}")
     flags = getflags(A)
     dtype_flag_masks = 'uint16'
 
@@ -692,27 +694,73 @@ class MapBlocksOutput:
 
 
 class Var:
-    def __init__(self, name: str, dtype: str, dims: Tuple):
+    def __init__(
+        self,
+        name: str,
+        dtype: str | None = None,
+        dims: Tuple | str | None = None,
+        flags: Dict[str, int] | None = None,
+        attrs: Dict[str, Any] | None = None,
+    ):
         """
         Represents a DataArray structure as used by `MapBlockOutput`
+
+        Args:
+            name: name of the variable
+            dtype: data type of the variable (optional ; only required for creating a variable)
+            dims: dimensions of the variable, either a tuple of dimension names or a string
+                representing the name of a variable in the dataset, in which case the dims
+                are taken from that variable's dimensions. (optional ; only required for
+                creating a variable)
+            flags: dictionary mapping flag names to bit positions (optional ; for flag variables)
+                Example: {'CLOUDY': 1, 'BAD_DATA': 2}
+            attrs: dictionary of attributes to add to the variable (optional)
+                Example: {'units': 'm', 'long_name': 'latitude'}
         """
         self.name = name
         self.dtype = dtype
         self.dims = dims
+        self.flags = flags or {}
+        self.attrs = attrs or {}
+    
+    def getdims(self, ds: xr.Dataset | None = None):
+        """
+        Get the actual dimensions for that variable.
+        If dims is defined as a tuple, it is returned as is.
+        If defined as a str, the dimensions of the corresponding variable in ds are
+        returned.
+        """
+        if isinstance(self.dims, tuple):
+            return self.dims
+        elif isinstance(self.dims, str):
+            assert ds is not None
+            return ds[self.dims].dims
+        else:
+            raise TypeError
 
     def to_dataarray(self, ds: xr.Dataset, new_dims: Dict | None = None):
         """
         Convert to a DataArray with dims infos provided by `ds`
 
         Args:
-            new_dims: size of each new dimension
-            new_coords: coords of each new dimension
+            ds: Dataset providing dimension and coordinate information
+            new_dims: Dictionary mapping dimension names to their size or coordinates.
+                For dimensions not present in `ds`, this parameter is required.
+                Values can be:
+                - An integer specifying the dimension size (no coordinates)
+                - An array-like object (list, numpy array, etc.) providing coordinate
+                  values. The dimension size is inferred from the length.
+                Example: {'new_dim': 5} or {'new_dim': [0, 1, 2, 3, 4]}
+        
+        Returns:
+            xr.DataArray: Empty DataArray with appropriate dimensions, chunks, and coordinates
         """
         new_dims = new_dims or {}
+        actual_dims = self.getdims(ds)
         shape = []
         chunks = []
         coords = {}
-        for d in self.dims:
+        for d in actual_dims:
             if d in ds.dims:
                 shape.append(len(ds[d]))
                 chunks.append(ds.chunks[d])
@@ -733,9 +781,10 @@ class Var:
 
         return xr.DataArray(
             da.empty(shape=shape, dtype=self.dtype, chunks=chunks),
-            dims=self.dims,
+            dims=actual_dims,
             name=self.name,
             coords=coords,
+            attrs=self.attrs,
         )
 
     def conform(self, da: xr.DataArray, transpose: bool = False) -> xr.DataArray:
