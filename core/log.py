@@ -7,9 +7,9 @@
     
 """
 # standard library imports
+from typing import Literal, Type
 from datetime import datetime
 from enum import Enum
-from typing import Literal
 from tqdm import tqdm
 import inspect
 import warnings
@@ -219,7 +219,7 @@ def log(lvl: lvl, *args, **kwargs):
     _internal.log(lvl, *args, **kwargs)
 
     
-def error(*args, e: Exception=RuntimeError, **kwargs):
+def error(*args, e: Type[Exception] = RuntimeError, **kwargs):
     """
     log with defaul level ERROR
     will raise e if passed
@@ -232,7 +232,7 @@ def error(*args, e: Exception=RuntimeError, **kwargs):
             raise RuntimeError(f"log.error Invalid Exception type: {str(e)}, should be a subclass of {str(Exception)}")
         raise e(*args)
     
-def warning(*args, w: Warning=None, **kwargs):
+def warning(*args, w: Type[Warning] = None, **kwargs):
     """
     log with defaul level WARNING
     """
@@ -251,7 +251,7 @@ def info(*args, **kwargs):
     """
     _internal.log(lvl.INFO, *args, **kwargs)
 
-def check(condition, *args, e: Exception=AssertionError):
+def check(condition, *args, e: Type[Exception] = AssertionError):
     """
     log assertion with level ERROR
     """
