@@ -27,7 +27,7 @@ class BlockProcessor(ABC):
     - process_block: Method that performs the actual processing on a data block, by
       adding or modifying Dataset variables in place.
     - input_vars: List of variable names required as input (optional)
-    - modified_vars: List of variable names that will be modified (optional)
+    - modified_vars: List of Var objects describing the variables to be modified (optional)
     - created_vars: List of Var objects describing newly created variables (optional)
     - created_dims: Dictionary of new dimensions to be created by this processor (optional)
     - global_attrs: Dictionary of the global attributes set by this processor (optional)
@@ -48,18 +48,50 @@ class BlockProcessor(ABC):
     >>> result = map_blockwise(ds, processors)
     """
 
-    def input_vars(self) -> List[str]:
-        """Return list of input variable names required by this processor."""
+    def input_vars(self) -> List[Var]:
+        """
+        Names of input variables required by this processor.
+
+        These must exist in the block before `process_block()` runs.
+        `map_blockwise` validates presence and builds the subset using these
+        names (plus names from `modified_vars()`). Do not list variables you
+        create; use `created_vars()` instead.
+
+        Example:
+        >>> def input_vars(self):
+        ...     return [Var('a'), Var('b'), Var('flags')]
+        """
         return []
 
     def modified_vars(self) -> List[Var]:
         """
-        Return list of variables that will be modified in-place.
+        Variables to be modified in-place.
+
+        Use `Var` with only `name` (leave `dims`/`dtype` as None). Optionally
+        provide other attributes or `flags` to register flag metadata
+        used by `raiseflag()`.
+
+        Example:
+        >>> def modified_vars(self):
+        ...     return [Var('flags', flags={'CLOUD': 1})]
+
+        Note: flags are raised like so:
+        >>> def process_block(self, block, **kwargs):
+        ...     self.raiseflag(block, 'flags', 'CLOUD', block['rho_toa'] > 0.2)
         """
         return []
 
     def created_vars(self) -> List[Var]:
-        """Return list of Var objects describing newly created variables."""
+        """
+        Variables that this processor will create.
+
+        Provide Var definition: `name`, `dtype`, `dims` (plus optionally
+        `flags` or other attributes). Declare any new dims in `created_dims()`.
+
+        Example:
+        >>> def created_vars(self):
+        ...     return [Var('sum', 'float64', ('x', 'y'))]
+        """
         return []
 
     def created_dims(self) -> Dict[str, Any]:
@@ -145,7 +177,7 @@ class BlockProcessor(ABC):
             flag_mappings = {}
             for var in self.modified_vars() + self.created_vars():
                 if hasattr(var, "flags") and var.flags:
-                    flag_mappings[var.name] = var.flags
+                    flag_mappings[var] = var.flags
             self._flag_mappings = flag_mappings
         return self._flag_mappings
 
@@ -206,12 +238,12 @@ def process_single_block(
         
         # Validate that all advertised created variables exist with correct specs
         for var in p.created_vars():
-            if var.name not in ds.data_vars:
+            if var not in ds.data_vars:
                 raise ValueError(
                     f"Processor {p.__class__.__name__} failed to create variable '{var.name}'"
                 )
             
-            actual_var = ds[var.name]
+            actual_var = ds[var]
             if actual_var.dtype != var.dtype:
                 raise ValueError(
                     f"Processor {p.__class__.__name__} created variable '{var.name}' "
@@ -258,10 +290,9 @@ def map_blockwise(
     current_vars = set(ds.data_vars.keys())
     for i, processor in enumerate(processors):
         # Check inputs are available
-        modified_var_names = [v.name for v in processor.modified_vars()]
         missing_vars = [
             var
-            for var in processor.input_vars() + modified_var_names
+            for var in processor.input_vars() + processor.modified_vars()
             if var not in current_vars
         ]
         if missing_vars:
@@ -273,7 +304,7 @@ def map_blockwise(
         
         # Add created variables to available vars for next processor
         for var_def in processor.created_vars():
-            current_vars.add(var_def.name)
+            current_vars.add(var_def)
 
     # Create a subset of input, with only the relevant variables, and apply
     # xr.map_blocks
@@ -319,8 +350,7 @@ def _subset(ds: xr.Dataset, processors: List[BlockProcessor]) -> xr.Dataset:
     
     for processor in processors:
         input_vars.update(processor.input_vars())
-        modified_var_names = [v.name for v in processor.modified_vars()]
-        input_vars.update(modified_var_names)
+        input_vars.update(processor.modified_vars())
     
     # Keep only the needed variables that actually exist in the dataset
     return ds[list(input_vars & set(ds.data_vars.keys()))]
@@ -356,8 +386,8 @@ def _create_template(ds: xr.Dataset, processors: List[BlockProcessor]) -> xr.Dat
     for processor in processors:
         flags = processor.get_flag_mappings()
         for var in processor.created_vars():
-            assert var.name not in template_ds
-            template_ds[var.name] = var.to_dataarray(
+            assert var not in template_ds
+            template_ds[var] = var.to_template(
                 template_ds, new_dims=processor.created_dims()
             )
         

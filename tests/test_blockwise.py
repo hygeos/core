@@ -16,11 +16,11 @@ from core.tools import Var
 
 
 class InitProcessor(BlockProcessor):
-    def input_vars(self) -> List[str]:
-        return ['latitude']
+    def input_vars(self) -> List[Var]:
+        return [Var('latitude')]
 
     def created_vars(self) -> List[Var]:
-        return [Var('flags', 'uint16', 'latitude')]
+        return [Var('flags', dtype='uint16', dims_like='latitude')]
 
     def process_block(self, block: xr.Dataset, **kwargs):
         block['flags'] = xr.zeros_like(block.latitude, dtype='uint16')
@@ -28,19 +28,17 @@ class InitProcessor(BlockProcessor):
 class NDVIProcessor(BlockProcessor):
     """Example processor that computes NDVI from red and NIR bands."""
     
-    def input_vars(self) -> List[str]:
-        return ['latitude', 'rho_toa']  # Expecting multi-band reflectance data
+    def input_vars(self) -> List[Var]:
+        return [Var('latitude'), Var('rho_toa')]  # Expecting multi-band reflectance data
     
     def created_vars(self) -> List[Var]:
         return [
             Var(
                 "ndvi",
-                "float32",
-                "latitude",
-                attrs={
-                    "units": "dimensionless",
-                    "long_name": "Normalized Difference Vegetation Index",
-                },
+                dtype="float32",
+                dims_like="latitude",
+                units="dimensionless",
+                long_name="Normalized Difference Vegetation Index",
             )
         ]
     
@@ -72,8 +70,8 @@ class ThresholdProcessor(BlockProcessor):
         self._input_var = input_var
         self.threshold = threshold
     
-    def input_vars(self) -> List[str]:
-        return ['latitude', self._input_var]
+    def input_vars(self) -> List[Var]:
+        return [Var('latitude'), Var(self._input_var)]
     
     def modified_vars(self) -> List[Var]:
         return [Var('flags', flags={"ABOVE_THRESHOLD": 1})]
@@ -82,9 +80,9 @@ class ThresholdProcessor(BlockProcessor):
         return [
             Var(
                 f"{self._input_var}_mask",
-                "bool",
-                "latitude",
-                attrs={"long_name": f"{self._input_var} mask"},
+                dtype="bool",
+                dims_like="latitude",
+                long_name=f"{self._input_var} mask",
             )
         ]
 
@@ -208,16 +206,16 @@ def test_blockwise():
 def test_blockwise_newdims():
     class NewdimensionProcessor(BlockProcessor):
 
-        def input_vars(self) -> List[str]:
-            return ['latitude']
+        def input_vars(self) -> List[Var]:
+            return [Var('latitude')]
             
         def created_dims(self):
             return {'new_dim1': 2, 'new_dim2': [1, 2, 3]}
 
         def created_vars(self) -> List[Var]:
             return [
-                Var("A", "float32", ("new_dim1", "new_dim2")),
-                Var("B", "float32", ("new_dim1", "y", "x")),
+                Var("A", dtype="float32", dims=("new_dim1", "new_dim2")),
+                Var("B", dtype="float32", dims=("new_dim1", "y", "x")),
             ]
         
         def process_block(self, block: xr.Dataset, **kwargs):
