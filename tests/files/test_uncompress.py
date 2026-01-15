@@ -108,13 +108,15 @@ def test_uncompress_single_formats(format_ext, compress_func):
     ('tar.gz', lambda path: _create_tar_gz_multi(path)),
     ('tar.bz2', lambda path: _create_tar_bz2_multi(path)),
 ])
-@pytest.mark.parametrize("extract_to_subdir,expected_files", [
-    (True, lambda tmpdir: [(Path(tmpdir) / "test" / "file1.txt", "content"), 
-                          (Path(tmpdir) / "test" / "subdir" / "file2.txt", "content")]),
-    (False, lambda tmpdir: [(Path(tmpdir) / "file1.txt", "content"), 
-                           (Path(tmpdir) / "subdir" / "file2.txt", "content")]),
+@pytest.mark.parametrize("extract_to,expected_files", [
+    ('subdir', lambda tmpdir: [(Path(tmpdir) / "test" / "file1.txt", "content"), 
+                               (Path(tmpdir) / "test" / "subdir" / "file2.txt", "content")]),
+    ('target_dir', lambda tmpdir: [(Path(tmpdir) / "file1.txt", "content"), 
+                                   (Path(tmpdir) / "subdir" / "file2.txt", "content")]),
+    ('auto', lambda tmpdir: [(Path(tmpdir) / "test" / "file1.txt", "content"), 
+                             (Path(tmpdir) / "test" / "subdir" / "file2.txt", "content")]),
 ])
-def test_uncompress_archive_formats_and_modes(archive_format, create_func, extract_to_subdir, expected_files):
+def test_uncompress_archive_formats_and_modes(archive_format, create_func, extract_to, expected_files):
     """Test uncompress with different archive formats and extract modes"""
     with TemporaryDirectory(prefix='test_archive_') as tmpdir:
         archive_file = Path(tmpdir) / f"test.{archive_format}"
@@ -123,7 +125,7 @@ def test_uncompress_archive_formats_and_modes(archive_format, create_func, extra
         create_func(archive_file)
         
         # Test extraction
-        uncompress(archive_file, tmpdir, extract_to_subdir=extract_to_subdir)
+        uncompress(archive_file, tmpdir, extract_to=extract_to)
         
         # Check expected files exist
         for file_path, content in expected_files(tmpdir):

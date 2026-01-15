@@ -9,6 +9,7 @@ import subprocess
 from functools import wraps
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Literal
 
 from core import log
 
@@ -51,7 +52,7 @@ def uncompress_decorator(target_name_func=None, verbose=True):
             # Uncompress to target location
             with TemporaryDirectory() as tmpdir:
                 f_compressed = f(identifier, tmpdir, *args, **kwargs)
-                uncompress(f_compressed, target, verbose=verbose, extract_to_subdir=False)
+                uncompress(f_compressed, target, verbose=verbose, extract_to='target_dir')
                 
                 # Find the uncompressed result in dirname and rename if needed
                 uncompressed_files = [p for p in Path(dirname).iterdir() 
@@ -117,42 +118,59 @@ def uncompress_single(filename, output_path, verbose=False):
     return output_path
 
 
-def uncompress(filename,
-               dirname,
+def uncompress(filename: str | Path,
+               target_dir: str | Path,
                create_out_dir=True,
-               extract_to_subdir=True,
+               extract_to: Literal['auto', 'subdir', 'target_dir'] = 'auto',
                verbose=False) -> Path:
     """
     Uncompress `filename` to `dirname`
 
-    Arguments:
+    Parameters
     ----------
 
-    create_out_dir: bool
-        create output directory if it does not exist
-    extract_to_subdir: bool
-        if True (default), extract to a subdirectory named after the archive
-        if False, extract directly to dirname
+    filename : str or Path
+        Path to the file to uncompress
 
-    Returns the path to the uncompressed file
+    target_dir : str or Path
+        Directory to uncompress the file to
+
+    create_out_dir : bool, optional
+        If True, create the output directory if it does not exist. Default is True.
+
+    extract_to : {'auto', 'subdir', 'target_dir'}, default 'auto'
+        'auto': if the root of the archive contains a single file or directory, uncompress
+            it to `target_dir`. Otherwise uncompress it to <target_dir>/<archivefolder>, where
+            `archivefolder` is a directory named after `filename` but without the extension.
+        'subdir': Uncompress the content of the archive to <target_dir>/<archivefolder>, where
+            `archivefolder` is a directory named after `filename` but without the extension.
+        'target_dir': uncompress the content of the archive to <target_dir> regardless of the
+            content of the archive.
+
+    verbose : bool, optional
+        If True, print verbose output. Default is False.
+
+    Returns
+    -------
+
+    Path
+        Path to the uncompressed file or directory
     """
     filename = Path(filename)
+    fname = filename.name
     if verbose:
-        log.info(f'Uncompressing {filename} to {dirname}')
-    if not Path(dirname).exists():
+        log.info(f'Uncompressing {filename} to {target_dir}')
+    if not Path(target_dir).exists():
         if create_out_dir:
-            Path(dirname).mkdir(parents=True)
+            Path(target_dir).mkdir(parents=True)
         else:
-            raise IOError(f'Directory {dirname} does not exist.')
+            raise IOError(f'Directory {target_dir} does not exist.')
 
-    fname = str(filename)
-    
-    with TemporaryDirectory(prefix='tmp_uncompress', dir=dirname) as tmpdir:
+    with TemporaryDirectory(prefix='tmp_uncompress', dir=target_dir) as tmpdir:
         extracted_path = None
         
         # Check if it's a single compressed file first
-        fname = str(filename)
-        if ((fname.endswith('.gz') and not any(fname.endswith(x) for x in ['.tar.gz', '.tgz'])) or
+        if ((fname.endswith('.gz') and not fname.endswith('.tar.gz')) or
             (fname.endswith('.bz2') and not fname.endswith('.tar.bz2')) or
             fname.endswith('.Z')):
             # Single compressed file
@@ -160,32 +178,37 @@ def uncompress(filename,
             uncompress_single(filename, extracted_path, verbose)
         else:
             # Try archive formats with shutil.unpack_archive
-            try:
-                shutil.unpack_archive(fname, tmpdir)
-                extracted_path = Path(tmpdir)
-            except (shutil.ReadError, ValueError):
-                # Not a recognized archive format
-                raise ErrorUncompressed(
-                    'Could not determine format of file '
-                    f'{Path(filename).name} and `allow_uncompressed` is not set.')
+            shutil.unpack_archive(filename, tmpdir)
+            extracted_path = Path(tmpdir)
         
+        # Determine whether the archive shall be uncompressed to a subdirectory or
+        content = list(extracted_path.glob('*'))
+        assert len(content)
+        if extract_to == 'target_dir':
+            extract_to_subdir = False
+        elif extract_to == 'subdir':
+            extract_to_subdir = True
+        elif extract_to == 'auto':
+            extract_to_subdir = len(content) >= 2
+        else:
+            raise ValueError(extract_to)
+
         # Determine final target path
         if extract_to_subdir:
             # Handle compound extensions properly
-            name = filename.name
-            if name.endswith(('.tar.gz', '.tar.bz2', '.tar.xz')):
+            if fname.endswith(('.tar.gz', '.tar.bz2', '.tar.xz')):
                 # For compound extensions, remove both parts
                 target_name = Path(filename.stem).stem
             else:
                 target_name = filename.stem
             
-            target = Path(dirname) / target_name
+            target = Path(target_dir) / target_name
             assert not target.exists(), f'Error, {target} exists.'
             # Move to final destination
             shutil.move(extracted_path, target)
         else:
-            target = Path(dirname)
-            # Move the contents of extracted_path to dirname
+            target = Path(target_dir)
+            # Move the contents of extracted_path to target_dir
             items = [extracted_path] if extracted_path.is_file() else list(extracted_path.iterdir())
             for item in items:
                 dest = target / item.name
