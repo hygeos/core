@@ -22,7 +22,6 @@ except ImportError:
 from collections import OrderedDict
 from dateutil.parser import parse
 
-from core.geo.naming import names
 from core import log
 
 
@@ -207,8 +206,8 @@ def sub_pt(ds: xr.Dataset, pt_lat, pt_lon, rad,
     int_default_value, int
         for DataArrays of type int, this value is assigned on non-valid pixels
     '''
-    lat = ds[str(names.latitude)].compute()
-    lon = ds[str(names.longitude)].compute()
+    lat = ds["latitude"].compute()
+    lon = ds["longitude"].compute()
     cond = haversine(lat, lon, pt_lat, pt_lon) < rad
     cond = cond.compute()
 
@@ -670,7 +669,7 @@ class MapBlocksOutput:
         """
         return xr.merge(
             [
-                m.to_dataarray(ds, self.new_dims) if isinstance(m, Var) else m
+                m.to_template(ds, self.new_dims) if isinstance(m, Var) else m
                 for m in self.model
             ]
         )
@@ -693,52 +692,116 @@ class MapBlocksOutput:
         return xr.merge(list_vars)
 
 
-class Var:
-    def __init__(
-        self,
+class Var(str):
+    dtype: str | None
+    dims: Tuple | None
+    dims_like: str | None
+    desc: str | None
+    units: str | None
+    flags: Dict[str, int] | None
+    minv: float | None
+    maxv: float | None
+    attrs: Dict[str, Any]
+
+    def __new__(
+        cls,
         name: str,
+        *,
         dtype: str | None = None,
-        dims: Tuple | str | None = None,
+        dims: Tuple | None = None,
+        dims_like: str | None = None,
+        desc: str | None = None,
+        units: str | None = None,
         flags: Dict[str, int] | None = None,
-        attrs: Dict[str, Any] | None = None,
+        minv: float | None = None,
+        maxv: float | None = None,
+        **kwargs,
     ):
         """
-        Represents a DataArray structure as used by `MapBlockOutput`
+        Create a `Var` descriptor defining the expected structure of a variable
+
+        `Var` is a lightweight descriptor (a `str` subclass) whose string
+        value is the variable name. It carries metadata about the intended
+        data type, dimensions and arbitrary attributes, and is used by
+        helpers such as `map_blockwise`for blockwise processing.
 
         Args:
-            name: name of the variable
-            dtype: data type of the variable (optional ; only required for creating a variable)
-            dims: dimensions of the variable, either a tuple of dimension names or a string
-                representing the name of a variable in the dataset, in which case the dims
-                are taken from that variable's dimensions. (optional ; only required for
-                creating a variable)
-            flags: dictionary mapping flag names to bit positions (optional ; for flag variables)
-                Example: {'CLOUDY': 1, 'BAD_DATA': 2}
-            attrs: dictionary of attributes to add to the variable (optional)
-                Example: {'units': 'm', 'long_name': 'latitude'}
+            name: The variable name. The `Var` instance itself is a `str` equal
+                to this name.
+            dtype: Expected NumPy dtype for the variable (e.g. 'float32',
+                'uint16'). Used by template creation and validation.
+            dims: Expected dimensions as a tuple of dimension names (optional)
+                (e.g. ('x', 'y')).
+            dims_like: Name of an existing variable in a reference dataset;
+                the dimensions will be taken from that variable in the dataset 
+                (see `getdims`). Use this to define dimensions "like another Var".
+            desc: description of the variable (optional)
+            units: units of the variable (optional)
+            flags: mapping for bitmask flags (optional),
+                e.g. {'CLEAR': 1, 'CLOUDY': 2}.
+            attrs: Optional dictionary of standard xarray attributes (reserved
+                for future use).
+            minv: minimum valid value (optional).
+            maxv: maximum valid value (optional).
+            **kwargs: Additional arbitrary attributes to attach to the variable
+                descriptor. These are accessible via the attrs attribute.
         """
-        self.name = name
-        self.dtype = dtype
-        self.dims = dims
-        self.flags = flags or {}
-        self.attrs = attrs or {}
+        instance = super().__new__(cls, name)
+        # Use object.__setattr__ because str is immutable
+        for k, v in {
+            'dtype': dtype,
+            'dims': dims,
+            'dims_like': dims_like,
+            'desc': desc,
+            'units': units,
+            'flags': flags,
+            'minv': minv,
+            'maxv': maxv,
+        }.items():
+            object.__setattr__(instance, k, v)
+        # Store additional kwargs in attrs
+        object.__setattr__(instance, 'attrs', kwargs)
+        return instance
     
+    def getattrs(self) -> Dict:
+        """Return a selection of attributes as a dictionary"""
+        result = {}
+        for k in ('desc', 'units', 'flags', 'minv', 'maxv'):
+            v = getattr(self, k, None)
+            if v is not None:
+                result[k] = v
+        result.update(self.attrs)
+        return result
+
+    def __repr__(self):
+        return f"Var({str(self)!r})"
+
+    def describe(self):
+        """
+        Prints the description of the variable.
+        """
+        lines = [f"Variable: {self}"]
+        for key, value in self.getattrs().items():
+            if value is not None:
+                lines.append(f"  {key}: {value}")
+        print('\n'.join(lines))
+
     def getdims(self, ds: xr.Dataset | None = None):
         """
         Get the actual dimensions for that variable.
         If dims is defined as a tuple, it is returned as is.
-        If defined as a str, the dimensions of the corresponding variable in ds are
-        returned.
+        If dims_like is defined, the dimensions of the corresponding 
+        variable in ds are returned.
         """
-        if isinstance(self.dims, tuple):
+        if self.dims is not None:
             return self.dims
-        elif isinstance(self.dims, str):
+        elif self.dims_like is not None:
             assert ds is not None
-            return ds[self.dims].dims
+            return ds[self.dims_like].dims
         else:
-            raise TypeError
+            raise TypeError('Either dims or dims_like must be specified')
 
-    def to_dataarray(self, ds: xr.Dataset, new_dims: Dict | None = None):
+    def to_template(self, ds: xr.Dataset, new_dims: Dict | None = None):
         """
         Convert to a DataArray with dims infos provided by `ds`
 
@@ -782,9 +845,9 @@ class Var:
         return xr.DataArray(
             da.empty(shape=shape, dtype=self.dtype, chunks=chunks),
             dims=actual_dims,
-            name=self.name,
+            name=self,
             coords=coords,
-            attrs=self.attrs,
+            attrs=self.getattrs(),
         )
 
     def conform(self, da: xr.DataArray, transpose: bool = False) -> xr.DataArray:

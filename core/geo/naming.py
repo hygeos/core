@@ -1,108 +1,55 @@
-# standard library imports
-# ...
-        
-# third party imports
-        
-# sub package imports
+#!/usr/bin/env python3
 
-from core.log import check
+from core.tools import Var
 
 
-class _name(object):
-    
-    def __init__(self, 
-                 name: str, 
-                 desc: str = None, 
-                 unit: str = None, 
-                 minv: int|float = None, 
-                 maxv: int|float = None,
-                 dtype: str = None):
-        self.name = name
-        self.desc = desc
-        self.unit = unit
-        self.minv = minv
-        self.maxv = maxv
-        self.range = (minv, maxv)
-        self.dtype = dtype
-    
-    def __str__(self):
-        return self.name
-    
 class names:
     
     # Dimensions
-    rows        = _name("y", "Vertical dimension of rasters", "pixels")
-    columns     = _name("x", "Horizontal dimension of rasters", "pixels")
-    lon         = _name("longitude", "Horizontal earth coordinate axis", "Degrees", -180, 180, 'float32')
-    lat         = _name("latitude", "Vertical earth coordinate axis", "Degrees", -90, 90, 'float32')
+    rows        = Var("y", desc="Vertical dimension of rasters", units="pixels")
+    columns     = Var("x", desc="Horizontal dimension of rasters", units="pixels")
+    lon         = Var("longitude", desc="Horizontal earth coordinate axis", units="Degrees", minv=-180, maxv=180, dtype='float32')
+    lat         = Var("latitude", desc="Vertical earth coordinate axis", units="Degrees", minv=-90, maxv=90, dtype='float32')
 
-    bands       = _name("bands", "spectral dimension of the acquisition", None)
-    bands_nvis  = _name("bands_nvis", "Visible spectral dimension of the acquisition", None)
-    bands_ir    = _name("bands_ir", "Infrared spectral dimension of the acquisition", None)
-    bnames      = _name("bandnames", "Name of bands", None)
-    detector    = _name("detectors", "Index of detector", None)
+    bands       = Var("bands", desc="spectral dimension of the acquisition")
+    bands_nvis  = Var("bands_nvis", desc="Visible spectral dimension of the acquisition")
+    bands_ir    = Var("bands_ir", desc="Infrared spectral dimension of the acquisition")
+    bnames      = Var("bandnames", desc="Name of bands")
+    detector    = Var("detectors", desc="Index of detector")
     
     # Radiometry 
-    rtoa        = _name("Rtoa", "Top of Atmosphere reflectance", None, dtype='float32')
-    ltoa        = _name("Ltoa", "Top of Atmosphere radiance", "W.m-2.sr-1")            
-    bt          = _name("BT", "Brightness Temperature", "K", minv=0)
-    rho_w       = _name("rho_w", "Water Reflectance", None)
+    rtoa        = Var("Rtoa", desc="Top of Atmosphere reflectance", dtype='float32')
+    ltoa        = Var("Ltoa", desc="Top of Atmosphere radiance", units="W.m-2.sr-1")            
+    bt          = Var("BT", desc="Brightness Temperature", units="K", minv=0)
+    rho_w       = Var("rho_w", desc="Water Reflectance")
 
-    wav         = _name("wav", "Effective wavelength", "nm") 
-    cwav        = _name("cwav", "Central (nominal) wavelength", "nm")
+    wav         = Var("wav", desc="Effective wavelength", units="nm") 
+    cwav        = Var("cwav", desc="Central (nominal) wavelength", units="nm")
 
-    F0          = _name("F0", "Solar flux irradiance", "W.m-2.sr-1")
+    F0          = Var("F0", desc="Solar flux irradiance", units="W.m-2.sr-1")
     
     # Angles 
-    sza = _name("sza", "Sun zenith angle",       "Degrees", minv=   0, maxv= 90, dtype='float32')
-    vza = _name("vza", "View zenith angle",      "Degrees", minv=   0, maxv= 90, dtype='float32')
-    saa = _name("saa", "Sun azimuth angle",      "Degrees", minv=   0, maxv=180, dtype='float32')
-    vaa = _name("vaa", "View azimuth angle",     "Degrees", minv=   0, maxv=180, dtype='float32')
-    raa = _name("raa", "Relative azimuth angle", "Degrees", minv=-180, maxv=180, dtype='float32')
-    mus = _name("mus", "Cosine of the sun zenith angle",  None, dtype='float32')
-    muv = _name("muv", "Cosine of the view zenith angle", None, dtype='float32')
+    sza = Var("sza", desc="Sun zenith angle",       units="Degrees", minv=   0, maxv= 90, dtype='float32')
+    vza = Var("vza", desc="View zenith angle",      units="Degrees", minv=   0, maxv= 90, dtype='float32')
+    saa = Var("saa", desc="Sun azimuth angle",      units="Degrees", minv=   0, maxv=180, dtype='float32')
+    vaa = Var("vaa", desc="View azimuth angle",     units="Degrees", minv=   0, maxv=180, dtype='float32')
+    raa = Var("raa", desc="Relative azimuth angle", units="Degrees", minv=-180, maxv=180, dtype='float32')
+    mus = Var("mus", desc="Cosine of the sun zenith angle",  dtype='float32')
+    muv = Var("muv", desc="Cosine of the view zenith angle", dtype='float32')
     
     # Flags
-    flags   = _name("flags", "Bitmask describing the pixel data", None, dtype='uint16')
-    quality = _name("quality", "Boolean mask describing the pixel quality", None, dtype=bool)
+    flags   = Var("flags", desc="Bitmask describing the pixel data", dtype='uint16')
+    quality = Var("quality", desc="Boolean mask describing the pixel quality", dtype='bool')
     
     # Attributes
-    crs             = _name("crs", "Projection")
-    unit            = _name("unit")
-    datetime        = _name("datetime")
-    platform        = _name("platform")
-    sensor          = _name("sensor")
-    shortname       = _name("shortname")
-    resolution      = _name("resolution", "Resolution in meter")
-    description     = _name("description")
-    product_name    = _name("product_name")
-    input_directory = _name("input_directory")
+    crs             = Var("crs", desc="Projection")
+    unit            = Var("unit")
+    datetime        = Var("datetime")
+    platform        = Var("platform")
+    sensor          = Var("sensor")
+    shortname       = Var("shortname")
+    resolution      = Var("resolution", desc="Resolution in meter")
+    description     = Var("description")
+    product_name    = Var("product_name")
+    input_directory = Var("input_directory")
 
-
-def add_var(ds, var, attrs: _name):
-    """
-    Add a new variable to a xarray.Dataset with it attributes
-
-    Args:
-        ds (xr.Dataset): Dataset to complete
-        var (xr.DataArray): Array to add 
-        attrs (_name): Attributes to join to the new variable
-    """
-    
-    # Add data and common attributes
-    ds[attrs.name] = var
-    if attrs.desc: ds[attrs.name].attrs['description'] = attrs.desc
-    if attrs.unit: ds[attrs.name].attrs['unit'] = attrs.unit
-    
-    # Check data range of values
-    if attrs.range:
-        check(var.min() > attrs.range[0] and var.max() < attrs.range[1], 
-              f'Values for new var ({attrs.name}) out of range ({attrs.range})')
-        ds[attrs.name].attrs['values_range'] = attrs.range
-    
-    # Check data type
-    if attrs.dtype: 
-        ds[attrs.name] = ds[attrs.name].astype(attrs.dtype)
-        ds[attrs.name].attrs['dtype'] = attrs.dtype
-        
-    return ds

@@ -17,7 +17,7 @@ def convert_latlon_2D(lat: da.array, lon: da.array) -> tuple:
     
     return da.meshgrid(lon, lat)
 
-def center_longitude(ds: xr.Dataset, center: Literal[0, 180]=0, lon_name: str=names.lon.name):
+def center_longitude(ds: xr.Dataset, center: Literal[0, 180]=0, lon_name: str=names.lon):
     """
     Center longitudes from [0, 360] to [-180, 180] or from [-180, 180] to [0, 360]
     """
