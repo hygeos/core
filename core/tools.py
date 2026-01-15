@@ -1040,6 +1040,12 @@ def xr_filter_decorator(
     2. Applying the decorated function to the subset.
     3. Reconstructing the original dataset from the subset using `xr_unfilter`.
 
+    Behavior with in-place vs. non-in-place modifications:
+    - If the decorated function returns a Dataset (non-in-place), the decorator returns
+      the unfiltered result.
+    - If the decorated function returns None (in-place modification), the decorator
+      updates the original input dataset in-place with the unfiltered modified subset.
+
     NOTE: this decorator does not guarantee that the order of dimensions is maintained.
     When using this decorator with `xr.apply_blocks`, you may want to wrap your
     xr_filter_decorator decorated method with the `conform` decorator.
@@ -1058,14 +1064,23 @@ def xr_filter_decorator(
             )
             new_args = tuple(sub if i == argpos else a for i, a in enumerate(args))
             result = func(*new_args, **kwargs)
-            return xr_unfilter(
-                result,
+            
+            # unfilter the result
+            # if `func` does in-place modification, then modify the input dataset `ds`
+            # in-place with the unfiltered modified input `sub`.
+            # otherwise, return the unfiltered result.
+            unf = xr_unfilter(
+                result or sub,
                 ok,
                 fill_value_float=fill_value_float,
                 fill_value_int=fill_value_int,
                 stackdim=stackdim,
                 transparent=transparent,
             )
+            if result is not None:
+                return unf
+            else:
+                ds.update(unf)
 
         return wrapper
 
