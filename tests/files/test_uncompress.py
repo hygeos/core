@@ -166,6 +166,23 @@ def _create_tar_bz2_multi(path):
         tf.addfile(info2, fileobj=io.BytesIO(b"content"))
 
 
+@pytest.mark.parametrize('path', [
+    "file1.txt",
+    "subdir/file2.txt",
+])
+def test_uncompress_single_dir(path: str):
+    """
+    Uncompressing a directory with a single file/directory, check appropriate returned
+    path
+    """
+    with TemporaryDirectory(prefix='test_archive_') as tmpdir:
+        archive_file = Path(tmpdir) / "test.zip"
+        with ZipFile(archive_file, 'w') as zf:
+            zf.writestr(path, "content")
+
+        ret = uncompress(archive_file, tmpdir)
+        assert ret.name != Path(tmpdir).name
+
 def test_uncompress_single_unsupported():
     """Test uncompress_single with unsupported format"""
     with TemporaryDirectory(prefix='test_single_') as tmpdir:

@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory
 from typing import Literal
 
 from core import log
+from core.tools import only
 
 
 def uncompress_decorator(target_name_func=None, verbose=True):
@@ -214,6 +215,10 @@ def uncompress(filename: str | Path,
                 dest = target / item.name
                 assert not dest.exists(), f'Error, {dest} exists.'
                 shutil.move(item, dest)
+            if extract_to == 'auto':
+                # a single file was moved: we shall return its path instead of the
+                # containing folder
+                target = target / only(items).name
         
     assert target.exists()
     return target
