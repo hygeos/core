@@ -158,7 +158,7 @@ def uncompress(filename: str | Path,
         Path to the uncompressed file or directory
     """
     filename = Path(filename)
-    fname = filename.name
+    fname = filename.name.lower()
     if verbose:
         log.info(f'Uncompressing {filename} to {target_dir}')
     if not Path(target_dir).exists():
