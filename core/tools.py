@@ -686,7 +686,7 @@ class MapBlocksOutput:
         """
         list_vars = []
         for var in self.model:
-            da = ds[var.name]
+            da = ds[var]
             list_vars.append(var.conform(da, transpose=transpose))
 
         return xr.merge(list_vars)
@@ -696,11 +696,8 @@ class Var(str):
     dtype: str | None
     dims: Tuple | None
     dims_like: str | None
-    desc: str | None
-    units: str | None
     flags: Dict[str, int] | None
-    minv: float | None
-    maxv: float | None
+    tags: list[str] | None
     attrs: Dict[str, Any]
 
     def __new__(
@@ -710,12 +707,9 @@ class Var(str):
         dtype: str | None = None,
         dims: Tuple | None = None,
         dims_like: str | None = None,
-        desc: str | None = None,
-        units: str | None = None,
         flags: Dict[str, int] | None = None,
-        minv: float | None = None,
-        maxv: float | None = None,
-        **kwargs,
+        tags: list[str] | None = None,
+        attrs: Dict[str, Any] | None = None,
     ):
         """
         Create a `Var` descriptor defining the expected structure of a variable
@@ -723,7 +717,7 @@ class Var(str):
         `Var` is a lightweight descriptor (a `str` subclass) whose string
         value is the variable name. It carries metadata about the intended
         data type, dimensions and arbitrary attributes, and is used by
-        helpers such as `map_blockwise`for blockwise processing.
+        helpers such as `map_blocks`for blockwise processing.
 
         Args:
             name: The variable name. The `Var` instance itself is a `str` equal
@@ -735,16 +729,13 @@ class Var(str):
             dims_like: Name of an existing variable in a reference dataset;
                 the dimensions will be taken from that variable in the dataset 
                 (see `getdims`). Use this to define dimensions "like another Var".
-            desc: description of the variable (optional)
-            units: units of the variable (optional)
             flags: mapping for bitmask flags (optional),
                 e.g. {'CLEAR': 1, 'CLOUDY': 2}.
-            attrs: Optional dictionary of standard xarray attributes (reserved
-                for future use).
-            minv: minimum valid value (optional).
-            maxv: maximum valid value (optional).
-            **kwargs: Additional arbitrary attributes to attach to the variable
-                descriptor. These are accessible via the attrs attribute.
+            tags: Variable tags, used for further selection.
+                e.g. tags=['debug', 'level2']
+            attrs: Optional dictionary of attributes to attach to the variable
+                descriptor, including 'desc' (description), 'units',
+                'minv' (minimum valid value), 'maxv' (maximum valid value).
         """
         instance = super().__new__(cls, name)
         # Use object.__setattr__ because str is immutable
@@ -752,36 +743,41 @@ class Var(str):
             'dtype': dtype,
             'dims': dims,
             'dims_like': dims_like,
-            'desc': desc,
-            'units': units,
             'flags': flags,
-            'minv': minv,
-            'maxv': maxv,
+            'tags': tags,
         }.items():
             object.__setattr__(instance, k, v)
-        # Store additional kwargs in attrs
-        object.__setattr__(instance, 'attrs', kwargs)
+        # Store attrs
+        object.__setattr__(instance, 'attrs', attrs or {})
         return instance
-    
-    def getattrs(self) -> Dict:
-        """Return a selection of attributes as a dictionary"""
-        result = {}
-        for k in ('desc', 'units', 'flags', 'minv', 'maxv'):
-            v = getattr(self, k, None)
-            if v is not None:
-                result[k] = v
-        result.update(self.attrs)
-        return result
 
     def __repr__(self):
         return f"Var({str(self)!r})"
+    
+    def unit(self) -> str:
+        """
+        Return unit
+        For backward compatibility
+        """
+        assert "units" in self.attrs
+        assert isinstance(self.attrs["units"], str)
+        return self.attrs["units"]
+
+    def desc(self) -> str:
+        """
+        Returns variable description
+        For backward compatibility
+        """
+        assert "desc" in self.attrs
+        assert isinstance(self.attrs["desc"], str)
+        return self.attrs["desc"]
 
     def describe(self):
         """
         Prints the description of the variable.
         """
         lines = [f"Variable: {self}"]
-        for key, value in self.getattrs().items():
+        for key, value in self.attrs.items():
             if value is not None:
                 lines.append(f"  {key}: {value}")
         print('\n'.join(lines))
@@ -799,7 +795,9 @@ class Var(str):
             assert ds is not None
             return ds[self.dims_like].dims
         else:
-            raise TypeError('Either dims or dims_like must be specified')
+            raise TypeError(
+                f"Either dims or dims_like must be specified for created variables ({self})"
+            )
 
     def to_template(self, ds: xr.Dataset, new_dims: Dict | None = None):
         """
@@ -842,6 +840,9 @@ class Var(str):
             elif (d in new_dims) and hasattr(new_dims[d], "__len__"):
                 coords[d] = new_dims[d]
 
+        if self.dtype is None:
+            raise TypeError(f'Please define the dtype for created variable {self}')
+
         return xr.DataArray(
             da.empty(shape=shape, dtype=self.dtype, chunks=chunks),
             dims=actual_dims,
@@ -854,10 +855,13 @@ class Var(str):
         """
         Conform a DataArray to the variable definition
         """
+        if self.dims is None:
+            raise ValueError(f"dims must be set for Var {self}")
+        
         # type check
-        if da.dtype != self.dtype:
+        if self.dtype is not None and da.dtype != self.dtype:
             raise TypeError(
-                f'Expected type "{self.dtype}" for "{self.name}" but '
+                f'Expected type "{self.dtype}" for "{self}" but '
                 f'encountered "{da.dtype}"'
             )
         
@@ -865,14 +869,14 @@ class Var(str):
         if da.dims != self.dims:
             if set(da.dims) != set(self.dims):
                 raise RuntimeError(
-                    f'Expected dimensions "{self.dims}" for variable "{self.name}" '
+                    f'Expected dimensions "{self.dims}" for variable "{self}" '
                     f'but encountered "{da.dims}".'
                 )
             if transpose:
                 return da.transpose(*self.dims)
             else:
                 raise RuntimeError(
-                    f'Expected dimensions "{self.dims}" for variable "{self.name}" '
+                    f'Expected dimensions "{self.dims}" for variable "{self}" '
                     f'but encountered "{da.dims}". Please consider `transpose=True`'
                 )
         else:
@@ -900,7 +904,7 @@ def xr_filter(
     Returns:
     xr.Dataset: A new dataset with the subset of data where the condition is True.
     """
-    stackdim = stackdim or "_".join(condition.dims)
+    stackdim = stackdim or "_".join([str(x) for x in condition.dims])
     assert stackdim not in ds.dims
     ok = condition.stack({stackdim: condition.dims})
 
@@ -924,7 +928,7 @@ def xr_filter(
     
     if transparent:
         # reassign the initial dimension names to the Dataset
-        sub = sub.rename({stackdim: condition.dims[0]}).expand_dims(*condition.dims[1:])
+        sub = sub.rename({stackdim: condition.dims[0]}).expand_dims(condition.dims[1:])
     return sub
 
 
@@ -935,7 +939,7 @@ def xr_unfilter(
     fill_value_float: float = np.nan,
     fill_value_int: int = 0,
     transparent: bool = False,
-) -> xr.DataArray:
+) -> xr.Dataset:
     """
     Reconstructs the original dataset from a subset dataset where the condition is True,
     unstacking the condition dimensions.
@@ -954,7 +958,7 @@ def xr_unfilter(
     Returns:
     xr.DataArray: The reconstructed dataset with the specified dimensions unstacked.
     """
-    stackdim = stackdim or "_".join(condition.dims)
+    stackdim = stackdim or "_".join(str(d) for d in condition.dims)
 
     if transparent:
         sub = sub.rename({condition.dims[0]: stackdim}).squeeze([*condition.dims[1:]])
@@ -1122,7 +1126,7 @@ def xr_flat(ds: xr.Dataset) -> xr.Dataset:
     flat_ds = ds.stack(index=dims)
     return flat_ds.reset_index(dims).reset_coords(dims)
 
-def xr_sample(ds: xr.Dataset, nb_sample: int|float, seed: int = None) -> xr.Dataset:
+def xr_sample(ds: xr.Dataset, nb_sample: int|float, seed: int | None = None) -> xr.Dataset:
     """
     A method to extract a subset of sample from a flat xarray.Dataset
 
@@ -1132,7 +1136,8 @@ def xr_sample(ds: xr.Dataset, nb_sample: int|float, seed: int = None) -> xr.Data
         seed (int, optional): Random seed to use. Defaults to None.
     """
     
-    if seed: np.random.seed(seed)
+    if seed:
+        np.random.seed(seed)
     
     # Retrieve index dimension
     size = ds.sizes
@@ -1145,7 +1150,8 @@ def xr_sample(ds: xr.Dataset, nb_sample: int|float, seed: int = None) -> xr.Data
         log.check(nb_sample >= 0 and nb_sample <= 1, 'Invalid number of sample.'
                   f'If float, should be between 0 and 1, got {nb_sample}')
         nb_sample = int(length*nb_sample)
-    if nb_sample > length: nb_sample = length
+    if nb_sample > length:
+        nb_sample = length
     selec = np.random.choice(length, nb_sample, replace=False)
     return ds.isel({index_dim: selec})
 
