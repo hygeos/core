@@ -1,106 +1,95 @@
-
-
-"""
-Design of modules that apply to xarray Datasets, with the possibility of chaining
-several modules
-"""
-
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import List, Dict, Any
 
 import numpy as np
 import pytest
 import xarray as xr
 
-from core.process.blockwise import BlockProcessor, map_blockwise
+from core.files.save import to_netcdf
+from core.monitor import Chrono
+from core.process.blockwise import BlockProcessor, CompoundProcessor
 from core.tools import Var
 
 
 class InitProcessor(BlockProcessor):
     def input_vars(self) -> List[Var]:
-        return [Var('latitude')]
+        return [Var('latitude'), Var('rho_toa', tags=['level1'])]
 
     def created_vars(self) -> List[Var]:
-        return [Var('flags', dtype='uint16', dims_like='latitude')]
+        return [Var('flags', dtype='uint16', dims_like='latitude', tags=['level2', 'flags'])]
 
-    def process_block(self, block: xr.Dataset, **kwargs):
+    def process_block(self, block: xr.Dataset):
         block['flags'] = xr.zeros_like(block.latitude, dtype='uint16')
         
-class NDVIProcessor(BlockProcessor):
-    """Example processor that computes NDVI from red and NIR bands."""
+
+class Cloudmask(BlockProcessor):
+    """Example cloud mask processor"""
     
     def input_vars(self) -> List[Var]:
-        return [Var('latitude'), Var('rho_toa')]  # Expecting multi-band reflectance data
-    
-    def created_vars(self) -> List[Var]:
-        return [
-            Var(
-                "ndvi",
-                dtype="float32",
-                dims_like="latitude",
-                units="dimensionless",
-                long_name="Normalized Difference Vegetation Index",
-            )
-        ]
-    
-    def global_attrs(self) -> Dict[str, Any]:
-        return {'processing': 'ndvi_computed', 'algorithm_version': '1.0'}
-    
-    def process_block(self, block: xr.Dataset, **kwargs) -> None:
-        """Compute NDVI = (NIR - Red) / (NIR + Red)."""
-        red_band = kwargs.get('red_band', 1)
-        nir_band = kwargs.get('nir_band', 4)
-        
-        rho = block['rho_toa']
-        red = rho.sel(band=red_band)
-        nir = rho.sel(band=nir_band)
-        
-        # Compute NDVI with safe division
-        numerator = nir - red
-        denominator = nir + red
-        ndvi = xr.where(denominator != 0, numerator / denominator, 0.0)
-        
-        # Add to block
-        block['ndvi'] = ndvi.astype('float32')
+        return [Var('rho_toa')]
 
-
-class ThresholdProcessor(BlockProcessor):
-    """Example processor that applies a threshold to create a mask."""
-    
-    def __init__(self, input_var: str = 'ndvi', threshold: float = 0.3):
-        self._input_var = input_var
-        self.threshold = threshold
-    
-    def input_vars(self) -> List[Var]:
-        return [Var('latitude'), Var(self._input_var)]
-    
     def modified_vars(self) -> List[Var]:
-        return [Var('flags', flags={"ABOVE_THRESHOLD": 1})]
+        return [Var('flags', flags={'CLOUD': 1})]
+    
+    def process_block(self, block: xr.Dataset) -> None:
+        """Compute cloud mask"""
+        nir = block.rho_toa.isel(band=-1)
+
+        self.raiseflag(block, 'flags', 'CLOUD', nir > 0.1)
+
+class Ancillary(BlockProcessor):
+    def input_vars(self) -> List[Var]:
+        return [Var("latitude"), Var("longitude")]
+
+    def created_vars(self) -> List[Var]:
+        return [Var("wind", dtype="float32", dims_like="latitude")]
+
+    def process_block(self, block: xr.Dataset):
+        block["wind"] = xr.zeros_like(block.latitude, dtype="float32")
+
+class Rayleigh(BlockProcessor):
+    def input_vars(self) -> List[Var]:
+        return [Var("rho_toa")]
+
+    def created_vars(self) -> List[Var]:
+        return [Var("rho_rc", dtype="float32", dims_like="rho_toa")]
+
+    def process_block(self, block: xr.Dataset):
+        block["rho_rc"] = xr.zeros_like(block.rho_toa, dtype="float32")
+
+class Aerosol(BlockProcessor):
+    def input_vars(self) -> List[Var]:
+        return [Var("rho_rc")]
+
+    def modified_vars(self) -> List[Var]:
+        return [Var("flags", flags={'AC_ERROR': 2}, tags=['level2'])]
 
     def created_vars(self) -> List[Var]:
         return [
             Var(
-                f"{self._input_var}_mask",
-                dtype="bool",
-                dims_like="latitude",
-                long_name=f"{self._input_var} mask",
-            )
+                "rho_w",
+                dtype="float32",
+                dims_like="rho_rc",
+                tags=["level2"],
+                attrs={
+                    "desc": "Water reflectance",
+                    "units": "dimensionless",
+                },
+            ),
+            Var("rho_aer", dtype="float32", dims_like="rho_rc"),
         ]
+    def global_attrs(self) -> Dict[str, Any]:
+        return {"algorithm_version": "1.0"}
 
-    def process_block(self, block: xr.Dataset, **kwargs) -> None:
-        """Create a boolean mask based on threshold."""
-        input_data = block[self._input_var]
-        mask = input_data > self.threshold
-        block[f'{self._input_var}_mask'] = mask
-        
-        self.raiseflag(block, "flags", "ABOVE_THRESHOLD", mask)
+    def process_block(self, block: xr.Dataset):
+        self.raiseflag(block, "flags", "AC_ERROR", block.rho_rc.sum(dim='band') > 0.5)
+        block["rho_aer"] = xr.zeros_like(block.rho_rc, dtype="float32")
+        block["rho_w"] = xr.zeros_like(block.rho_rc, dtype="float32")
 
 
 def create_sample_dataset(
-    x_size: int = 500,
-    y_size: int = 500,
-    n_bands: int = 10,
-    chunks: dict | None = {"x": 50, "y": 50, "band": -1},
-    seed: int = 42,
+    small: bool = True
 ) -> xr.Dataset:
     """
     Create a sample dataset with latitude, longitude, and rho_toa variables.
@@ -120,6 +109,18 @@ def create_sample_dataset(
     xr.Dataset
         Dataset with latitude, longitude coordinates and rho_toa variable
     """
+    if small:
+        x_size = 200
+        y_size = 200
+        n_bands = 10
+        chunks = {"x": 50, "y": 50, "band": -1}
+    else:
+        x_size = 2000
+        y_size = 2000
+        n_bands = 10
+        chunks = {"x": 500, "y": 500, "band": -1}
+
+    seed = 42
     np.random.seed(seed)
 
     # Create latitude and longitude 2D variables as random arrays
@@ -154,10 +155,7 @@ def create_sample_dataset(
 def test_sample_dataset():
     """Test the sample dataset creation."""
     # Create basic dataset
-    ds = create_sample_dataset(x_size=50, y_size=50)
-
-    # Check dimensions
-    assert ds.sizes == {'x': 50, 'y': 50, 'band': 10}
+    ds = create_sample_dataset()
 
     # Check variables
     assert 'rho_toa' in ds.data_vars
@@ -171,40 +169,152 @@ def test_sample_dataset():
     assert hasattr(ds.rho_toa.data, 'chunks')
 
 
-def test_blockwise():
+@pytest.fixture(scope="session")
+def sample_netcdf_file(request):
+    """Create a sample dataset for performance tests."""
+    small: bool = request.param
+    if small:
+        ds = create_sample_dataset(small=True)
+        yield ds
+    else:
+        file_path = Path('/tmp/') / "large_sample_data.nc"
+        if not file_path.exists():
+            # Create large sample dataset
+            ds = create_sample_dataset(small=False)
+            
+            # Save to NetCDF
+            to_netcdf(ds, file_path)
+        
+        # Load dataset with chunks
+        chunks = {"x": 500, "y": 500, "band": -1}
+        ds_loaded = xr.open_dataset(file_path, chunks=chunks)
+        
+        yield ds_loaded
+
+
+@pytest.mark.parametrize(
+    "compound_kwargs,expected_outputs",
+    [
+        (
+            {"outputs": "all"},
+            {
+                "rho_rc",
+                "rho_aer",
+                "wind",
+                "rho_w",
+                "flags",
+                "latitude",
+                "rho_toa",
+                "longitude",
+            },
+        ),
+        (
+            {"outputs": "tags", "outputs_tags": ["level1", "level2"]},
+            {"flags", "rho_toa", "rho_w"},
+        ),
+        (
+            {"outputs": "named", "outputs_names": ["rho_w", "flags", "rho_toa"]},
+            {"flags", "rho_toa", "rho_w"},
+        ),
+        (
+            {"outputs": "created_modified"},
+            {'flags', 'wind', 'rho_w', 'rho_rc', 'rho_aer'},
+        ),
+    ],
+)
+def test_blockwise(compound_kwargs: dict, expected_outputs: set):
+    """
+    Test blockwise processing with different output selection modes.
+    """
     ds = create_sample_dataset()
     
-    # Create a chain of processors
-    processors = [
+    # Apply blockwise processing to the compound processor
+    compound = CompoundProcessor([
         InitProcessor(),
-        NDVIProcessor(),
-        ThresholdProcessor('ndvi', 0.3)
-    ]
-    
-    # Apply blockwise processing
-    result = map_blockwise(ds, processors, red_band=1, nir_band=4)
+        Cloudmask(),
+        Ancillary(),
+        Rayleigh(),
+        Aerosol(),
+    ], **compound_kwargs)
+    result = compound.map_blocks(ds)
+
+    # Check the output variables
+    assert set([str(x) for x in result.data_vars]) == expected_outputs
     
     # Verify results
-    assert 'ndvi' in result.data_vars
-    assert 'ndvi_mask' in result.data_vars
-    print("Blockwise processing test passed!")
+    assert 'rho_w' in result.data_vars
+    assert 'flags' in result.data_vars
 
     # Check that it computes
     result.compute()
 
-    # Check attrs
-    assert result['ndvi'].attrs == {'units': 'dimensionless', 'long_name': 'Normalized Difference Vegetation Index'}
-    assert result['ndvi_mask'].attrs == {'long_name': 'ndvi mask'}
+    # Check var attrs
+    assert result['rho_w'].attrs == {'desc': 'Water reflectance', 'units': 'dimensionless'}
+    assert len(result['flags'].attrs)
     
     # Check global attributes
-    assert result.attrs['processing'] == 'ndvi_computed'
     assert result.attrs['algorithm_version'] == '1.0'
     # Original attributes should be preserved
     assert result.attrs['title'] == 'Sample satellite reflectance dataset'
+    if 'rho_toa' in expected_outputs:
+        assert result.rho_toa.attrs['units'] == "dimensionless"
 
 
-def test_blockwise_newdims():
-    class NewdimensionProcessor(BlockProcessor):
+def test_blockwise_missing_var():
+    """
+    Check that KeyError is raised when the input dataset does not contain the
+    required variable
+    """
+    with pytest.raises(KeyError):
+        InitProcessor().map_blocks(xr.Dataset())
+
+def test_blockwise_dtype_error():
+    # When the actual dtype does not match the declared one
+    class BuggedInitProcessor(InitProcessor):
+        def process_block(self, block: xr.Dataset):
+            # dtype does not match created_vars
+            block['flags'] = xr.zeros_like(block.latitude, dtype='uint8')
+
+    ds = create_sample_dataset()
+    with pytest.raises(TypeError):
+        BuggedInitProcessor().map_blocks(ds).compute()
+
+def test_blockwise_empty_output():
+    # Empty processing, no output variable: raise ValueError
+    ds = create_sample_dataset()
+    with pytest.raises(ValueError):
+        CompoundProcessor(
+            [InitProcessor()], outputs="named", outputs_names=[]
+        ).map_blocks(ds)
+
+def test_blockwise_wrong_order():
+    # Apply modules in the wrong order
+    ds = create_sample_dataset()
+    with pytest.raises(KeyError):
+        CompoundProcessor([
+            Aerosol(),
+            InitProcessor(),
+        ]).map_blocks(ds)
+
+def test_blockwise_missing_out_var():
+    # When the processor does not create the expected variable
+    ds = create_sample_dataset()
+    class BuggedInitProcessor(InitProcessor):
+        def process_block(self, block: xr.Dataset):
+            # dtype does not match created_vars
+            pass
+
+    ds = create_sample_dataset()
+    with pytest.raises(ValueError):
+        BuggedInitProcessor().map_blocks(ds).compute()
+
+
+@pytest.mark.parametrize('compound', [True, False])
+def test_blockwise_newdims(compound: bool):
+    """
+    Test a processor which creates new dimensions
+    """
+    class NewdimensionProcessorA(BlockProcessor):
 
         def input_vars(self) -> List[Var]:
             return [Var('latitude')]
@@ -215,13 +325,26 @@ def test_blockwise_newdims():
         def created_vars(self) -> List[Var]:
             return [
                 Var("A", dtype="float32", dims=("new_dim1", "new_dim2")),
-                Var("B", dtype="float32", dims=("new_dim1", "y", "x")),
             ]
         
-        def process_block(self, block: xr.Dataset, **kwargs):
+        def process_block(self, block: xr.Dataset):
             block["A"] = xr.DataArray(
                 np.zeros((2, 3), dtype="float32"), dims=("new_dim1", "new_dim2")
             )
+    class NewdimensionProcessorB(BlockProcessor):
+
+        def input_vars(self) -> List[Var]:
+            return [Var('latitude')]
+            
+        def created_dims(self):
+            return {'new_dim1': 2}
+
+        def created_vars(self) -> List[Var]:
+            return [
+                Var("B", dtype="float32", dims=("new_dim1", "y", "x")),
+            ]
+        
+        def process_block(self, block: xr.Dataset):
             block["B"] = xr.DataArray(
                 np.zeros((2, block.y.size, block.x.size), dtype="float32"),
                 dims=("new_dim1", "y", "x"),
@@ -229,39 +352,123 @@ def test_blockwise_newdims():
 
     ds = create_sample_dataset()
 
-    result = map_blockwise(ds, [NewdimensionProcessor()])
+    if compound:
+        result = CompoundProcessor(
+            [NewdimensionProcessorA(), NewdimensionProcessorB()]
+        ).map_blocks(ds)
+    else:
+        result = NewdimensionProcessorA().map_blocks(ds)
     assert 'new_dim1' in result.dims
     assert 'new_dim2' in result.dims
     assert 'new_dim2' in result.coords
 
     result.compute()
 
-@pytest.mark.parametrize("mode", ["chained", "graphed"])
-def test_perf(mode):
+
+
+@pytest.mark.parametrize("fail,kwargs", [
+    (False, {'outputs': 'named', 'outputs_names': ['flags']}),
+    (True, {'outputs': 'named', 'outputs_names': ['dummy']}),
+    (True, {'outputs': 'created_modified'}),
+    (True, {'outputs': 'all'}),
+    ])
+def test_blockwise_partial(fail: bool, kwargs: dict):
+    """
+    Test partial processing: unnecessary Processors shall not be applied
+    """
+    class Invalid(BlockProcessor):
+        def input_vars(self) -> List[Var]:
+            return [Var('flags')]
+        def created_vars(self) -> List[Var]:
+            return [Var('dummy', dims_like='flags', dtype='float32')]
+        def process_block(self, block: xr.Dataset):
+            raise RuntimeError
+
+    ds = create_sample_dataset()
+    res = CompoundProcessor([
+        InitProcessor(),
+        Cloudmask(),
+        Invalid(),
+    ], **kwargs).map_blocks(ds)
+    
+    if fail:
+        # This should fail because of the Invalid processor.
+        with pytest.raises(RuntimeError):
+            res.compute()
+    else:
+        # And not fail when we skip the variable "dummy" for which
+        # the processor raises an error
+        res.compute()
+
+
+def test_processor_describe():
+    Aerosol().describe()
+
+
+def test_compound_describe():
+    CompoundProcessor([
+        InitProcessor(),
+        Cloudmask(),
+        Ancillary(),
+        Rayleigh(),
+        Aerosol(),
+    ]).describe()
+
+
+def test_blockwise_numpy():
+    """
+    Test that map_blocks requires dask-based datasets but process_block works with numpy arrays.
+    """
+    ds = create_sample_dataset().compute()
+    with pytest.raises(ValueError):
+        InitProcessor().map_blocks(ds)
+    
+    InitProcessor().process_block(ds)
+    assert 'flags' in ds
+
+
+@pytest.mark.parametrize(
+    "sample_netcdf_file",
+    [
+        # False,  # large
+        True,  # small
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize(
+    "scheduler",
+    [
+        "sync",
+        "threads",
+        "processes",
+        "distributed",
+    ],
+)
+@pytest.mark.parametrize("chained", [True, False])
+def test_perf(chained: bool, scheduler: str, sample_netcdf_file):
     """
     Check the performance of chained processing, compared with successive map_blocks
 
-    There is a significant difference when napplication becomes larger than 10
     """
-    napplication = 10
-    ds = create_sample_dataset(x_size=10, y_size=10)
+    ds = sample_netcdf_file
 
-    class SampleProcessor(BlockProcessor):
-        def modified_vars(self):
-            return [Var('rho_toa')]
-        def process_block(self, block: xr.Dataset, **kwargs):
-            block['rho_toa'] += 1.
+    processors = [
+        InitProcessor(),
+        Cloudmask(),
+        Ancillary(),
+        Rayleigh(),
+        Aerosol(),
+    ]
 
-    from core.monitor import Chrono, dask_graph_stats
+    with Chrono('Init'):
+        ds = CompoundProcessor(processors).map_blocks(ds, chained=chained)
 
-    if mode == "chained":
-        result = map_blockwise(ds, [SampleProcessor()]*napplication)
-    else:  # graphed
-        result = ds.copy(deep=True)
-        for _ in range(napplication):
-            result = map_blockwise(result, [SampleProcessor()])
+    with Chrono('Process'):
+        if scheduler == "distributed":
+            from dask.distributed import Client, LocalCluster
+            cluster = LocalCluster()
+            client = Client(cluster)
+            ds.compute()
 
-    print(dask_graph_stats(result).to_string(index=False))
-    with Chrono(f'{mode.capitalize()}'):
-        result['rho_toa'].mean().values
-
+        else:
+            ds.compute(scheduler=scheduler)

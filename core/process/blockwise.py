@@ -4,24 +4,62 @@
 """
 Block processing framework for xarray datasets with lazy evaluation support.
 
-This module provides a framework for creating chainable block processors that can 
-work efficiently with xarray's chunked arrays and xarray's map_blocks functionality.
+This module provides a framework for processing large xarray datasets in chunks
+using lazy evaluation, leveraging xarray's map_blocks functionality and dask's chunked
+arrays.
+
+Key components:
+- BlockProcessor: Abstract base class for defining individual processing operations
+  that modify or create dataset variables within data blocks.
+- CompoundProcessor: Class for chaining multiple processors into optimized pipelines
+  with flexible output selection
+
+The framework supports:
+- Variable metadata management (dimensions, dtypes, attributes, flags)
+- Inputs and outputs description, with automatic validation
+- Performance optimization through processor chaining
+
+Example
+-------
+Create a simple processor that adds two variables:
+
+>>> class AddProcessor(BlockProcessor):
+...     def input_vars(self):
+...         return [Var('a'), Var('b')]
+...
+...     def created_vars(self):
+...         return [Var('sum', 'float64', ('x', 'y'))]
+...
+...     def process_block(self, block):
+...         block['sum'] = block['a'] + block['b']
+...
+>>> result = AddProcessor().map_blocks(dataset)
+
+Chain multiple processors:
+
+>>> compound = CompoundProcessor([processor1, processor2])
+>>> result = compound.map_blocks(dataset)
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from functools import reduce
+from typing import Any, Literal
 
+import dask.array as da
+import pandas as pd
 import xarray as xr
 
+from core.ascii_table import ascii_table
 from core.tools import Var
 from core.tools import raiseflag
 
 
 class BlockProcessor(ABC):
     """
-    Abstract base class for block processing operations. Processors can be chained to
-    minimize dask graph management overhead. Processors are intended to be executed
-    by `map_blockwise`.
+    Abstract base class for block processing operations.  Processors are intended to be
+    executed by their method `map_blocks`. Use `CompoundProcessor` to combine multiple
+    processors into a single processing pipeline and minimize dask graph management
+    overhead.
 
     Each processor defines:
     - process_block: Method that performs the actual processing on a data block, by
@@ -29,6 +67,8 @@ class BlockProcessor(ABC):
     - input_vars: List of variable names required as input (optional)
     - modified_vars: List of Var objects describing the variables to be modified (optional)
     - created_vars: List of Var objects describing newly created variables (optional)
+    - output_vars: List of Var objects describing the variables to be output by the
+        map_blocks method (optional)
     - created_dims: Dictionary of new dimensions to be created by this processor (optional)
     - global_attrs: Dictionary of the global attributes set by this processor (optional)
 
@@ -36,7 +76,7 @@ class BlockProcessor(ABC):
     --------
     >>> class AddProcessor(BlockProcessor):
     ...     def input_vars(self):
-    ...         return ['a', 'b']
+    ...         return [Var('a'), Var('b')]
     ...
     ...     def created_vars(self):
     ...         return [Var('sum', 'float64', ('x', 'y'))]
@@ -44,18 +84,13 @@ class BlockProcessor(ABC):
     ...     def process_block(self, block, **kwargs):
     ...         block['sum'] = block['a'] + block['b']
     ...
-    >>> processors = [AddProcessor()]
-    >>> result = map_blockwise(ds, processors)
+    >>> result = AddProcessor().map_blocks(ds)
     """
+    _preserve_attrs: bool = True
 
-    def input_vars(self) -> List[Var]:
+    def input_vars(self) -> list[Var]:
         """
-        Names of input variables required by this processor.
-
-        These must exist in the block before `process_block()` runs.
-        `map_blockwise` validates presence and builds the subset using these
-        names (plus names from `modified_vars()`). Do not list variables you
-        create; use `created_vars()` instead.
+        Input variables required by this processor.
 
         Example:
         >>> def input_vars(self):
@@ -63,7 +98,7 @@ class BlockProcessor(ABC):
         """
         return []
 
-    def modified_vars(self) -> List[Var]:
+    def modified_vars(self) -> list[Var]:
         """
         Variables to be modified in-place.
 
@@ -81,7 +116,7 @@ class BlockProcessor(ABC):
         """
         return []
 
-    def created_vars(self) -> List[Var]:
+    def created_vars(self) -> list[Var]:
         """
         Variables that this processor will create.
 
@@ -94,7 +129,17 @@ class BlockProcessor(ABC):
         """
         return []
 
-    def created_dims(self) -> Dict[str, Any]:
+    def output_vars(self) -> list[Var]:
+        """
+        Returns the list of variables to be returned by `map_blocks`
+
+        By default, the created and modified variables are included as output_vars.
+
+        This method can be overridden to adjust this behaviour.
+        """
+        return self.created_vars() + self.modified_vars()
+
+    def created_dims(self) -> dict[str, Any]:
         """
         Return dictionary of new dimensions to be created by this processor.
 
@@ -114,7 +159,7 @@ class BlockProcessor(ABC):
         """
         return {}
 
-    def global_attrs(self) -> Dict[str, Any]:
+    def global_attrs(self) -> dict[str, Any]:
         """
         Return dictionary of global attributes to be set by this processor.
         For variable attributes, use the `attrs` argument of the created/modified variables.
@@ -129,6 +174,9 @@ class BlockProcessor(ABC):
 
         This is a convenience wrapper around core.tools.raiseflag that automatically
         looks up the flag bit position from the processor's flag definitions.
+
+        Note that the flags must be registered in the Var definition for the variable
+        in modified_vars() or created_vars().
 
         Parameters
         ----------
@@ -148,6 +196,8 @@ class BlockProcessor(ABC):
 
         Examples
         --------
+        >>> def modified_vars(self):
+        ...     return [Var('flags', flags={'CLOUDY': 1})]
         >>> def process_block(self, block, **kwargs):
         ...     cloud_mask = block['reflectance'] > 0.8
         ...     self.raiseflag(block, 'flags', 'CLOUDY', cloud_mask)
@@ -169,10 +219,19 @@ class BlockProcessor(ABC):
             )
 
         flag_value = flag_mappings[var_name][flag_name]
+
+        # check that condition has the same dimensions as the flags variable
+        if condition.dims != block[var_name].dims:
+            raise ValueError(
+                f"Dimensions of condition {condition.dims} do not match "
+                f"dimensions of variable '{var_name}' {block[var_name].dims}"
+            )
+
         raiseflag(block[var_name], flag_name, flag_value, condition)
 
-    def get_flag_mappings(self) -> Dict[str, Dict[str, int]]:
-        """Extract flag bit mappings from modified_vars() and created_vars(). Results are cached."""
+    def get_flag_mappings(self) -> dict[str, dict[str, int]]:
+        """Extract flag bit mappings (var -> flags) from modified_vars() and
+        created_vars(). Results are cached."""
         if not hasattr(self, "_flag_mappings"):
             flag_mappings = {}
             for var in self.modified_vars() + self.created_vars():
@@ -182,7 +241,7 @@ class BlockProcessor(ABC):
         return self._flag_mappings
 
     @abstractmethod
-    def process_block(self, block: xr.Dataset, **kwargs):
+    def process_block(self, block: xr.Dataset):
         """
         Process a single block of data.
 
@@ -196,213 +255,555 @@ class BlockProcessor(ABC):
         """
         pass
 
-    def describe(self) -> Dict[str, Any]:
-        """Return a description of this processor for logging/debugging."""
-        return {
-            "name": self.__class__.__name__,
-            "inputs": self.input_vars(),
-            "creates": [
-                {"name": v.name, "dtype": v.dtype, "dims": v.dims}
-                for v in self.created_vars()
-            ],
-            "modifies": self.modified_vars,
-        }
+    def describe(self) -> None:
+        """Print a description of this processor for logging/debugging."""
+        print(f"Processor: {self.__class__.__name__}")
+        
+        # Collect all variables with their roles
+        all_vars = {}
+        for v in self.input_vars():
+            all_vars[str(v)] = ('I', v)
+        for v in self.modified_vars():
+            all_vars[str(v)] = ('M', v)
+        for v in self.created_vars():
+            all_vars[str(v)] = ('C', v)
+        
+        if not all_vars:
+            print("  No variables defined")
+            return
+        
+        # Prepare data for table
+        table_data = []
+        for name, (role, v) in sorted(all_vars.items()):
+            dtype_str = v.dtype if v.dtype else ''
+            dims_str = str(v.dims) if v.dims else (v.dims_like if v.dims_like else '')
+            table_data.append({
+                'Variable': name,
+                'dtype': dtype_str,
+                'dims': dims_str,
+                'role': role
+            })
+        
+        # Create DataFrame and print table
+        df = pd.DataFrame(table_data)
+        ascii_table(df).print()
+        
+        # Additional info
+        if self.created_dims():
+            print()
+            print("Created dims:")
+            for k, v in self.created_dims().items():
+                print(f"  {k}: {v}")
+        if self.global_attrs():
+            print()
+            print("Global attrs:")
+            for k, v in self.global_attrs().items():
+                print(f"  {k}: {v}")
+
+    def template(self, ds: xr.Dataset) -> xr.Dataset:
+        """
+        Create a template dataset for xr.map_blocks operations.
+
+        This method builds a template dataset that defines the structure and metadata
+        of the output dataset after processing. The template includes:
+        - All output variables (created and modified)
+        - Appropriate data types and dimensions for created variables
+        - Flag metadata for variables with defined flags
+        - Global attributes from the processor
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            Input dataset used as a reference for existing variables and coordinates
+
+        Returns
+        -------
+        xr.Dataset
+            Template dataset containing the expected output structure with dummy data
+        """
+        # Start with the existing variables
+        template_ds = ds.copy()
+        if not self._preserve_attrs:
+            template_ds.attrs.clear()
+
+        # Add created vars to the template
+        for var in self.created_vars():
+            template_ds[var] = var.to_template(
+                template_ds, new_dims=self.created_dims()
+            )
+
+        # Register flags for all variables that have them defined
+        flag_mappings = self.get_flag_mappings()
+        for var, flags_dict in flag_mappings.items():
+            var_name = str(var)
+            for flag_name, flag_value in flags_dict.items():
+                raiseflag(template_ds[var_name], flag_name, flag_value)
+
+        # Update global attributes from all processors
+        template_ds.attrs.update(self.global_attrs())
+
+        if not len(template_ds):
+            # template is empty, processing is useless
+            raise ValueError("Template is empty (missing created/modified variables ?)")
+
+        return template_ds[self.output_vars()]
 
 
-def process_single_block(
-    ds: xr.Dataset, processors: list[BlockProcessor], kwargs: dict
-) -> xr.Dataset:
-    """
-    Apply a sequence of processors to a single data block.
-    
-    This function is designed to be used with xr.map_blocks for chunk-wise
-    processing. It applies each processor in sequence to the input dataset,
-    modifying it in place.
-    
-    Parameters
-    ----------
-    ds : xr.Dataset
-        Input dataset block to process
-    processors : list[BlockProcessor]
-        List of processors to apply sequentially
-    kwargs : dict
-        Additional keyword arguments passed to each processor's process_block method
-        
-    Returns
-    -------
-    xr.Dataset
-        Processed dataset with modifications from all processors applied
-    """
-    for p in processors:
-        p.process_block(ds, **kwargs)
-        
-        # Validate that all advertised created variables exist with correct specs
-        for var in p.created_vars():
-            if var not in ds.data_vars:
+    def process_and_validate(self, block: xr.Dataset) -> xr.Dataset:
+        """
+        Process a block and validate the created output variables.
+
+        This method wraps the call to `process_block`, and is called by xr.map_map_blocks
+        """
+        self.process_block(block)
+
+        # Validate that all advertised created output variables exist with correct specs
+        for var in [x for x in self.output_vars() if x in self.created_vars()]:
+            if var not in block.data_vars:
                 raise ValueError(
-                    f"Processor {p.__class__.__name__} failed to create variable '{var.name}'"
+                    f"Processor {self.__class__.__name__} failed to create variable '{var}'"
                 )
-            
-            actual_var = ds[var]
+
+            actual_var = block[var]
             if actual_var.dtype != var.dtype:
-                raise ValueError(
-                    f"Processor {p.__class__.__name__} created variable '{var.name}' "
+                raise TypeError(
+                    f"Processor {self.__class__.__name__} created variable '{var}' "
                     f"with dtype {actual_var.dtype}, expected {var.dtype}"
                 )
-            
-            var_dims = var.getdims(ds)
+
+            var_dims = var.getdims(block)
             if actual_var.dims != var_dims:
                 raise ValueError(
-                    f"Processor {p.__class__.__name__} created variable '{var.name}' "
+                    f"Processor {self.__class__.__name__} created variable '{var}' "
                     f"with dims {actual_var.dims}, expected {var_dims}"
                 )
-    
-    return ds
-    
 
-def map_blockwise(
-    ds: xr.Dataset, 
-    processors: List[BlockProcessor],
-    **kwargs
-) -> xr.Dataset:
-    """
-    Apply a chain of processors to a dataset, using xr.map_blocks
-    
-    This function validates all processors and applies them sequentially
-    while preserving chunking structure when possible.
-    
-    Parameters
-    ----------
-    ds : xr.Dataset
-        Input dataset to process
-    processors : List[BlockProcessor]
-        List of processors to apply sequentially
-    **kwargs : dict
-        Additional keyword arguments passed to all processors
-        
-    Returns
-    -------
-    xr.Dataset
-        Processed dataset with new/modified variables
-    """
+        # Return only output variables
+        return block[self.output_vars()] 
 
-    # Validate all processors inputs
-    current_vars = set(ds.data_vars.keys())
-    for i, processor in enumerate(processors):
-        # Check inputs are available
-        missing_vars = [
+    def map_blocks(
+        self,
+        ds: xr.Dataset,
+    ) -> xr.Dataset:
+        """
+        Apply this processor to a dataset using xarray's map_blocks.
+
+        This method validates that all required input and modified variables are present
+        in the dataset, creates a subset containing only the necessary variables, builds
+        a template dataset defining the output structure, and applies the processor's
+        process_block method to each chunk using xr.map_blocks.
+
+        The output includes only the variables specified by output_vars() (by default,
+        created and modified variables).
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            Input dataset to process. Must contain all variables required by
+            input_vars() and modified_vars().
+
+        Returns
+        -------
+        xr.Dataset
+            Processed dataset containing the output variables as defined by output_vars().
+        """
+        # Check that ds is dask based, and not numpy based
+        if not all(isinstance(ds[var].data, da.Array) for var in ds.data_vars):
+            raise ValueError("Input dataset must be dask-based (chunked), not numpy-based")
+
+        # Validate processor inputs
+        current_vars = set(ds.data_vars.keys())
+        missing_inputs = [
             var
-            for var in processor.input_vars() + processor.modified_vars()
+            for var in self.input_vars() + self.modified_vars()
             if var not in current_vars
         ]
-        if missing_vars:
-            raise ValueError(
-                f"Processor {i} ({processor.__class__.__name__}) requires "
-                f"variables {missing_vars} which are not available. "
+        if missing_inputs:
+            raise KeyError(
+                f"Processor {self} requires "
+                f"variables {missing_inputs} which are not available. "
                 f"Current variables: {list(current_vars)}"
             )
-        
-        # Add created variables to available vars for next processor
-        for var_def in processor.created_vars():
-            current_vars.add(var_def)
 
-    # Create a subset of input, with only the relevant variables, and apply
-    # xr.map_blocks
-    sub = _subset(ds, processors)
-    template = _create_template(sub, processors)
-    
-    # Ensure coordinates from the template are added to the subset
-    # This is necessary because xr.map_blocks doesn't preserve coordinates
-    # from the template when they're not present in the input dataset
-    for coord_name in template.coords:
-        if coord_name not in sub.coords:
-            sub = sub.assign_coords({coord_name: template.coords[coord_name]})
-    
-    result = xr.map_blocks(
-        process_single_block,
-        sub,
-        template=template,
-        kwargs={"processors": processors, "kwargs": kwargs},
-    )
-    return result
+        # take a subset of the input
+        sub = ds[self.input_vars() + self.modified_vars()]
+
+        # create a template
+        template = self.template(ds)
+
+        # Ensure coordinates from the template are added to the subset
+        # This is necessary because xr.map_blocks doesn't preserve coordinates
+        # from the template when they're not present in the input dataset
+        for coord_name in template.coords:
+            if coord_name not in sub.coords:
+                sub = sub.assign_coords({coord_name: template.coords[coord_name]})
+
+        return xr.map_blocks(self.process_and_validate, sub, template=template)
 
 
-def _subset(ds: xr.Dataset, processors: List[BlockProcessor]) -> xr.Dataset:
+class CompoundProcessor(BlockProcessor):
     """
-    Extract only the variables needed by the processors.
-    
-    Returns a dataset containing only variables that are either inputs
-    or will be modified by any of the processors.
-    
-    Parameters
-    ----------
-    ds : xr.Dataset
-        Input dataset
-    processors : List[BlockProcessor]
-        List of processors to determine needed variables
-        
-    Returns
-    -------
-    xr.Dataset
-        Subset of input dataset with only needed variables
-    """
-    input_vars = set()
-    
-    for processor in processors:
-        input_vars.update(processor.input_vars())
-        input_vars.update(processor.modified_vars())
-    
-    # Keep only the needed variables that actually exist in the dataset
-    return ds[list(input_vars & set(ds.data_vars.keys()))]
+    Combines multiple BlockProcessor instances into a single processor.
 
+    This class allows chaining multiple processors together, automatically filtering
+    out processors that are not required to produce the specified outputs. It provides
+    flexible output selection based on variable roles (created/modified/input) or
+    custom criteria like tags or specific names.
 
-def _create_template(ds: xr.Dataset, processors: List[BlockProcessor]) -> xr.Dataset:
-    """
-    Create output template for xr.map_blocks.
-
-    This function generates a template dataset that defines the structure of the output
-    from applying the given processors. It starts with a shallow copy of the input dataset
-    and adds new variables created by each processor, along with their associated flags.
+    The compound processor optimizes execution by only running processors that
+    contribute to the final output, reducing unnecessary computation in processing
+    pipelines.
 
     Parameters
     ----------
-    ds : xr.Dataset
-        The input dataset to base the template on. This provides the existing variables
-        and dimensions that will be preserved in the output.
-    processors : List[BlockProcessor]
-        List of processors that will create new variables. Each processor's created_vars()
-        and flag mappings are used to populate the template.
+    list_processors : list[BlockProcessor]
+        List of processors to combine in execution order
+    outputs : Literal["created_modified", "all", "tags", "named"], default "created_modified"
+        How to select output variables:
+        - "created_modified": output variables that are created or modified by the processors
+        - "all": output all variables (created, modified, and input variables)
+        - "tags": output variables that have tags matching outputs_tags
+        - "named": output variables with names matching outputs_names
+    outputs_tags : list[str] | None, default None
+        Required when outputs="tags". List of tags that variables must have to be included
+        in the output. Variables are included if they have at least one matching tag.
+    outputs_names : list[str] | None, default None
+        Required when outputs="named". List of variable names to include in the output.
+        All specified names must exist in the processor chain.
+    preserve_attrs : bool, default True
+        Whether to preserve global attributes from the input dataset in the output.
 
-    Returns
-    -------
-    xr.Dataset
-        A template dataset containing all original variables plus newly created variables
-        with their proper dimensions, dtypes, and flag definitions. This template is used
-        by xr.map_blocks to determine the output structure.
+    Examples
+    --------
+    Combine two processors with default output (created and modified variables):
+
+    >>> p1 = CloudMaskProcessor()
+    >>> p2 = QualityFlagProcessor()
+    >>> compound = CompoundProcessor([p1, p2])
+    >>> result = compound.map_blocks(dataset)
+
+    Output only variables with specific tags:
+
+    >>> compound = CompoundProcessor([p1, p2],
+    ...                              outputs="tags",
+    ...                              outputs_tags=["quality"])
+    >>> result = compound.map_blocks(dataset)
+
+    Output specific named variables:
+
+    >>> compound = CompoundProcessor([p1, p2], outputs="named", 
+    ...                              outputs_names=["cloud_mask", "quality_flags"])
+    >>> result = compound.map_blocks(dataset)
     """
-    template_ds = ds.copy(deep=False)
+    def __init__(
+        self,
+        list_processors: list[BlockProcessor],
+        outputs: Literal[
+            "created_modified", "all", "tags", "named"
+        ] = "created_modified",
+        outputs_tags: list[str] | None = None,
+        outputs_names: list[str] | None = None,
+        preserve_attrs: bool = True,
+    ):
+        self.list_processors = list_processors
+        self.outputs = outputs
+        self.output_tags = outputs_tags
+        self.output_names = outputs_names
+        self._preserve_attrs = preserve_attrs
+        assert (outputs_names is not None) == (outputs == 'named')
+        assert (outputs_tags is not None) == (outputs == 'tags')
 
-    # Add/overwrite with created_vars from each processor
-    for processor in processors:
-        flags = processor.get_flag_mappings()
-        for var in processor.created_vars():
-            assert var not in template_ds
-            template_ds[var] = var.to_template(
-                template_ds, new_dims=processor.created_dims()
-            )
+    def get_required_processors(self) -> list[BlockProcessor]:
+        """
+        Filter the processor chain to keep only those required to produce allowed_vars.
         
-        # Check that modified variables do not define dims/dtype
-        for var in processor.modified_vars():
-            assert var.dims is None
-            assert var.dtype is None
+        A processor is kept if:
+        - It creates any variables in allowed_vars, OR
+        - It modifies any variables in allowed_vars, OR
+        - It creates variables needed by a later kept processor
         
-        # Register flags in the template
-        for varname, flags_mapping in flags.items():
-            for flag_name, flag_value in flags_mapping.items():
-                raiseflag(template_ds[varname], flag_name, flag_value)
+        This avoids running unnecessary processors that don't contribute to the output.
+        
+        Parameters
+        ----------
+        processors : list[BlockProcessor]
+            Full list of processors
+            
+        Returns
+        -------
+        list[BlockProcessor]
+            Filtered list containing only required processors
+        """
+        # Track which variables we need to produce (starts with allowed_vars)
+        needed_vars = set(self.output_vars())
+        # Track which processors are required
+        required_processors = []
+        
+        # Work backwards through the processor chain
+        for processor in reversed(self.list_processors):
+            created_vars = set(processor.created_vars())
+            modified_vars = set(processor.modified_vars())
+            
+            # Keep this processor if it creates/modifies any needed variables
+            if (created_vars & needed_vars) or (modified_vars & needed_vars):
+                required_processors.append(processor)
+                # Add this processor's inputs to the set of needed variables
+                needed_vars.update(processor.input_vars())
+                # Add modified vars to needed (they must exist before modification)
+                needed_vars.update(processor.modified_vars())
+        
+        # Reverse to restore original order
+        return list(reversed(required_processors))
 
-        # Update global attributes
-        template_ds.attrs.update(processor.global_attrs())
-    
-    return template_ds
+    def input_vars(self) -> list[Var]:
+        """
+        Return the list of input variables for the compound processor.
+
+        The compound input vars are the variables being input in at least one processor,
+        but not modified nor created by any processor.
+
+        Returns
+        -------
+        list[Var]
+            List of input variables required by the compound processor
+        """
+        input_vars = []
+        for processor in self.list_processors:
+            for var in processor.input_vars():
+                if var not in input_vars:
+                    input_vars.append(var)
+        exclude_vars = []
+        for processor in self.list_processors:
+            for var in processor.modified_vars() + processor.created_vars():
+                if var not in exclude_vars:
+                    exclude_vars.append(var)
+        result = [var for var in input_vars if var not in exclude_vars]
+        return result
+
+    def modified_vars(self) -> list[Var]:
+        """
+        Return the list of variables modified by the compound processor.
+
+        The compound modified vars are the variables that are modified vars for all
+        processors (not created, not input).
+
+        Returns
+        -------
+        list[Var]
+            List of variables modified by the compound processor
+        """
+        # Collect all modified vars, including their multiple definitions
+        modified_vars = {}
+        for processor in self.list_processors:
+            for var in processor.modified_vars():
+                svar = str(var)
+                if svar not in modified_vars:
+                    modified_vars[svar] = []
+                modified_vars[svar].append(var)
+        # Remove vars created by any processor, which will be listed in the
+        # method `created_vars`
+        for processor in self.list_processors:
+            for var in processor.created_vars():
+                svar = str(var)
+                if svar in modified_vars:
+                    del modified_vars[svar]
+        modified_vars_merged = [
+            reduce(lambda x, y: x.merge_with(y), v) for v in modified_vars.values()
+        ]
+        return modified_vars_merged
+
+    def created_vars(self) -> list[Var]:
+        """
+        Return the list of variables created by the compound processor.
+
+        The compound created vars is the union of all created vars from sub-processors.
+
+        Returns
+        -------
+        list[Var]
+            List of variables created by the compound processor
+        """
+        created_vars = {}
+        # Collect all created vars, including their multiple definitions
+        for processor in self.list_processors:
+            for var in processor.created_vars():
+                svar = str(var)
+                if svar not in created_vars:
+                    created_vars[svar] = []
+                created_vars[svar].append(var)
+            # append modified vars
+            for var in processor.modified_vars():
+                svar = str(var)
+                if svar in created_vars:
+                    created_vars[svar].append(var)
+        
+        # merge all vars in created_vars
+        created_vars_merged = [
+            reduce(lambda x, y: x.merge_with(y), v) for v in created_vars.values()
+        ]
+
+        return created_vars_merged
+
+    def output_vars(self) -> list[Var]:
+        if self.outputs == "created_modified":
+            return self.created_vars() + self.modified_vars()
+        else:
+            all_vars = self.created_vars() + self.modified_vars() + self.input_vars()
+            if self.outputs == 'all':
+                return all_vars
+            elif self.outputs == 'named':
+                assert self.output_names is not None
+                named_outputs = [x for x in all_vars if x in self.output_names]
+                assert len(named_outputs) == len(self.output_names), 'Could not find all required outputs in the compound'
+                return named_outputs
+            elif self.outputs == 'tags':
+                # return all variables that have a non-void intersection between their
+                # tags and self.outputs_tags
+                assert self.output_tags is not None
+                filtered_vars = [
+                    x
+                    for x in all_vars
+                    if hasattr(x, "tags")
+                    and x.tags
+                    and set(x.tags) & set(self.output_tags)
+                ]
+                if not filtered_vars:
+                    # Fail loudly when no Var were selected
+                    all_tags = set()
+                    for var in all_vars:
+                        if hasattr(var, "tags") and var.tags:
+                            all_tags.update(var.tags)
+                    available_tags_str = ", ".join(sorted(all_tags)) if all_tags else "none"
+                    raise ValueError(f"No variable matching tags {self.output_tags} "
+                                     "have been selected. Input variables contain the "
+                                     f"following tags: {available_tags_str}")
+                return filtered_vars
+            else:
+                raise ValueError(self.outputs)
+
+    def created_dims(self) -> dict[str, Any]:
+        created_dims = {}
+        for processor in self.list_processors:
+            for dim_name, dim_value in processor.created_dims().items():
+                if dim_name in created_dims:
+                    if created_dims[dim_name] != dim_value:
+                        raise ValueError(
+                            f"Incompatible dimension '{dim_name}' defined by multiple processors. "
+                            f"Existing: {created_dims[dim_name]}, New: {dim_value}"
+                        )
+                else:
+                    created_dims[dim_name] = dim_value
+        return created_dims
+
+    def global_attrs(self) -> dict[str, Any]:
+        """
+        Safe merge of the global attributes from all processors
+        """
+        merged_attrs = {}
+        for processor in self.list_processors:
+            for key, value in processor.global_attrs().items():
+                if key not in merged_attrs:
+                    merged_attrs[key] = value
+                else:
+                    assert merged_attrs[key] == value
+        return merged_attrs
+
+    def describe(self) -> None:
+        """
+        Print a detailed description of the compound processor.
+        """
+        processors = self.list_processors
+        
+        # Compute compound roles
+        compound_created = {str(v) for v in self.created_vars()}
+        compound_modified = {str(v) for v in self.modified_vars()}
+        compound_input = {str(v) for v in self.input_vars()}
+        
+        # Prepare data for table
+        table_data = []
+        all_vars = self.input_vars() + self.modified_vars() + self.created_vars()
+        for v in all_vars:
+            v_name = str(v)
+            row = {
+                'Variable': v_name,
+                'dtype': v.dtype if v.dtype else '',
+                'dims': str(v.dims) if v.dims else (str(v.dims_like) if v.dims_like else '')
+            }
+            
+            # Add processor columns
+            for p in processors:
+                p_name = p.__class__.__name__
+                if any(str(x) == v_name for x in p.created_vars()):
+                    cell = 'C'
+                elif any(str(x) == v_name for x in p.modified_vars()):
+                    cell = 'M'
+                elif any(str(x) == v_name for x in p.input_vars()):
+                    cell = 'I'
+                else:
+                    cell = ''
+                row[p_name] = cell
+            
+            # Add compound column
+            if v_name in compound_created:
+                cell = 'C'
+            elif v_name in compound_modified:
+                cell = 'M'
+            elif v_name in compound_input:
+                cell = 'I'
+            else:
+                cell = ''
+            row['Compound'] = cell
+            
+            table_data.append(row)
+        
+        # Create DataFrame and print table
+        df = pd.DataFrame(table_data)
+        ascii_table(df).print()
+
+    def process_block(self, block: xr.Dataset):
+        """
+        Process a single block of data by applying all required processors, hereby
+        implementing the compound processor.
+
+        This method iterates through the list of required processors obtained from
+        `get_required_processors()` and calls their `process_block` method on the
+        provided block, modifying it in place.
+
+        Parameters
+        ----------
+        block : xr.Dataset
+            The xarray Dataset representing the block to be processed.
+        """
+        for p in self.get_required_processors():
+            p.process_block(block)
+
+    def map_blocks(self, ds: xr.Dataset, chained: bool = True) -> xr.Dataset:
+        """
+        Apply processors to dataset blocks with optional chaining.
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            Input xarray Dataset to process.
+        chained : bool, default True
+            If True, use processor chaining for efficient computation.
+            If False, don't chain processors; this may involve additional dask graph
+            overhead.
+
+        Returns
+        -------
+        xr.Dataset
+            Processed dataset containing only the output variables.
+        """
+        if chained:
+            return super().map_blocks(ds)
+        else:
+            # Naive implementation without processor chaining
+            # Involves dask graph overhead.
+            for p in self.list_processors:
+                result = p.map_blocks(ds)
+                for x in result:
+                    ds[x] = result[x]
+            return ds[self.output_vars()]
+
 

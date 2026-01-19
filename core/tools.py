@@ -848,8 +848,82 @@ class Var(str):
             dims=actual_dims,
             name=self,
             coords=coords,
-            attrs=self.getattrs(),
+            attrs=self.attrs,
         )
+
+    def merge_with(self, other: "Var") -> "Var":
+        """
+        Merge this Var with another Var, combining their attributes.
+
+        Attributes are merged by preferring non-None values. If both have
+        non-None values for the same attribute and they differ, a ValueError
+        is raised.
+        """
+        merged_kwargs = {}
+        for attr in [
+            "dtype",
+            "dims",
+            "dims_like",
+            "flags",
+            "tags",
+        ]:
+            self_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if self_val is not None and other_val is not None:
+                if isinstance(self_val, dict) and isinstance(other_val, dict):
+                    # merge dicts
+                    merged_dict = self_val.copy()
+                    for k, v in other_val.items():
+                        if k in merged_dict and merged_dict[k] != v:
+                            raise ValueError(
+                                f"Conflicting {attr} key '{k}': {merged_dict[k]} vs {v}"
+                            )
+                        merged_dict[k] = v
+                    merged_kwargs[attr] = merged_dict
+                elif isinstance(self_val, list) and isinstance(other_val, list):
+                    # merge lists
+                    merged_list = list(set(self_val + other_val))
+                    merged_kwargs[attr] = merged_list
+                elif self_val == other_val:
+                    merged_kwargs[attr] = self_val
+                else:
+                    raise ValueError(f"Conflicting {attr}: {self_val} vs {other_val}")
+            elif self_val is not None:
+                merged_kwargs[attr] = self_val
+            elif other_val is not None:
+                merged_kwargs[attr] = other_val
+
+        # Merge attrs dict with proper conflict resolution
+        merged_attrs = {}
+        all_keys = set(self.attrs.keys()) | set(other.attrs.keys())
+        for key in all_keys:
+            self_val = self.attrs.get(key)
+            other_val = other.attrs.get(key)
+            if self_val is not None and other_val is not None:
+                if isinstance(self_val, dict) and isinstance(other_val, dict):
+                    # merge dicts
+                    merged_dict = self_val.copy()
+                    for k, v in other_val.items():
+                        if k in merged_dict and merged_dict[k] != v:
+                            raise ValueError(
+                                f"Conflicting {key} key '{k}': {merged_dict[k]} vs {v}"
+                            )
+                        merged_dict[k] = v
+                    merged_attrs[key] = merged_dict
+                elif isinstance(self_val, list) and isinstance(other_val, list):
+                    # merge lists
+                    merged_list = list(set(self_val + other_val))
+                    merged_attrs[key] = merged_list
+                elif self_val == other_val:
+                    merged_attrs[key] = self_val
+                else:
+                    raise ValueError(f"Conflicting {key}: {self_val} vs {other_val}")
+            elif self_val is not None:
+                merged_attrs[key] = self_val
+            elif other_val is not None:
+                merged_attrs[key] = other_val
+        merged_kwargs.update(merged_attrs)
+        return Var(self, **merged_kwargs)
 
     def conform(self, da: xr.DataArray, transpose: bool = False) -> xr.DataArray:
         """
