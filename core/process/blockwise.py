@@ -431,6 +431,11 @@ class BlockProcessor(ABC):
         # create a template
         template = self.template(ds)
 
+        if not template:
+            raise ValueError('Missing output variables. Make sure to define at least '
+                             f'one output or created variable ({self}).')
+
+
         # Ensure coordinates from the template are added to the subset
         # This is necessary because xr.map_blocks doesn't preserve coordinates
         # from the template when they're not present in the input dataset
