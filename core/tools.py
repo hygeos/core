@@ -5,6 +5,7 @@
 Various utility functions for modifying xarray object
 '''
 
+from enum import Enum
 from functools import wraps
 import re
 from pathlib import Path
@@ -359,7 +360,7 @@ def getflag(A: xr.DataArray, name: str):
     return (A & flags[name]) != 0
 
 
-def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition=None):
+def raiseflag(A: xr.DataArray, flag_name: str | Enum, flag_value: int, condition=None):
     """
     Raise a flag in DataArray `A` with name `flag_name`, value `flag_value` and `condition`
     The name and value of the flag is recorded in the attributes of `A`
@@ -377,6 +378,9 @@ def raiseflag(A: xr.DataArray, flag_name: str, flag_value: int, condition=None):
         If None, the flag values are unchanged ; the flag is simple registered in the
         attributes.
     """
+    if isinstance(flag_name, Enum):
+        flag_name = flag_name.name
+    assert isinstance(flag_name , str)
     if not np.issubdtype(A.dtype, np.integer):
         raise ValueError(f"raiseflag can only be used on integer DataArrays, got {A.dtype}")
     flags = getflags(A)

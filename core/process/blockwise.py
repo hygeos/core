@@ -332,7 +332,7 @@ class BlockProcessor(ABC):
                 template_ds, new_dims=self.created_dims()
             )
 
-        # Register flags for all variables that have them defined
+        # Register flags for all variables that have been defined
         flag_mappings = self.get_flag_mappings()
         for var, flags_dict in flag_mappings.items():
             var_name = str(var)
