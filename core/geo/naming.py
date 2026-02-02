@@ -15,6 +15,7 @@ class names:
     bands_nvis  = Var("bands_nvis", attrs={'desc': "Visible spectral dimension of the acquisition"})
     bands_ir    = Var("bands_ir", attrs={'desc': "Infrared spectral dimension of the acquisition"})
     bnames      = Var("bandnames", attrs={'desc': "Name of bands"})
+    bgroup      = Var("bands_group", attrs={'desc': "List of group of bands"})
     detector    = Var("detectors", attrs={'desc': "Index of detector"})
     
     # Radiometry 
