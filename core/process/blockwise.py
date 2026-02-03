@@ -45,9 +45,9 @@ from abc import ABC, abstractmethod
 from functools import reduce
 from typing import Any, Literal
 
-import dask.array as da
 import pandas as pd
 import xarray as xr
+from xarray.core.parallel import make_meta
 
 from core.ascii_table import ascii_table
 from core.tools import Var
@@ -122,6 +122,8 @@ class BlockProcessor(ABC):
 
         Provide Var definition: `name`, `dtype`, `dims` (plus optionally
         `flags` or other attributes). Declare any new dims in `created_dims()`.
+        If `dtype` or `dims` is not specified, they will be assessed by running
+        `process_block` on mockup data.
 
         Example:
         >>> def created_vars(self):
@@ -300,9 +302,25 @@ class BlockProcessor(ABC):
             for k, v in self.global_attrs().items():
                 print(f"  {k}: {v}")
 
-    def template(self, ds: xr.Dataset) -> xr.Dataset:
+
+    def has_output_info(self) -> bool:
         """
-        Create a template dataset for xr.map_blocks operations.
+        Returns whether all output variables contains a description of their dtype and
+        dimensions (in method `created_vars`). Otherwise, the `process_block` will be
+        run on mocked up data to determine what the output looks like (see xr.map_blocks).
+        """
+        _has_output_info = True
+        for v in self.created_vars():
+            if v.dtype is None:
+                _has_output_info = False
+            if v.dims is None and v.dims_like is None:
+                _has_output_info = False
+        return _has_output_info
+        
+    
+    def build_template(self, ds_template: xr.Dataset):
+        """
+        Modified a template dataset for xr.map_blocks operations.
 
         This method builds a template dataset that defines the structure and metadata
         of the output dataset after processing. The template includes:
@@ -311,42 +329,44 @@ class BlockProcessor(ABC):
         - Flag metadata for variables with defined flags
         - Global attributes from the processor
 
+        If some dimensions are not fully described, the method runs the processing
+        code on mockup data to assess the data types and dimensions of created variables.
+
         Parameters
         ----------
-        ds : xr.Dataset
-            Input dataset used as a reference for existing variables and coordinates
+        ds_template : xr.Dataset
+            Input template, modified in place.
 
         Returns
         -------
-        xr.Dataset
-            Template dataset containing the expected output structure with dummy data
+        None
+            The input dataset is modified in place.
         """
-        # Start with the existing variables
-        template_ds = ds.copy()
-        if not self._preserve_attrs:
-            template_ds.attrs.clear()
-
         # Add created vars to the template
-        for var in self.created_vars():
-            template_ds[var] = var.to_template(
-                template_ds, new_dims=self.created_dims()
-            )
+        if self.has_output_info():
+            for var in self.created_vars():
+                ds_template[str(var)] = var.to_template(
+                    ds_template, new_dims=self.created_dims()
+                )
+        else:
+            # Apply process_block on mocked up data to assess the dtype and dimensions
+            # of created variables
+            meta: xr.Dataset = make_meta(ds_template) # type: ignore
+            self.process_block(meta)
+            for var in self.created_vars():
+                ds_template[str(var)] = var.to_template(
+                    ds_template, meta, new_dims=self.created_dims()
+                )
 
         # Register flags for all variables that have been defined
         flag_mappings = self.get_flag_mappings()
         for var, flags_dict in flag_mappings.items():
             var_name = str(var)
             for flag_name, flag_value in flags_dict.items():
-                raiseflag(template_ds[var_name], flag_name, flag_value)
+                raiseflag(ds_template[var_name], flag_name, flag_value)
 
         # Update global attributes from all processors
-        template_ds.attrs.update(self.global_attrs())
-
-        if not len(template_ds):
-            # template is empty, processing is useless
-            raise ValueError("Template is empty (missing created/modified variables ?)")
-
-        return template_ds[self.output_vars()]
+        ds_template.attrs.update(self.global_attrs())
 
 
     def process_and_validate(self, block: xr.Dataset) -> xr.Dataset:
@@ -355,9 +375,19 @@ class BlockProcessor(ABC):
 
         This method wraps the call to `process_block`, and is called by xr.map_map_blocks
         """
+        # standard block call
         self.process_block(block)
+        
+        # validate outputs
+        self.validate(block)
 
-        # Validate that all advertised created output variables exist with correct specs
+        # Return only output variables
+        return block[self.output_vars()] 
+    
+    def validate(self, block: xr.Dataset):
+        """
+        Validate that all advertised created output variables exist with correct specs
+        """
         for var in [x for x in self.output_vars() if x in self.created_vars()]:
             if var not in block.data_vars:
                 raise ValueError(
@@ -365,7 +395,7 @@ class BlockProcessor(ABC):
                 )
 
             actual_var = block[var]
-            if actual_var.dtype != var.dtype:
+            if (var.dtype is not None) and (actual_var.dtype != var.dtype):
                 raise TypeError(
                     f"Processor {self.__class__.__name__} created variable '{var}' "
                     f"with dtype {actual_var.dtype}, expected {var.dtype}"
@@ -378,8 +408,6 @@ class BlockProcessor(ABC):
                     f"with dims {actual_var.dims}, expected {var_dims}"
                 )
 
-        # Return only output variables
-        return block[self.output_vars()] 
 
     def map_blocks(
         self,
@@ -407,12 +435,9 @@ class BlockProcessor(ABC):
         xr.Dataset
             Processed dataset containing the output variables as defined by output_vars().
         """
-        # Check that ds is dask based, and not numpy based
-        if not all(isinstance(ds[var].data, da.Array) for var in ds.data_vars):
-            raise ValueError("Input dataset must be dask-based (chunked), not numpy-based")
 
-        # Validate processor inputs
-        current_vars = set(ds.data_vars.keys())
+        # Validate processor inputs (can be coords as well)
+        current_vars = set(ds.data_vars) | set(ds.coords)
         missing_inputs = [
             var
             for var in self.input_vars() + self.modified_vars()
@@ -425,16 +450,25 @@ class BlockProcessor(ABC):
                 f"Current variables: {list(current_vars)}"
             )
 
+        # Check that there are output variables
+        output_vars = self.output_vars()
+        if not output_vars:
+            raise ValueError('Missing output variables. Make sure to define at least '
+                             f'one output or created variable ({self}).')
+
         # take a subset of the input
         sub = ds[self.input_vars() + self.modified_vars()]
 
         # create a template
-        template = self.template(ds)
+        template = ds.copy()
+        if not self._preserve_attrs:
+            template.attrs.clear()
+        self.build_template(template)
+        template = template[self.output_vars()]
 
         if not template:
             raise ValueError('Missing output variables. Make sure to define at least '
                              f'one output or created variable ({self}).')
-
 
         # Ensure coordinates from the template are added to the subset
         # This is necessary because xr.map_blocks doesn't preserve coordinates
@@ -781,6 +815,31 @@ class CompoundProcessor(BlockProcessor):
         """
         for p in self.get_required_processors():
             p.process_block(block)
+
+    def build_template(self, ds_template: xr.Dataset):
+        """
+        Modifies a template dataset for xr.map_blocks operations for compound processors.
+
+        This method builds a template dataset that defines the structure and metadata
+        of the output dataset after processing by all processors in the compound.
+        The template includes:
+        - All output variables (created and modified) from all processors
+        - Appropriate data types and dimensions for created variables
+        - Flag metadata for variables with defined flags
+        - Global attributes from all processors
+
+        Parameters
+        ----------
+        ds_template : xr.Dataset
+            Input dataset, modified in place.
+
+        Returns
+        -------
+        None
+            The input dataset is modified in place.
+        """
+        for processor in self.get_required_processors():
+            processor.build_template(ds_template)
 
     def map_blocks(self, ds: xr.Dataset, chained: bool = True) -> xr.Dataset:
         """
