@@ -1,0 +1,554 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.interpolate &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.lock" href="core.lock.html" />
+    <link rel="prev" title="core.fuzzy" href="core.fuzzy.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.html">core.geo package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.html">core.network package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html">core.ascii_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.auth.html">core.auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.cache.html">core.cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.condor.html">core.condor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html">core.config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.conftest.html">core.conftest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.dates.html">core.dates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree.html">core.deptree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree_prefect.html">core.deptree_prefect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.download.html">core.download</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.env.html">core.env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fileutils.html">core.fileutils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ftp.html">core.ftp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fuzzy.html">core.fuzzy</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">core.interpolate</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Index"><code class="docutils literal notranslate"><span class="pre">Index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Interpolator"><code class="docutils literal notranslate"><span class="pre">Interpolator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Linear"><code class="docutils literal notranslate"><span class="pre">Linear</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Linear_Indexer"><code class="docutils literal notranslate"><span class="pre">Linear_Indexer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Locator"><code class="docutils literal notranslate"><span class="pre">Locator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Locator_Regular"><code class="docutils literal notranslate"><span class="pre">Locator_Regular</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Nearest"><code class="docutils literal notranslate"><span class="pre">Nearest</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Nearest_Indexer"><code class="docutils literal notranslate"><span class="pre">Nearest_Indexer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Spline"><code class="docutils literal notranslate"><span class="pre">Spline</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.Spline_Indexer"><code class="docutils literal notranslate"><span class="pre">Spline_Indexer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.align_lists"><code class="docutils literal notranslate"><span class="pre">align_lists()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.broadcast_numpy"><code class="docutils literal notranslate"><span class="pre">broadcast_numpy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.broadcast_shapes"><code class="docutils literal notranslate"><span class="pre">broadcast_shapes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.create_locator"><code class="docutils literal notranslate"><span class="pre">create_locator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.determine_output_dimensions"><code class="docutils literal notranslate"><span class="pre">determine_output_dimensions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.find_indices"><code class="docutils literal notranslate"><span class="pre">find_indices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.interp"><code class="docutils literal notranslate"><span class="pre">interp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.interp_var"><code class="docutils literal notranslate"><span class="pre">interp_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.interpolate.product_dict"><code class="docutils literal notranslate"><span class="pre">product_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.lock.html">core.lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html">core.log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.masks.html">core.masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html">core.monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html">core.progressbar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pseudoinverse.html">core.pseudoinverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pytest_utils.html">core.pytest_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.save.html">core.save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.table.html">core.table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html">core.tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.uncompress.html">core.uncompress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.xrtags.html">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+      <li class="breadcrumb-item active">core.interpolate</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.interpolate.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-core.interpolate">
+<span id="core-interpolate"></span><h1>core.interpolate<a class="headerlink" href="#module-core.interpolate" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Index">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Index" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Index.get_indexer">
+<span class="sig-name descname"><span class="pre">get_indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Index.get_indexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Index.get_indexer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Interpolator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Interpolator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Interpolator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Interpolator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BlockProcessor</span></code></p>
+<p>Interpolate/select a Dataset onto new coordinates.</p>
+<dl class="simple">
+<dt>This class is similar to xr.interp and xr.sel, but:</dt><dd><ul class="simple">
+<li><p>Supports dask-based coordinates inputs without triggering immediate
+computation as is done by xr.interp</p></li>
+<li><p>Supports combinations of selection and interpolation. This is faster and more
+memory efficient than performing independently the selection and interpolation.</p></li>
+<li><p>Supports pointwise indexing/interpolation using dask arrays
+(see <a class="reference external" href="https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing">https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing</a>)</p></li>
+<li><p>Supports per-dimension options (nearest neighbour selection, linear/spline
+interpolation, out-of-bounds behaviour, cyclic dimensions…)</p></li>
+<li><p>Works with full Datasets, allowing interpolation of multiple variables at once.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The <cite>interp</cite> function is a convenience wrapper around this class for single DataArrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>xr.Dataset</em>) – The input Dataset containing variables to interpolate.</p></li>
+<li><p><strong>**kwargs</strong> – <p>definition of the selection/interpolation coordinates for each
+dimension, using the following classes:</p>
+<blockquote>
+<div><ul>
+<li><p>Linear: linear interpolation (like xr.DataArray.interp)</p></li>
+<li><p>Nearest: nearest neighbour selection (like xr.DataArray.sel)</p></li>
+<li><p>Index: integer index selection (like xr.DataArray.isel)</p></li>
+</ul>
+</div></blockquote>
+<p>These classes store the coordinate data in their <cite>.values</cite> attribute and have
+a <cite>.get_indexer</cite> method which returns an indexer for the passed coordinates.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">interpolator</span> <span class="o">=</span> <span class="n">Interpolator</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="c1"># input Dataset with variables ozone and wind, dimensions (lat, lon)</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="c1"># perform linear interpolation along dimension `lat`</span>
+<span class="gp">... </span>    <span class="c1"># using variable &quot;latitude&quot; in coords_dataset</span>
+<span class="gp">... </span>    <span class="c1"># clip out-of-bounds values to the axis min/max.</span>
+<span class="gp">... </span>    <span class="n">lat</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="s2">&quot;latitude&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="c1"># perform nearest neighbour selection along</span>
+<span class="gp">... </span>    <span class="c1"># dimension `lon`, using variable &quot;longitude&quot;</span>
+<span class="gp">... </span>    <span class="c1"># in coords</span>
+<span class="gp">... </span>    <span class="n">lon</span> <span class="o">=</span> <span class="n">Nearest</span><span class="p">(</span><span class="s2">&quot;longitude&quot;</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">interpolator</span><span class="o">.</span><span class="n">map_blocks</span><span class="p">(</span><span class="n">coords_dataset</span><span class="p">)</span>  <span class="c1"># coords_dataset has lat and lon variables</span>
+<span class="gp">... </span><span class="c1"># returns a Dataset with variables &quot;ozone&quot; and &quot;wind&quot;, interpolated over the</span>
+<span class="gp">... </span><span class="c1"># coordinates lat and lon provided in coords_dataset</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Interpolator.created_dims">
+<span class="sig-name descname"><span class="pre">created_dims</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/core/interpolate.html#Interpolator.created_dims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Interpolator.created_dims" title="Link to this definition"></a></dt>
+<dd><p>Return dictionary of new dimensions to be created by this processor.</p>
+<p>Each dimension is defined either by:
+- An int: specifying the dimension size
+- An array-like: providing coordinates for the dimension</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary mapping dimension names to their size (int) or coordinates (array-like)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dict[str, <a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int">int</a> or array-like]</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">created_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;wavelength&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">400</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mi">700</span><span class="p">]}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Interpolator.created_vars">
+<span class="sig-name descname"><span class="pre">created_vars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core.tools.html#core.tools.Var" title="core.tools.Var"><span class="pre">Var</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/core/interpolate.html#Interpolator.created_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Interpolator.created_vars" title="Link to this definition"></a></dt>
+<dd><p>Variables that this processor will create.</p>
+<p>Provide Var definition: <cite>name</cite>, <cite>dtype</cite>, <cite>dims</cite> (plus optionally
+<cite>flags</cite> or other attributes). Declare any new dims in <cite>created_dims()</cite>.
+If <cite>dtype</cite> or <cite>dims</cite> is not specified, they will be assessed by running
+<cite>process_block</cite> on mockup data.</p>
+<p>Example:
+&gt;&gt;&gt; def created_vars(self):
+…     return [Var(‘sum’, ‘float64’, (‘x’, ‘y’))]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Interpolator.input_vars">
+<span class="sig-name descname"><span class="pre">input_vars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core.tools.html#core.tools.Var" title="core.tools.Var"><span class="pre">Var</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/core/interpolate.html#Interpolator.input_vars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Interpolator.input_vars" title="Link to this definition"></a></dt>
+<dd><p>Input variables required by this processor.</p>
+<p>Example:
+&gt;&gt;&gt; def input_vars(self):
+…     return [Var(‘a’), Var(‘b’), Var(‘flags’)]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Interpolator.process_block">
+<span class="sig-name descname"><span class="pre">process_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Interpolator.process_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Interpolator.process_block" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>ex: block is a xr.Dataset with</dt><dd><p>latitude (x, y)
+longitude (x, y)</p>
+</dd>
+</dl>
+<p>Returns interpolated_data, interpolated over the coordinates provided in <cite>block</cite>.
+interpolated_data is of the same type as data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Linear">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nan'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'clip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'cycle'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'error'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'regular'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'irregular'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'auto'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Linear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Linear" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Linear.get_indexer">
+<span class="sig-name descname"><span class="pre">get_indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Linear.get_indexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Linear.get_indexer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Linear_Indexer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Linear_Indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Linear_Indexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Linear_Indexer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Locator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Locator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Locator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Locator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The purpose of these classes is to locate values in coordinate axes.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Locator.handle_oob">
+<span class="sig-name descname"><span class="pre">handle_oob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Locator.handle_oob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Locator.handle_oob" title="Link to this definition"></a></dt>
+<dd><p>handle out of bound values</p>
+<p>Note: when bounds == “cycle”, does nothing</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Locator.locate_index">
+<span class="sig-name descname"><span class="pre">locate_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Locator.locate_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Locator.locate_index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Locator.locate_index_weight">
+<span class="sig-name descname"><span class="pre">locate_index_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Locator.locate_index_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Locator.locate_index_weight" title="Link to this definition"></a></dt>
+<dd><p>Find indices and dist of values for linear and spline interpolation in self.coords</p>
+<p>Returns a list of indices, dist (float 0 to 1) and oob</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Locator_Regular">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Locator_Regular</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Locator_Regular"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Locator_Regular" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#core.interpolate.Locator" title="core.interpolate.Locator"><code class="xref py py-class docutils literal notranslate"><span class="pre">Locator</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Locator_Regular.locate_index">
+<span class="sig-name descname"><span class="pre">locate_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Locator_Regular.locate_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Locator_Regular.locate_index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Locator_Regular.locate_index_weight">
+<span class="sig-name descname"><span class="pre">locate_index_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Locator_Regular.locate_index_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Locator_Regular.locate_index_weight" title="Link to this definition"></a></dt>
+<dd><p>Optimized version of locate_index_weight for regular grid coords</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Nearest">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Nearest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'auto'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Nearest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Nearest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Nearest.get_indexer">
+<span class="sig-name descname"><span class="pre">get_indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Nearest.get_indexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Nearest.get_indexer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Nearest_Indexer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Nearest_Indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Nearest_Indexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Nearest_Indexer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Spline">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Spline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tension</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'nan'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'clip'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'error'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'regular'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'irregular'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'auto'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Spline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Spline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.interpolate.Spline.get_indexer">
+<span class="sig-name descname"><span class="pre">get_indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Spline.get_indexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Spline.get_indexer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.interpolate.Spline_Indexer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">Spline_Indexer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">_ScalarT</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/interpolate.html#Spline_Indexer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.Spline_Indexer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.align_lists">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">align_lists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="_modules/core/interpolate.html#align_lists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.align_lists" title="Link to this definition"></a></dt>
+<dd><p>Align items from several lists into a single list that respects the order in each sublist.
+Raises ValueError if the lists cannot be aligned (e.g., due to cycles).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>lists</strong> – List of lists, where each sublist defines a partial order.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A single list with items aligned according to the partial orders.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>align_lists([[‘x’], [‘x’, ‘y’], [‘y’, ‘z’]]) -&gt; [‘x’, ‘y’, ‘z’]
+align_lists([[‘x’, ‘y’], [‘y’, ‘x’]]) -&gt; ValueError</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.broadcast_numpy">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">broadcast_numpy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span></span></span><a class="reference internal" href="_modules/core/interpolate.html#broadcast_numpy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.broadcast_numpy" title="Link to this definition"></a></dt>
+<dd><p>Returns all data variables in <cite>ds</cite> as numpy arrays
+broadcastable against each other, with dimensions orderes as <cite>out_dims</cite>.
+(with new single-element dimensions)</p>
+<p>This requires the input to be broadcasted to common dimensions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.broadcast_shapes">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">broadcast_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span></span></span><a class="reference internal" href="_modules/core/interpolate.html#broadcast_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.broadcast_shapes" title="Link to this definition"></a></dt>
+<dd><p>For each data variable in <cite>ds</cite>, returns the shape for broadcasting
+in the dimensions defined by dims</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.create_locator">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">create_locator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spacing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#core.interpolate.Locator" title="core.interpolate.Locator"><span class="pre">Locator</span></a></span></span><a class="reference internal" href="_modules/core/interpolate.html#create_locator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.create_locator" title="Link to this definition"></a></dt>
+<dd><p>Locator factory</p>
+<p>The purpose of this method is to instantiate the appropriate “Locator” class.</p>
+<p>The args are passed from the indexers.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.determine_output_dimensions">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">determine_output_dimensions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="_modules/core/interpolate.html#determine_output_dimensions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.determine_output_dimensions" title="Link to this definition"></a></dt>
+<dd><p>Determine output dimensions for an interpolated/selected DataArray.</p>
+<p>This function implements NumPy’s advanced indexing rules to determine the final
+dimension ordering of the output DataArray after interpolation/selection operations.</p>
+<p>The key principle is that when advanced indexing is applied to some dimensions
+of an array, those dimensions are replaced by the dimensions of the indexing arrays,
+and these new dimensions are inserted at the position of the first indexed dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>xr.DataArray</em>) – The input DataArray being interpolated/selected.</p></li>
+<li><p><strong>mapping</strong> (<em>dict</em>) – A dictionary mapping dimension names in <cite>data</cite> (keys) to variable names in
+<cite>coordinates</cite> (values). Only dimensions being interpolated/selected should be
+included.</p></li>
+<li><p><strong>coordinates</strong> (<em>xr.Dataset</em>) – The Dataset containing coordinate variables referenced in <cite>mapping</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of dimension names for the output DataArray, in the order they will appear.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.find_indices">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">find_indices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xi</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/core/interpolate.html#find_indices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.find_indices" title="Link to this definition"></a></dt>
+<dd><p>Multi-dimensional grid interpolation preprocessing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grid</strong> – Tuple of 1D arrays defining grid coordinates for each dimension</p></li>
+<li><p><strong>xi</strong> – 2D array where each row represents a dimension and each column a query point</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Grid interval indices for each query point in each dimension
+distances: Normalized distances within each interval</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>indices</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.interp">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">interp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/core/interpolate.html#interp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.interp" title="Link to this definition"></a></dt>
+<dd><p>Interpolate/select a DataArray onto new coordinates.</p>
+<dl class="simple">
+<dt>This function is similar to xr.interp and xr.sel, but:</dt><dd><ul class="simple">
+<li><p>Supports dask-based coordinates inputs without triggering immediate
+computation as is done by xr.interp</p></li>
+<li><p>Supports combinations of selection and interpolation. This is faster and more
+memory efficient than performing independently the selection and interpolation.</p></li>
+<li><p>Supports pointwise indexing/interpolation using dask arrays
+(see <a class="reference external" href="https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing">https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing</a>)</p></li>
+<li><p>Supports per-dimension options (nearest neighbour selection, linear/spline
+interpolation, out-of-bounds behaviour, cyclic dimensions…)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>da</strong> (<em>xr.DataArray</em>) – The input DataArray</p></li>
+<li><p><strong>**kwargs</strong> – <p>definition of the selection/interpolation coordinates for each
+dimension, using the following classes:</p>
+<blockquote>
+<div><ul>
+<li><p>Linear: linear interpolation (like xr.DataArray.interp)</p></li>
+<li><p>Nearest: nearest neighbour selection (like xr.DataArray.sel)</p></li>
+<li><p>Index: integer index selection (like xr.DataArray.isel)</p></li>
+</ul>
+</div></blockquote>
+<p>These classes store the coordinate data in their <cite>.values</cite> attribute and have
+a <cite>.get_indexer</cite> method which returns an indexer for the passed coordinates.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">interp</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="p">,</span>  <span class="c1"># input DataArray with dimensions (a, b, c)</span>
+<span class="gp">... </span>    <span class="n">a</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span>           <span class="c1"># perform linear interpolation along dimension `a`</span>
+<span class="gp">... </span>         <span class="n">a_values</span><span class="p">,</span>        <span class="c1"># `a_values` is a DataArray with dimension (x, y);</span>
+<span class="gp">... </span>         <span class="n">bounds</span><span class="o">=</span><span class="s1">&#39;clip&#39;</span><span class="p">),</span>  <span class="c1"># clip out-of-bounds values to the axis min/max.</span>
+<span class="gp">... </span>    <span class="n">b</span> <span class="o">=</span> <span class="n">Nearest</span><span class="p">(</span><span class="n">b_values</span><span class="p">),</span> <span class="c1"># perform nearest neighbour selection along</span>
+<span class="gp">... </span>                           <span class="c1"># dimension `b`; `b_values` is a DataArray</span>
+<span class="gp">... </span>                           <span class="c1"># with dimension (x, y)</span>
+<span class="gp">... </span><span class="p">)</span> <span class="c1"># returns a DataArray with dimensions (x, y, c)</span>
+<span class="go">No interpolation or selection is performed along dimension `c` thus it is</span>
+<span class="go">left as-is.</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataArray on the new coordinates.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>xr.DataArray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.interp_var">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">interp_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_out_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/core/interpolate.html#interp_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.interp_var" title="Link to this definition"></a></dt>
+<dd><p>Interpolate a single variable <cite>da</cite>, with indices and weights</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.interpolate.product_dict">
+<span class="sig-prename descclassname"><span class="pre">core.interpolate.</span></span><span class="sig-name descname"><span class="pre">product_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/core/interpolate.html#product_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.interpolate.product_dict" title="Link to this definition"></a></dt>
+<dd><p>Cartesian product of a dictionary of lists</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.fuzzy.html" class="btn btn-neutral float-left" title="core.fuzzy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.lock.html" class="btn btn-neutral float-right" title="core.lock" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
