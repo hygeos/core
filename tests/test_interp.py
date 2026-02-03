@@ -1,23 +1,21 @@
-try:
-    from matplotlib import pyplot as plt
-except ImportError:
-    pass
+from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
-
 from core.monitor import Chrono
 
-
 from core.interpolate import (
+    Interpolator,
     Linear_Indexer,
     Nearest_Indexer,
     Spline_Indexer,
+    align_lists,
     interp,
     Linear,
     Nearest,
     Spline,
 )
+from tests.test_blockwise import create_ancillary_dataset, create_sample_dataset
 try:
     from luts import luts 
 except ImportError:
@@ -128,9 +126,9 @@ def test_indexer_time():
 
 def test_cycle_period():
     coords = np.linspace(-180, 179, 360)
-    Linear_Indexer(coords, bounds="cycle", spacing="auto", period=360),
+    Linear_Indexer(coords, bounds="cycle", spacing="auto", period=360)
     with pytest.raises(AssertionError):
-        Linear_Indexer(coords, bounds="cycle", spacing="auto", period=359),
+        Linear_Indexer(coords, bounds="cycle", spacing="auto", period=359)
 
 
 @pytest.mark.parametrize("apply_function", **parametrize_dict(list_interp_functions))
@@ -178,7 +176,7 @@ def sample(vmin: float, vmax: float, dims: list):
     return xr.DataArray(
         vmin + np.random.random(np.prod(shp)).reshape(shp) * (vmax - vmin),
         dims=dims,
-        # coords={dim: np.linspace(0, 50, shp[i]) for i, dim in enumerate(dims)},
+        coords={dim: np.linspace(0, 50, shp[i]) for i, dim in enumerate(dims)},
     ).chunk({d: sizes[d] for d in dims})
 
 
@@ -208,10 +206,6 @@ def sample(vmin: float, vmax: float, dims: list):
             "a": Linear(sample(1, 3, ["x", "y"])),
             "c": Linear(sample(101, 105, ["x", "z"])),
         },
-        {  # missing dimension and reversed dimensions
-            "a": Linear(sample(1, 3, ["x", "y"])),
-            "c": Linear(sample(101, 105, ["y", "x"])),
-        },
         {  # same dimensions
             "a": Spline(sample(1, 3, ["x", "y"])),
             "b": Spline(sample(11, 14, ["x", "y"])),
@@ -235,10 +229,6 @@ def sample(vmin: float, vmax: float, dims: list):
             "a": Spline(sample(1, 3, ["x", "y"])),
             "c": Spline(sample(101, 105, ["x", "z"])),
         },
-        {  # missing dimension and reversed dimensions
-            "a": Spline(sample(1, 3, ["x", "y"])),
-            "c": Spline(sample(101, 105, ["y", "x"])),
-        },
     ],
 )
 def test_interp(kwargs):
@@ -252,8 +242,57 @@ def test_interp(kwargs):
         },
     )
     res = interp(data, **kwargs)
-
+    # all dims should have coordinates
+    for dim in res.dims:
+        assert dim in res.coords
     res.compute()
+
+
+
+def test_interp_dataset():
+    """
+    Test the interpolation of a full dataset with `Interpolator()`
+    # TODO: test Interpolator on either Dataset or DataArray
+    """
+    coords = {
+        "a": [1.0, 2.0, 4.0],
+        "b": [11.0, 12.0, 13.0, 14.0],
+        "c": [105.0, 104.0, 103.0, 102.0, 101.0],
+    }
+    data = xr.Dataset({
+        "var1": (["a"], np.zeros(3, dtype="float32")),
+        "var2": (["a", "c"], np.zeros((3, 5), dtype="float32")),
+        "var3": (["a", "b", "c"], np.zeros((3, 4, 5), dtype="float32")),
+    }, coords=coords)
+    
+    # Example interpolation kwargs
+    kwargs = {
+        "a": Linear("a"),
+        "b": Linear("b"),
+        "c": Linear("c"),
+    }
+    ds_coords = xr.Dataset({
+        "a": sample(1, 3, ["z"]),
+        "b": sample(11, 14, ["x", "y"]),
+        "c": sample(101, 105, ["x", "z"]),
+    })
+    res = Interpolator(data, **kwargs).map_blocks(ds_coords)
+    res.compute()
+
+
+def test_interp_real_case():
+    ds = create_sample_dataset()
+    ret = Interpolator(
+        create_ancillary_dataset(),
+        lat=Linear("latitude"),
+        lon=Linear("longitude"),
+    ).map_blocks(ds)
+
+    # Check that attributes are preserved
+    assert 'units' in ret.wind.attrs
+    assert 'units' in ret.ozone.attrs
+
+    ret.compute()
 
 
 @pytest.mark.parametrize('regular', [True, False])
@@ -474,3 +513,12 @@ def test_interp_same_dimensions():
     interp(
         data, a=Linear(xr.DataArray([105.0, 104.0, 103.0, 102.0, 101.0], dims=["a"]))
     )
+
+
+def test_align_lists():
+    # test interleaving of several lists
+    result = align_lists([["x"], ["x", "z"], ["y", "z"], ["x", "y"]])
+    assert result == ["x", "y", "z"]
+
+    with pytest.raises(ValueError):
+        align_lists([["x", "y"], ["y", "x"]])

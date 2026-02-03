@@ -1,5 +1,4 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import List, Dict, Any
 
 import numpy as np
@@ -7,6 +6,7 @@ import pytest
 import xarray as xr
 
 from core.files.save import to_netcdf
+from core.interpolate import Interpolator, Linear
 from core.monitor import Chrono
 from core.process.blockwise import BlockProcessor, CompoundProcessor
 from core.tools import Var
@@ -38,22 +38,21 @@ class Cloudmask(BlockProcessor):
 
         self.raiseflag(block, 'flags', 'CLOUD', nir > 0.1)
 
-class Ancillary(BlockProcessor):
-    def input_vars(self) -> List[Var]:
-        return [Var("latitude"), Var("longitude")]
 
-    def created_vars(self) -> List[Var]:
-        return [Var("wind", dtype="float32", dims_like="latitude")]
+def InterpolatorFactory() -> BlockProcessor:
+    return Interpolator(
+        create_ancillary_dataset(),
+        lat=Linear("latitude"),
+        lon=Linear("longitude"),
+    )
 
-    def process_block(self, block: xr.Dataset):
-        block["wind"] = xr.zeros_like(block.latitude, dtype="float32")
 
 class Rayleigh(BlockProcessor):
     def input_vars(self) -> List[Var]:
         return [Var("rho_toa")]
 
     def created_vars(self) -> List[Var]:
-        return [Var("rho_rc", dtype="float32", dims_like="rho_toa")]
+        return [Var("rho_rc")]
 
     def process_block(self, block: xr.Dataset):
         block["rho_rc"] = xr.zeros_like(block.rho_toa, dtype="float32")
@@ -141,6 +140,11 @@ def create_sample_dataset(
             "latitude": (["y", "x"], latitude),
             "longitude": (["y", "x"], longitude),
         },
+        coords={
+            "band": np.arange(n_bands),
+            "y": np.arange(y_size),
+            "x": np.arange(x_size),
+        },
         attrs={
             "title": "Sample satellite reflectance dataset",
             "description": "Simulated top-of-atmosphere reflectance data",
@@ -149,6 +153,63 @@ def create_sample_dataset(
     )
     if chunks is not None:
         ds = ds.chunk(chunks)
+    return ds
+
+
+def create_ancillary_dataset() -> xr.Dataset:
+    """
+    Create a sample dataset with ozone and wind variables, and lat/lon coordinates.
+        
+    Returns
+    -------
+    xr.Dataset
+        Dataset with ozone and wind variables, lat/lon coordinates
+    """
+    lat_size = 100
+    lon_size = 100
+
+    seed = 42
+    np.random.seed(seed)
+
+    # Create lat and lon coordinates
+    lat = np.linspace(-90, 90, lat_size)
+    lon = np.linspace(-180, 180, lon_size)
+
+    # Create ozone variable (e.g., ozone concentration in DU)
+    ozone = np.random.uniform(200, 400, size=(lat_size, lon_size))
+    
+    # Create wind variable (e.g., wind speed in m/s)
+    wind = np.random.uniform(0, 20, size=(lat_size, lon_size))
+
+    ds = xr.Dataset(
+        {
+            "ozone": (
+                ["lat", "lon"],
+                ozone,
+                {
+                    "long_name": "Ozone concentration",
+                    "units": "DU",
+                },
+            ),
+            "wind": (
+                ["lat", "lon"],
+                wind,
+                {
+                    "long_name": "Wind speed",
+                    "units": "m/s",
+                },
+            ),
+        },
+        coords={
+            "lat": lat,
+            "lon": lon,
+        },
+        attrs={
+            "title": "Sample ozone and wind dataset",
+            "description": "Simulated ozone concentration and wind speed data",
+            "created_by": "create_ozone_wind_dataset function",
+        },
+    )
     return ds
 
 
@@ -161,6 +222,11 @@ def test_sample_dataset():
     assert 'rho_toa' in ds.data_vars
     assert 'latitude' in ds.data_vars
     assert 'longitude' in ds.data_vars
+
+    # Check coordinates
+    assert 'band' in ds.coords
+    assert 'y' in ds.coords
+    assert 'x' in ds.coords
 
     # Check data ranges
     assert ds.rho_toa.min() >= 0.0
@@ -201,6 +267,7 @@ def sample_netcdf_file(request):
                 "rho_rc",
                 "rho_aer",
                 "wind",
+                "ozone",
                 "rho_w",
                 "flags",
                 "latitude",
@@ -218,7 +285,7 @@ def sample_netcdf_file(request):
         ),
         (
             {"outputs": "created_modified"},
-            {'flags', 'wind', 'rho_w', 'rho_rc', 'rho_aer'},
+            {'flags', 'wind', 'ozone', 'rho_w', 'rho_rc', 'rho_aer'},
         ),
     ],
 )
@@ -229,13 +296,16 @@ def test_blockwise(compound_kwargs: dict, expected_outputs: set):
     ds = create_sample_dataset()
     
     # Apply blockwise processing to the compound processor
-    compound = CompoundProcessor([
-        InitProcessor(),
-        Cloudmask(),
-        Ancillary(),
-        Rayleigh(),
-        Aerosol(),
-    ], **compound_kwargs)
+    compound = CompoundProcessor(
+        [
+            InitProcessor(),
+            Cloudmask(),
+            InterpolatorFactory(),
+            Rayleigh(),
+            Aerosol(),
+        ],
+        **compound_kwargs,
+    )
     result = compound.map_blocks(ds)
 
     # Check the output variables
@@ -409,22 +479,10 @@ def test_compound_describe():
     CompoundProcessor([
         InitProcessor(),
         Cloudmask(),
-        Ancillary(),
+        InterpolatorFactory(),
         Rayleigh(),
         Aerosol(),
     ]).describe()
-
-
-def test_blockwise_numpy():
-    """
-    Test that map_blocks requires dask-based datasets but process_block works with numpy arrays.
-    """
-    ds = create_sample_dataset().compute()
-    with pytest.raises(ValueError):
-        InitProcessor().map_blocks(ds)
-    
-    InitProcessor().process_block(ds)
-    assert 'flags' in ds
 
 
 @pytest.mark.parametrize(
@@ -455,7 +513,7 @@ def test_perf(chained: bool, scheduler: str, sample_netcdf_file):
     processors = [
         InitProcessor(),
         Cloudmask(),
-        Ancillary(),
+        InterpolatorFactory(),
         Rayleigh(),
         Aerosol(),
     ]

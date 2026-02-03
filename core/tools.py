@@ -673,7 +673,7 @@ class MapBlocksOutput:
         """
         return xr.merge(
             [
-                m.to_template(ds, self.new_dims) if isinstance(m, Var) else m
+                m.to_template(ds, new_dims=self.new_dims) if isinstance(m, Var) else m
                 for m in self.model
             ]
         )
@@ -798,17 +798,26 @@ class Var(str):
         elif self.dims_like is not None:
             assert ds is not None
             return ds[self.dims_like].dims
+        elif (ds is not None) and (str(self) in ds.data_vars):
+            return ds[str(self)].dims
         else:
             raise TypeError(
                 f"Either dims or dims_like must be specified for created variables ({self})"
             )
 
-    def to_template(self, ds: xr.Dataset, new_dims: Dict | None = None):
+    def to_template(
+        self,
+        ds: xr.Dataset,
+        meta: xr.Dataset | None = None,
+        new_dims: Dict | None = None,
+    ):
         """
         Convert to a DataArray with dims infos provided by `ds`
 
         Args:
             ds: Dataset providing dimension and coordinate information
+            meta: Optional dataset containing the variable with the same name,
+                used to infer dtype and dims if not specified in the Var object
             new_dims: Dictionary mapping dimension names to their size or coordinates.
                 For dimensions not present in `ds`, this parameter is required.
                 Values can be:
@@ -816,19 +825,25 @@ class Var(str):
                 - An array-like object (list, numpy array, etc.) providing coordinate
                   values. The dimension size is inferred from the length.
                 Example: {'new_dim': 5} or {'new_dim': [0, 1, 2, 3, 4]}
-        
+
         Returns:
             xr.DataArray: Empty DataArray with appropriate dimensions, chunks, and coordinates
         """
         new_dims = new_dims or {}
-        actual_dims = self.getdims(ds)
+        if (meta is not None) and (self in meta):
+            actual_dims = meta[self].dims
+        else:
+            actual_dims = self.getdims(ds)
         shape = []
         chunks = []
         coords = {}
         for d in actual_dims:
             if d in ds.dims:
                 shape.append(len(ds[d]))
-                chunks.append(ds.chunks[d])
+                if d in ds.chunks:
+                    chunks.append(ds.chunks[d])
+                else:
+                    chunks.append(-1)
             else:
                 if d not in new_dims:
                     raise RuntimeError(f'dimension "{d}" has not been described.')
@@ -845,10 +860,15 @@ class Var(str):
                 coords[d] = new_dims[d]
 
         if self.dtype is None:
-            raise TypeError(f'Please define the dtype for created variable {self}')
+            if (meta is not None) and (self in meta):
+                dtype = meta[self].dtype
+            else:
+                raise TypeError(f'Please define the dtype for created variable {self}')
+        else:
+            dtype = self.dtype
 
         return xr.DataArray(
-            da.empty(shape=shape, dtype=self.dtype, chunks=chunks),
+            da.empty(shape=shape, dtype=dtype, chunks=chunks),
             dims=actual_dims,
             name=self,
             coords=coords,

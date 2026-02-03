@@ -1,32 +1,218 @@
-from datetime import datetime
 from functools import reduce
-from itertools import chain, product
-from typing import Dict, Iterable, List, Literal, Callable
+from itertools import product
+from typing import Any, Dict, Iterable, List, Literal, Callable
 
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
+from collections import defaultdict
+from heapq import heappop, heappush
+
+from core.process.blockwise import BlockProcessor
+from core.tools import Var
+from numba import jit, prange
 
 # from scipy.interpolate._rgi_cython import find_indices as scipy_find_indices
 
-try:
-    from numba import njit, jit, prange
-    from numba.typed import List
+
+class Interpolator(BlockProcessor):
+    """
+    Interpolate/select a Dataset onto new coordinates.
+
+    This class is similar to xr.interp and xr.sel, but:
+        - Supports dask-based coordinates inputs without triggering immediate
+          computation as is done by xr.interp
+        - Supports combinations of selection and interpolation. This is faster and more
+          memory efficient than performing independently the selection and interpolation.
+        - Supports pointwise indexing/interpolation using dask arrays
+          (see https://docs.xarray.dev/en/latest/user-guide/indexing.html#more-advanced-indexing)
+        - Supports per-dimension options (nearest neighbour selection, linear/spline
+          interpolation, out-of-bounds behaviour, cyclic dimensions...)
+        - Works with full Datasets, allowing interpolation of multiple variables at once.
+
+    The `interp` function is a convenience wrapper around this class for single DataArrays.
+
+    Args:
+        data (xr.Dataset): The input Dataset containing variables to interpolate.
+        **kwargs: definition of the selection/interpolation coordinates for each
+            dimension, using the following classes:
+                - Linear: linear interpolation (like xr.DataArray.interp)
+                - Nearest: nearest neighbour selection (like xr.DataArray.sel)
+                - Index: integer index selection (like xr.DataArray.isel)
+            These classes store the coordinate data in their `.values` attribute and have
+            a `.get_indexer` method which returns an indexer for the passed coordinates.
+
+    Example:
+        >>> interpolator = Interpolator(
+        ...     # input Dataset with variables ozone and wind, dimensions (lat, lon)
+        ...     data,
+        ...     # perform linear interpolation along dimension `lat`
+        ...     # using variable "latitude" in coords_dataset
+        ...     # clip out-of-bounds values to the axis min/max.
+        ...     lat = Linear("latitude", bounds='clip'),    
+        ...     # perform nearest neighbour selection along
+        ...     # dimension `lon`, using variable "longitude"
+        ...     # in coords 
+        ...     lon = Nearest("longitude"),
+        ... )
+        >>> result = interpolator.map_blocks(coords_dataset)  # coords_dataset has lat and lon variables
+        ... # returns a Dataset with variables "ozone" and "wind", interpolated over the
+        ... # coordinates lat and lon provided in coords_dataset
+    """
+
+    def __init__(self, data: xr.Dataset, **kwargs):
+        # get interpolators along all dimensions
+        self.indexers = {}
+        self.varnames = {}  # mapping of data coords to block variables
+        for k, v in kwargs.items():
+            varname = v.varname or k
+            self.indexers[k] = v.get_indexer(data[k])
+            self.varnames[k] = varname
+        
+        self.data: xr.Dataset = data
     
-except ImportError:
-    # Numba is not available
-    # -> Replace all import by native Python alternive
+    def input_vars(self) -> List[Var]:
+        return [Var(x) for x in self.varnames.values()]
+
+    def created_vars(self) -> List[Var]:
+        return [Var(str(x), attrs=self.data[x].attrs) for x in self.data]
     
-    List = list
-    def njit(func: Callable) -> Callable: # no-op decorator
-        return func
-    def jit(func: Callable) -> Callable: # no-op decorator
-        return func
-    prange = range
+    def created_dims(self) -> Dict[str, Any]:
+        cdims = {}
+        for dim in [d for d in self.data.dims if d not in self.indexers]:
+            if dim in self.data.coords:
+                cdims[dim] = self.data.coords[dim].values
+            else:
+                cdims[dim] = self.data.dims[dim]
+                
+        return cdims
+
+    def process_block(self, block: xr.Dataset):
+        """
+        ex: block is a xr.Dataset with
+           latitude (x, y)
+           longitude (x, y)
+        Returns interpolated_data, interpolated over the coordinates provided in `block`.
+        interpolated_data is of the same type as data
+        """
+        # Check that all indexers are present as variables in block_coords
+        for dim in self.varnames.values():
+            if dim not in block:
+                raise KeyError(
+                    f"Interpolated dimension '{dim}' is not present in the "
+                    f"provided coordinate dataset {list(block)}"
+                )
+        # take the subset of block that corresponds to used coordinate variables
+        block_sub = block[list(self.varnames.values())]
+
+        # Determine output dimensions for each variable
+        out_dims = {
+            k: determine_output_dimensions(self.data[k], self.varnames, block_sub)
+            for k in self.data.data_vars
+        }
+        global_out_dims = align_lists(list(out_dims.values()))
+        new_out_dims = [x for x in global_out_dims if x not in self.data]
+
+        # get broadcasted data from block_coords (all with the same number of dimensions)
+        np_indexers = broadcast_numpy(block_sub, new_out_dims)
+
+        # apply index searching over all dimensions (ie, v(values))
+        indices_weights = {
+            k: v(np_indexers[self.varnames[k]]) for k, v in self.indexers.items()
+        }
+
+        # copy relevant dims from self.data
+        coords = xr.Dataset()
+        for dim in global_out_dims:
+            if (dim not in coords) and (dim in self.data.coords):
+                coords[dim] = self.data.coords[dim]
+
+        # var loop
+        for var in self.data:
+
+            # list current "indexing" dimensions
+            current_dims = [
+                d
+                for d in global_out_dims
+                if d in list(self.data[var].dims) + new_out_dims
+            ]
+
+            w_shape = {
+                k: broadcast_shapes(block_sub, current_dims)[self.varnames[k]]
+                for k in self.indexers
+            }
+
+            # get the shapes for broadcasting each weight against the output dimensions
+            result = interp_var(
+                self.data[var],
+                indices_weights,
+                w_shape,
+                out_dims[var],
+                current_dims,
+            )
+
+            block[var] = xr.DataArray(
+                result,
+                dims=out_dims[var],
+                coords={k: v for k, v in coords.items() if k in out_dims[var]},
+                attrs=self.data[var].attrs,
+            )
 
 
+def interp_var(
+    da: xr.DataArray,
+    indices_weights: dict,
+    w_shape: dict,
+    current_out_dims: list,
+    current_dims: list,
+) -> NDArray[Any]:
+    """
+    Interpolate a single variable `da`, with indices and weights
+    """
+    # cartesian product of the combination of lower and upper indices (in case of
+    # linear interpolation) for each dimension
+    result = None
+    data_values = da.values
 
-def interp(da: xr.DataArray, **kwargs):
+    current_indices_weights = {
+        k: v for k, v in indices_weights.items() if k in da.dims
+    }
+
+    if not current_indices_weights:
+        # current `da` contains no interpolated dimension: return as-is
+        return da.data
+    
+    # get indices/weights for current DataArray
+    for iw in product_dict(**current_indices_weights):
+        weights = [
+            1 if iw[dim][1] is None else iw[dim][1].reshape(w_shape[dim])
+            for dim in iw
+        ]
+        w = reduce(lambda x, y: x*y, weights)
+        keys = [(iw[dim][0] if dim in iw else slice(None)) for dim in da.dims]
+        term = data_values[tuple(keys)] * w
+        if result is None:
+            result = term
+        else:
+            result += term
+
+    # result has dimensions as in global_out_dims
+    # squeeze it so that we keep dimensions out_dims[var]
+    assert result is not None
+    result = result.squeeze(
+        axis=tuple(
+            [
+                i
+                for (i, dim) in enumerate(current_dims)
+                if dim not in current_out_dims
+            ]
+        )
+    )
+
+    return result
+
+
+def interp(da: xr.DataArray, **kwargs) -> xr.DataArray:
     """
     Interpolate/select a DataArray onto new coordinates.
 
@@ -66,37 +252,12 @@ def interp(da: xr.DataArray, **kwargs):
     Returns:
         xr.DataArray: DataArray on the new coordinates.
     """
-    assert (da.chunks is None) or (
-        len(da.chunks) == 0
-    ), "Input DataArray should not be dask-based"
+    ds_coords = xr.Dataset({k: v.values for k, v in kwargs.items()})
+    for k, v in kwargs.items():
+        v.varname = k
+    result = Interpolator(da.to_dataset(name="dummy"), **kwargs).map_blocks(ds_coords)["dummy"]
 
-    # merge all indexing DataArrays in a single Dataset
-    ds = xr.Dataset({k: v.values for k, v in kwargs.items()})
-
-    # get interpolators along all dimensions
-    indexers = {k: v.get_indexer(da[k]) for k, v in kwargs.items()}
-
-    # get unique dimensions from all variables in the dataset (preserving order)
-    # we use this because ds.dims may change the order of dimensions
-    ds_dims = list(dict.fromkeys(chain(*[ds[var].dims for var in ds.variables])))
-
-    # transpose ds to get fixed dimension ordering
-    ds = ds.transpose(*ds_dims)
-    
-    out_dims = determine_output_dimensions(da, ds_dims, kwargs.keys())
-
-    ret = xr.map_blocks(
-        interp_block,
-        ds,
-        kwargs={
-            "da": da,
-            "out_dims": out_dims,
-            "indexers": indexers,
-        },
-    )
-    ret.attrs.update(da.attrs)
-
-    return ret
+    return result
 
 
 def product_dict(**kwargs) -> Iterable[Dict]:
@@ -109,66 +270,52 @@ def product_dict(**kwargs) -> Iterable[Dict]:
         yield dict(zip(keys, instance))
 
 
-def interp_block(
-    ds: xr.Dataset, da: xr.DataArray, out_dims, indexers: Dict
-) -> xr.DataArray:
+def align_lists(lists: list[list]) -> list:
     """
-    This function is called by map_blocks in function `interp`, and performs the
-    indexing and interpolation at the numpy level.
+    Align items from several lists into a single list that respects the order in each sublist.
+    Raises ValueError if the lists cannot be aligned (e.g., due to cycles).
 
-    It relies on the indexers to perform index searching and weight calculation, and
-    performs a linear combination of the sub-arrays.
+    Args:
+        lists: List of lists, where each sublist defines a partial order.
+
+    Returns:
+        A single list with items aligned according to the partial orders.
+
+    Example:
+        align_lists([['x'], ['x', 'y'], ['y', 'z']]) -> ['x', 'y', 'z']
+        align_lists([['x', 'y'], ['y', 'x']]) -> ValueError
     """
-    # get broadcasted data from ds (all with the same number of dimensions)
-    np_indexers = broadcast_numpy(ds)
-    
-    # get the shapes for broadcasting each weight against the output dimensions
-    w_shape = broadcast_shapes(ds, out_dims)
+    graph = defaultdict(list)
+    indegree = defaultdict(int)
+    all_items = set()
 
-    # apply index searching over all dimensions (ie, v(values))
-    t0 = datetime.now()
-    indices_weights = {k: v(np_indexers[k]) for k, v in indexers.items()}
-    time_find_index = datetime.now() - t0
+    # Build graph and indegree
+    for lst in lists:
+        for item in lst:
+            all_items.add(item)
+        for i in range(len(lst) - 1):
+            graph[lst[i]].append(lst[i + 1])
+            indegree[lst[i + 1]] += 1
 
-    # cartesian product of the combination of lower and upper indices (in case of
-    # linear interpolation) for each dimension
-    t0 = datetime.now()
-    result = 0
-    data_values = da.values
-    for iw in product_dict(**indices_weights):
-        weights = [
-            1 if iw[dim][1] is None else iw[dim][1].reshape(w_shape[dim])
-            for dim in iw
-        ]
-        w = reduce(lambda x, y: x*y, weights)
-        keys = [(iw[dim][0] if dim in iw else slice(None)) for dim in da.dims]
-        result += data_values[tuple(keys)] * w
-    time_interp = datetime.now() - t0
-    
-    # determine output coords
-    coords = {}
-    for dim in out_dims:
-        # in case dim is present in both da and ds, take the coords from ds in priority
-        if dim in ds.coords:
-            coords[dim] = ds.coords[dim]
-        elif dim in da.coords:
-            coords[dim] = da.coords[dim]
+    # Topological sort using Kahn's algorithm with priority queue for deterministic order
+    queue = []
+    for item in all_items:
+        if indegree[item] == 0:
+            heappush(queue, item)
+    result = []
 
-    # create output DataArray
-    ret = xr.DataArray(
-        result,
-        dims=out_dims,
-        coords=coords,
-    )
+    while queue:
+        item = heappop(queue)
+        result.append(item)
+        for neighbor in graph[item]:
+            indegree[neighbor] -= 1
+            if indegree[neighbor] == 0:
+                heappush(queue, neighbor)
 
-    ret.attrs.update(
-        {
-            "time_find_index": time_find_index,
-            "time_interp": time_interp,
-        }
-    )
+    if len(result) != len(all_items):
+        raise ValueError("Cannot align: cycle detected in the order constraints")
 
-    return ret
+    return result
 
 
 @jit(nopython=True, parallel=True)
@@ -289,7 +436,7 @@ class Locator:
 
         return indices, dist
 
-    def locate_index(values):
+    def locate_index(self, values):
         raise NotImplementedError
     
     
@@ -362,7 +509,7 @@ class Locator_Regular(Locator):
         return i_inf, dist
     
     #For Nearest ?
-    def locate_index(values):
+    def locate_index(self, values):
         raise NotImplementedError
 
 
@@ -393,7 +540,7 @@ def create_locator(
 class Spline:
     def __init__(
         self, 
-        values, 
+        var: str | xr.DataArray | None, 
         tension = 0.5, 
         bounds: Literal["error", "nan", "clip"] = "error", 
         spacing: Literal["regular", "irregular", "auto"]|Callable[[float],float] = "auto", 
@@ -421,11 +568,16 @@ class Spline:
                 - 1: Very lose rope
                 The points between indexes 0 and 1 and N - 1 and N will have a tightness of 0.5
         """
-        self.values = values
+        if isinstance(var, str):
+            self.varname = var
+            self.values = None
+        else:
+            self.varname = None
+            self.values = var
         self.bounds = bounds
         self.tension = tension
         self.spacing = spacing
-
+    
     def get_indexer(self, coords: xr.DataArray):
         cval = coords.values
         if len(cval) < 3 :
@@ -529,7 +681,7 @@ class Spline_Indexer:
 class Linear:
     def __init__(
         self,
-        values: xr.DataArray,
+        var: str | xr.DataArray | None,
         bounds: Literal["error", "nan", "clip", "cycle"] = "error",
         spacing: Literal["regular", "irregular", "auto"]
         | Callable[[float], float] = "auto",
@@ -542,6 +694,7 @@ class Linear:
         interp function, by initializing an indexer class.
 
         Args:
+            var (str or DataArray): the variable name or values to interpolate along.
             bounds (str): how to deal with out-of-bounds values:
                 - "error": raise a ValueError
                 - "nan": replace by NaNs
@@ -564,11 +717,16 @@ class Linear:
                 from the coordinates is equal to this value.
                 (only when bounds="cycle")
         """
-        self.values = values
+        if isinstance(var, str):
+            self.varname = var
+            self.values = None
+        else:
+            self.varname = None
+            self.values = var
         self.bounds = bounds
         self.spacing = spacing
         self.period = period
-    
+
     def get_indexer(self, coords: xr.DataArray):
         cval = coords.values
         if len(cval) < 2 :
@@ -659,7 +817,7 @@ class Index:
 class Nearest:
     def __init__(
         self,
-        values: xr.DataArray,
+        var: str | xr.DataArray | None, 
         tolerance: float | None = None,
         spacing: Literal["auto"] | Callable[[float], float] = "auto",
     ):
@@ -674,10 +832,15 @@ class Nearest:
                 - lambda x: f(x) : will take the value of the nearest valid value after
                     inverting the x axis values based on lambda
         """
-        self.values = values
+        if isinstance(var, str):
+            self.varname = var
+            self.values = None
+        else:
+            self.varname = None
+            self.values = var
         self.tolerance = tolerance
         self.spacing = spacing
-    
+
     def get_indexer(self, coords: xr.DataArray):
         return Nearest_Indexer(coords.values, self.tolerance, self.spacing)
 
@@ -686,8 +849,8 @@ class Nearest_Indexer:
     def __init__(self, coords: NDArray, tolerance: float|None, spacing: str|Callable = "auto"):
         self.tolerance = tolerance
         
-        if isinstance(spacing, str) or isinstance(spacing, Callable) :
-            TypeError("Spacing is of the wrong type, waiting for str or Callable")
+        if not (isinstance(spacing, str) or isinstance(spacing, Callable)):
+            raise TypeError("Spacing is of the wrong type, waiting for str or Callable")
             
         self.spacing = spacing
         if (np.diff(coords) > 0).all():
@@ -708,7 +871,7 @@ class Nearest_Indexer:
             mvalues = self.spacing(values)
             coords = self.spacing(self.coords)
         else:
-            ValueError("spacing isn't 'auto' or a Callable (lambda x: f(x))")
+            raise ValueError("spacing isn't 'auto' or a Callable (lambda x: f(x))")
         
         
         idx = np.searchsorted(coords, mvalues)
@@ -737,10 +900,10 @@ class Nearest_Indexer:
             return [(len(coords) - 1 - idx_closest, None)]
 
 
-def broadcast_numpy(ds: xr.Dataset) -> Dict:
+def broadcast_numpy(ds: xr.Dataset, out_dims: list) -> Dict:
     """
     Returns all data variables in `ds` as numpy arrays
-    broadcastable against each other
+    broadcastable against each other, with dimensions orderes as `out_dims`.
     (with new single-element dimensions)
 
     This requires the input to be broadcasted to common dimensions.
@@ -748,12 +911,18 @@ def broadcast_numpy(ds: xr.Dataset) -> Dict:
     result = {}
     for var in ds.variables:
         result[var] = ds[var].data[
-            tuple([slice(None) if d in ds[var].dims else None for d in ds.dims])
+            tuple(
+                [
+                    slice(None) if d in ds[var].dims else None
+                    for d in out_dims
+                    if d in ds.dims
+                ]
+            )
         ]
     return result
 
 
-def broadcast_shapes(ds: xr.Dataset, dims) -> Dict:
+def broadcast_shapes(ds: xr.Dataset, dims: list) -> Dict:
     """
     For each data variable in `ds`, returns the shape for broadcasting
     in the dimensions defined by dims
@@ -769,37 +938,52 @@ def broadcast_shapes(ds: xr.Dataset, dims) -> Dict:
     return result
 
 
-def determine_output_dimensions(
-    data: xr.DataArray, ds_dims: list, dims_sel_interp: Iterable
-) -> list:
+def determine_output_dimensions(data: xr.DataArray, mapping: dict, coordinates: xr.Dataset) -> list:
     """
-    Determine output dimensions for interpolated/selected DataArray.
+    Determine output dimensions for an interpolated/selected DataArray.
     
-    This function implements numpy's advanced indexing rules to determine the final
+    This function implements NumPy's advanced indexing rules to determine the final
     dimension ordering of the output DataArray after interpolation/selection operations.
     
     The key principle is that when advanced indexing is applied to some dimensions
     of an array, those dimensions are replaced by the dimensions of the indexing arrays,
     and these new dimensions are inserted at the position of the first indexed dimension.
     
-    Args:
-        data (xr.DataArray): The input DataArray being interpolated/selected
-        ds_dims (list): List of dimension names from the indexing Dataset (the new
-            dimensions that will replace the indexed dimensions)
-        dims_sel_interp (set or list): Set/list of dimension names from `data` that
-            are being interpolated or selected (i.e., dimensions with advanced indexing)
+    Parameters
+    ----------
+    data : xr.DataArray
+        The input DataArray being interpolated/selected.
+    mapping : dict
+        A dictionary mapping dimension names in `data` (keys) to variable names in
+        `coordinates` (values). Only dimensions being interpolated/selected should be
+        included.
+    coordinates : xr.Dataset
+        The Dataset containing coordinate variables referenced in `mapping`.
     
-    Returns:
-        list: Ordered list of dimension names for the output DataArray
+    Returns
+    -------
+    list
+        A list of dimension names for the output DataArray, in the order they will appear.
     """
     out_dims = []
-    dims_added = False
+    non_interpolated_dims = []
+    # dimensions introduced by the coords (aligned, to preserve their relative order)
+    dims_coords = align_lists(
+        [coordinates[v].dims for k, v in mapping.items() if k in data.dims]
+    )
+    dims_coords_added = False
     for dim in data.dims:
-        if dim in dims_sel_interp:
-            if not dims_added:
-                out_dims.extend(list(ds_dims))
-                dims_added = True
+        if dim in mapping:
+            # dimension is interpolated: replace it (once) with dims_coords
+            if not dims_coords_added:
+                out_dims.extend(dims_coords)
+                dims_coords_added = True
         else:
+            # dimension is not interpolated: it remains as-is
             out_dims.append(dim)
-    
+            non_interpolated_dims.append(dim)
+
+    # Detect collision between coordinate dimensions and non-interpolated dimensions
+    assert set(dims_coords).isdisjoint(set(non_interpolated_dims))
+
     return out_dims
