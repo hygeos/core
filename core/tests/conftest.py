@@ -65,12 +65,18 @@ img_collapsible
 img_size
     Image size, when using img_collapsible mode
     Ex: 100%, 250px (default)
+dark_mode
+    Whether to enable dark mode theme in HTML reports (default false).
+    Ex: true, false (default)
 """
 
 from pathlib import Path
 import base64
 import io
 import pytest
+
+# Module-level variable to store config
+_pytest_config = None
 
 
 def add_image_to_report(request, fp):
@@ -138,6 +144,14 @@ def pytest_addoption(parser):
                   'Whether to use a collapsible section to embed the images (default true).')
     parser.addini('img_size',
                   'Image size, when using img_collapsible mode. Ex: 100%, 250px (default)')
+    parser.addini('dark_mode',
+                  'Whether to enable dark mode theme in HTML reports (default false).')
+
+
+def pytest_configure(config):
+    """Store config for later use in hooks."""
+    global _pytest_config
+    _pytest_config = config
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -180,3 +194,162 @@ def pytest_runtest_makereport(item):
             extra.append(pytest_html.extras.extra(*a))
 
         report.extras = extra
+
+# Dark theme CSS embedded directly in conftest.py
+DARK_CSS = """
+<style type="text/css">
+/* Dark theme for pytest-html */
+:root {
+    --text-color: #c4c4c4;
+    --background-color: #272822;
+    --container-bg: #272822;
+    --table-bg: #2d2d2d;
+    --border-color: #555555;
+    --collapsible-bg: #2d2d2d;
+    --log-bg: #1a1a1a;
+    --passed-bg: #0f5132;
+    --failed-bg: #842029;
+    --skipped-bg: #664d03;
+    --error-bg: #842029;
+    --xfailed-bg: #664d03;
+    --xpassed-bg: #842029;
+    --rerun-bg: #664d03;
+    --link-color: #4dabf7;
+    --link-hover-color: #74c0fc;
+    --collapsed-bg: #3d3d3d;
+    --empty-color: #cccccc;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-color);
+}
+
+p {
+    color: var(--text-color);
+}
+
+.container {
+    background-color: var(--container-bg);
+    color: var(--text-color);
+}
+
+table {
+    background-color: var(--table-bg);
+    color: var(--text-color);
+}
+
+th, td {
+    background-color: var(--table-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.collapsible {
+    background-color: var(--collapsible-bg);
+}
+
+.log {
+    background-color: var(--log-bg);
+    color: var(--text-color);
+}
+
+.logwrapper .log {
+    color: var(--text-color) !important;
+}
+
+.logwrapper .log * {
+    color: var(--text-color) !important;
+}
+
+.passed {
+    background-color: var(--passed-bg);
+}
+
+.failed {
+    background-color: var(--failed-bg);
+}
+
+.skipped {
+    background-color: var(--skipped-bg);
+}
+
+.error {
+    background-color: var(--error-bg);
+}
+
+.xfailed {
+    background-color: var(--xfailed-bg);
+}
+
+.xpassed {
+    background-color: var(--xpassed-bg);
+}
+
+.rerun {
+    background-color: var(--rerun-bg);
+}
+
+.summary {
+    background-color: var(--container-bg);
+    color: var(--text-color);
+}
+
+.environment th, .environment td {
+    background-color: var(--container-bg);
+    color: var(--text-color);
+}
+
+.filters {
+    background-color: var(--container-bg);
+    color: var(--text-color);
+}
+
+.filters input, .filters select {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.filters label {
+    color: var(--text-color);
+}
+
+/* Make filter span text white while keeping colored backgrounds */
+.filters .failed, .filters .passed, .filters .skipped, 
+.filters .error, .filters .xfailed, .filters .xpassed, 
+.filters .rerun, .filters .retried {
+    color: var(--text-color) !important;
+}
+
+a {
+    color: var(--link-color);
+}
+
+a:hover {
+    color: var(--link-hover-color);
+}
+
+.collapsed .collapsible {
+    background-color: var(--collapsed-bg);
+}
+
+.empty {
+    color: var(--empty-color);
+}
+</style>
+"""
+
+
+def pytest_html_results_summary(prefix, summary, postfix):
+    """Add embedded dark theme CSS to the HTML report if dark_mode is enabled."""
+    if _pytest_config is not None:
+        dark_mode_enabled = {'true': True, 'false': False}[
+            (_pytest_config.getini('dark_mode') or 'false').lower()
+        ]
+        if dark_mode_enabled:
+            prefix.append(DARK_CSS)
