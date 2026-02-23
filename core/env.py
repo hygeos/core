@@ -4,8 +4,86 @@ from pathlib import Path
 from typing import Optional
 from core import log
 
-load_dotenv(dotenv_path=find_dotenv(usecwd=True)) 
 
+def find_dotenvs(
+    filename: str = '.env',
+    start_path: Optional[Path] = None,
+) -> list[Path]:
+    """
+    Find all dotenv files named `filename` in the start directory and every
+    parent directory up to the filesystem root.
+
+    Unlike :func:`dotenv.find_dotenv`, which stops at the first match, this
+    function collects **all** matches along the directory tree, using
+    :func:`dotenv.find_dotenv` to resolve the starting directory.
+
+    Args:
+        filename: dotenv filename to look for (default: ``'.env'``).
+        usecwd: if ``True`` (default), start from the current working directory.
+            Ignored when `start_path` is provided.
+            Note: unlike :func:`dotenv.find_dotenv`, ``usecwd=False`` here is
+            equivalent to ``usecwd=True`` because ``find_dotenv`` would
+            otherwise use *this* module's frame, not the caller's.
+        start_path: explicit starting directory, takes priority over `usecwd`.
+
+    Returns:
+        List of :class:`~pathlib.Path` objects for every dotenv file found,
+        ordered from **closest** (start directory) to **farthest** (root).
+    """
+    if start_path is not None:
+        current = Path(start_path).resolve()
+    else:
+        # find_dotenv with usecwd=True resolves from CWD; when called from
+        # inside another function usecwd=False would point to this module, so
+        # we always forward usecwd=True and let start_path handle other cases.
+        first = find_dotenv(filename=filename, usecwd=True)
+        current = Path(first).parent if first else Path.cwd()
+
+    dotenvs: list[Path] = []
+    while True:
+        candidate = current / filename
+        if candidate.is_file():
+            dotenvs.append(candidate)
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+
+    return dotenvs
+
+
+def load_dotenvs(
+    filename: str = '.env',
+    start_path: Optional[Path] = None,
+    override: bool = True,
+) -> list[Path]:
+    """
+    Load all dotenv files found by :func:`find_dotenvs`, from the farthest
+    ancestor to the closest directory so that inner ``.env`` files take
+    precedence over outer ones.
+
+    ``load_dotenv`` is called once per file found; variables already present
+    in the environment are only overwritten when ``override=True`` (the
+    default here, unlike the dotenv library default, to honour the
+    closest-wins precedence).
+
+    Args:
+        filename: dotenv filename to look for (default: ``'.env'``).
+        usecwd: if ``True``, start from the current working directory.
+        start_path: explicit starting directory.
+        override: whether a closer file's value overrides a value already
+            loaded from a farther file (default: ``True``).
+
+    Returns:
+        The list of dotenv files that were loaded, closest first.
+    """
+    dotenvs = find_dotenvs(filename=filename, start_path=start_path)
+    # Load farthest -> closest so that inner files override outer ones
+    for dotenv in reversed(dotenvs):
+        load_dotenv(dotenv_path=dotenv, override=override)
+    return dotenvs
+
+load_dotenvs()
 
 def getvar(
     envvar: str,
@@ -110,4 +188,7 @@ def getdir(
 
 
 if __name__ == "__main__":
-    log.info(f"dotenv file is: {find_dotenv(usecwd=True)}")
+    dotenvs = find_dotenvs()
+    log.info(f"all dotenv files (closest first): {dotenvs}")
+    loaded = load_dotenvs()
+    log.info(f"loaded {len(loaded)} dotenv file(s)")
