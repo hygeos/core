@@ -47,11 +47,10 @@ from typing import Any, Literal
 
 import pandas as pd
 import xarray as xr
-from xarray.core.parallel import make_meta
-
 from core.ascii_table import ascii_table
-from core.tools import Var
-from core.tools import raiseflag
+from core.tools import Var, raiseflag
+from dask.base import tokenize
+from xarray.core.parallel import make_meta
 
 
 class BlockProcessor(ABC):
@@ -476,6 +475,13 @@ class BlockProcessor(ABC):
         for coord_name in template.coords:
             if coord_name not in sub.coords:
                 sub = sub.assign_coords({coord_name: template.coords[coord_name]})
+
+        # Include processor identity in the input dataset attrs so that
+        # xr.map_blocks generates a unique dask graph token for each processor.
+        # Without this, different processor instances receiving the same input
+        # dataset produce identical tokens (because xr.map_blocks tokenizes
+        # only the input data, args, and kwargs — not the function/method itself).
+        sub.attrs['_processor_token'] = tokenize(self)
 
         return xr.map_blocks(self.process_and_validate, sub, template=template)
 
