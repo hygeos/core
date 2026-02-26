@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.geo package &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.geo.convert" href="core.geo.convert.html" />
+    <link rel="prev" title="core.files.uncompress" href="core.files.uncompress.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">core.geo package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.convert.html">core.geo.convert</a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html">core.geo.naming</a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.product_name.html">core.geo.product_name</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.html">core.network package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html">core.ascii_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.auth.html">core.auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.cache.html">core.cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.condor.html">core.condor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html">core.config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.conftest.html">core.conftest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.dates.html">core.dates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree.html">core.deptree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree_prefect.html">core.deptree_prefect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.download.html">core.download</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.env.html">core.env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fileutils.html">core.fileutils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ftp.html">core.ftp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fuzzy.html">core.fuzzy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html">core.interpolate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.lock.html">core.lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html">core.log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.masks.html">core.masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html">core.monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html">core.progressbar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pseudoinverse.html">core.pseudoinverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pytest_utils.html">core.pytest_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.save.html">core.save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.table.html">core.table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html">core.tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.uncompress.html">core.uncompress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.xrtags.html">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+      <li class="breadcrumb-item active">core.geo package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.geo.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-geo-package">
+<h1>core.geo package<a class="headerlink" href="#core-geo-package" title="Link to this heading"></a></h1>
+<hr class="docutils" />
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="core.geo.convert.html">core.geo.convert</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.convert.html#core.geo.convert.center_longitude"><code class="docutils literal notranslate"><span class="pre">center_longitude()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.convert.html#core.geo.convert.convert_latlon_2D"><code class="docutils literal notranslate"><span class="pre">convert_latlon_2D()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.geo.naming.html">core.geo.naming</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names"><code class="docutils literal notranslate"><span class="pre">names</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.F0"><code class="docutils literal notranslate"><span class="pre">names.F0</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bands"><code class="docutils literal notranslate"><span class="pre">names.bands</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bands_ir"><code class="docutils literal notranslate"><span class="pre">names.bands_ir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bands_nvis"><code class="docutils literal notranslate"><span class="pre">names.bands_nvis</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bgroup"><code class="docutils literal notranslate"><span class="pre">names.bgroup</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bnames"><code class="docutils literal notranslate"><span class="pre">names.bnames</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bt"><code class="docutils literal notranslate"><span class="pre">names.bt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.columns"><code class="docutils literal notranslate"><span class="pre">names.columns</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.crs"><code class="docutils literal notranslate"><span class="pre">names.crs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.cwav"><code class="docutils literal notranslate"><span class="pre">names.cwav</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.datetime"><code class="docutils literal notranslate"><span class="pre">names.datetime</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.description"><code class="docutils literal notranslate"><span class="pre">names.description</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.detector"><code class="docutils literal notranslate"><span class="pre">names.detector</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.flags"><code class="docutils literal notranslate"><span class="pre">names.flags</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.input_directory"><code class="docutils literal notranslate"><span class="pre">names.input_directory</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.lat"><code class="docutils literal notranslate"><span class="pre">names.lat</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.lon"><code class="docutils literal notranslate"><span class="pre">names.lon</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.ltoa"><code class="docutils literal notranslate"><span class="pre">names.ltoa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.mus"><code class="docutils literal notranslate"><span class="pre">names.mus</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.muv"><code class="docutils literal notranslate"><span class="pre">names.muv</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.platform"><code class="docutils literal notranslate"><span class="pre">names.platform</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.product_name"><code class="docutils literal notranslate"><span class="pre">names.product_name</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.quality"><code class="docutils literal notranslate"><span class="pre">names.quality</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.raa"><code class="docutils literal notranslate"><span class="pre">names.raa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.resolution"><code class="docutils literal notranslate"><span class="pre">names.resolution</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.rho_w"><code class="docutils literal notranslate"><span class="pre">names.rho_w</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.rows"><code class="docutils literal notranslate"><span class="pre">names.rows</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.rtoa"><code class="docutils literal notranslate"><span class="pre">names.rtoa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.saa"><code class="docutils literal notranslate"><span class="pre">names.saa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.sensor"><code class="docutils literal notranslate"><span class="pre">names.sensor</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.shortname"><code class="docutils literal notranslate"><span class="pre">names.shortname</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.sza"><code class="docutils literal notranslate"><span class="pre">names.sza</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.unit"><code class="docutils literal notranslate"><span class="pre">names.unit</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.vaa"><code class="docutils literal notranslate"><span class="pre">names.vaa</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.vza"><code class="docutils literal notranslate"><span class="pre">names.vza</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.wav"><code class="docutils literal notranslate"><span class="pre">names.wav</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.geo.product_name.html">core.geo.product_name</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.decompose"><code class="docutils literal notranslate"><span class="pre">decompose()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.get_fields"><code class="docutils literal notranslate"><span class="pre">get_fields()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.get_level"><code class="docutils literal notranslate"><span class="pre">get_level()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.get_pattern"><code class="docutils literal notranslate"><span class="pre">get_pattern()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.retrieve_product"><code class="docutils literal notranslate"><span class="pre">retrieve_product()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.files.uncompress.html" class="btn btn-neutral float-left" title="core.files.uncompress" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.geo.convert.html" class="btn btn-neutral float-right" title="core.geo.convert" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

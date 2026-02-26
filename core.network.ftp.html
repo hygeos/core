@@ -1,0 +1,221 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.network.ftp &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.process package" href="core.process.html" />
+    <link rel="prev" title="core.network.download" href="core.network.download.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.html">core.geo package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="core.network.html">core.network package</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="core.network.auth.html">core.network.auth</a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.network.download.html">core.network.download</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">core.network.ftp</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html">core.ascii_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.auth.html">core.auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.cache.html">core.cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.condor.html">core.condor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html">core.config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.conftest.html">core.conftest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.dates.html">core.dates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree.html">core.deptree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree_prefect.html">core.deptree_prefect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.download.html">core.download</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.env.html">core.env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fileutils.html">core.fileutils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ftp.html">core.ftp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fuzzy.html">core.fuzzy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html">core.interpolate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.lock.html">core.lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html">core.log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.masks.html">core.masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html">core.monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html">core.progressbar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pseudoinverse.html">core.pseudoinverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pytest_utils.html">core.pytest_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.save.html">core.save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.table.html">core.table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html">core.tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.uncompress.html">core.uncompress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.xrtags.html">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+          <li class="breadcrumb-item"><a href="core.network.html">core.network package</a></li>
+      <li class="breadcrumb-item active">core.network.ftp</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.network.ftp.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-core.network.ftp">
+<span id="core-network-ftp"></span><h1>core.network.ftp<a class="headerlink" href="#module-core.network.ftp" title="Link to this heading"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_create_dir">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_create_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_create_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_create_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_download">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_local</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_download" title="Link to this definition"></a></dt>
+<dd><p>Downloads <cite>file_local</cite> on ftp, from server directory <cite>dir_server</cite></p>
+<p>The file name on the server is determined by <cite>file_local.name</cite></p>
+<p class="rubric">Example</p>
+<p>ftp = FTP(<a href="#id1"><span class="problematic" id="id2">**</span></a>get_auth_ftp(‘my_server’))
+local_file = Path(‘./data.txt’)
+ftp_download(ftp, local_file, ‘/remote/folder’)
+ftp.quit()</p>
+<dl class="simple">
+<dt>Refs:</dt><dd><p><a class="reference external" href="https://stackoverflow.com/questions/19692739/">https://stackoverflow.com/questions/19692739/</a>
+<a class="reference external" href="https://stackoverflow.com/questions/73534659/">https://stackoverflow.com/questions/73534659/</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_file_exists">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_file_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_file_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_file_exists" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_list">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'*'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_list" title="Link to this definition"></a></dt>
+<dd><p>Returns the list of fles matching <cite>pattern</cite> on <cite>dir_server</cite></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.ftp_upload">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">ftp_upload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ftp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FTP</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_local</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir_server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'skip'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocksize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8192</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#ftp_upload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.ftp_upload" title="Link to this definition"></a></dt>
+<dd><p>FTP upload function</p>
+<ul class="simple">
+<li><p>Use temporary files</p></li>
+<li><p>Create remote directories</p></li>
+<li><dl class="simple">
+<dt>if_exists:</dt><dd><p>‘skip’: skip the existing file
+‘error’: raise an error on existing file
+‘overwrite’: overwrite existing file</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.get_auth_ftp">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">get_auth_ftp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span></span></span><a class="reference internal" href="_modules/core/network/ftp.html#get_auth_ftp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.get_auth_ftp" title="Link to this definition"></a></dt>
+<dd><p>get netrc credentials for use with pyfilesystem’s
+FTPFS or ftplib’s FTP</p>
+<p>Ex: FTP(<a href="#id3"><span class="problematic" id="id4">**</span></a>get_auth_ftp(&lt;name&gt;))</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.network.ftp.get_url_ftpfs">
+<span class="sig-prename descclassname"><span class="pre">core.network.ftp.</span></span><span class="sig-name descname"><span class="pre">get_url_ftpfs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/network/ftp.html#get_url_ftpfs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.network.ftp.get_url_ftpfs" title="Link to this definition"></a></dt>
+<dd><p>get netrc credentials for use with pyfilesystem’s fs.open_fs</p>
+<p>Ex: fs.open_fs(get_url_ftpfs(&lt;name&gt;))</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.network.download.html" class="btn btn-neutral float-left" title="core.network.download" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.process.html" class="btn btn-neutral float-right" title="core.process package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

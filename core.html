@@ -1,0 +1,667 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core package &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.files package" href="core.files.html" />
+    <link rel="prev" title="CORE Documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">core package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.html">core.geo package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.html">core.network package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html">core.ascii_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.auth.html">core.auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.cache.html">core.cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.condor.html">core.condor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html">core.config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.conftest.html">core.conftest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.dates.html">core.dates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree.html">core.deptree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree_prefect.html">core.deptree_prefect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.download.html">core.download</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.env.html">core.env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fileutils.html">core.fileutils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ftp.html">core.ftp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fuzzy.html">core.fuzzy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html">core.interpolate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.lock.html">core.lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html">core.log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.masks.html">core.masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html">core.monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html">core.progressbar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pseudoinverse.html">core.pseudoinverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pytest_utils.html">core.pytest_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.save.html">core.save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.table.html">core.table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html">core.tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.uncompress.html">core.uncompress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.xrtags.html">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">core package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-package">
+<h1>core package<a class="headerlink" href="#core-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="core.files.html">core.files package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.files.cache.html">core.files.cache</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.files.cache.html#core.files.cache.cache_dataframe"><code class="docutils literal notranslate"><span class="pre">cache_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.cache.html#core.files.cache.cache_dataset"><code class="docutils literal notranslate"><span class="pre">cache_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.cache.html#core.files.cache.cache_json"><code class="docutils literal notranslate"><span class="pre">cache_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.cache.html#core.files.cache.cache_pickle"><code class="docutils literal notranslate"><span class="pre">cache_pickle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.cache.html#core.files.cache.cachefunc"><code class="docutils literal notranslate"><span class="pre">cachefunc()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.files.fileutils.html">core.files.fileutils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.files.fileutils.html#core.files.fileutils.PersistentList"><code class="docutils literal notranslate"><span class="pre">PersistentList</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.fileutils.html#core.files.fileutils.filegen"><code class="docutils literal notranslate"><span class="pre">filegen</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.fileutils.html#core.files.fileutils.get_git_commit"><code class="docutils literal notranslate"><span class="pre">get_git_commit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.fileutils.html#core.files.fileutils.mdir"><code class="docutils literal notranslate"><span class="pre">mdir()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.fileutils.html#core.files.fileutils.safe_move"><code class="docutils literal notranslate"><span class="pre">safe_move()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.fileutils.html#core.files.fileutils.skip"><code class="docutils literal notranslate"><span class="pre">skip()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.fileutils.html#core.files.fileutils.temporary_copy"><code class="docutils literal notranslate"><span class="pre">temporary_copy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.files.lock.html">core.files.lock</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.files.lock.html#core.files.lock.LockFile"><code class="docutils literal notranslate"><span class="pre">LockFile()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.files.save.html">core.files.save</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.files.save.html#core.files.save.clean_attributes"><code class="docutils literal notranslate"><span class="pre">clean_attributes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.save.html#core.files.save.to_netcdf"><code class="docutils literal notranslate"><span class="pre">to_netcdf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.files.uncompress.html">core.files.uncompress</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.files.uncompress.html#core.files.uncompress.get_compression_ext"><code class="docutils literal notranslate"><span class="pre">get_compression_ext()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.uncompress.html#core.files.uncompress.uncompress"><code class="docutils literal notranslate"><span class="pre">uncompress()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.uncompress.html#core.files.uncompress.uncompress_decorator"><code class="docutils literal notranslate"><span class="pre">uncompress_decorator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.files.uncompress.html#core.files.uncompress.uncompress_single"><code class="docutils literal notranslate"><span class="pre">uncompress_single()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.geo.html">core.geo package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.convert.html">core.geo.convert</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.convert.html#core.geo.convert.center_longitude"><code class="docutils literal notranslate"><span class="pre">center_longitude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.convert.html#core.geo.convert.convert_latlon_2D"><code class="docutils literal notranslate"><span class="pre">convert_latlon_2D()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.naming.html">core.geo.naming</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names"><code class="docutils literal notranslate"><span class="pre">names</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.F0"><code class="docutils literal notranslate"><span class="pre">names.F0</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bands"><code class="docutils literal notranslate"><span class="pre">names.bands</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bands_ir"><code class="docutils literal notranslate"><span class="pre">names.bands_ir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bands_nvis"><code class="docutils literal notranslate"><span class="pre">names.bands_nvis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bgroup"><code class="docutils literal notranslate"><span class="pre">names.bgroup</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bnames"><code class="docutils literal notranslate"><span class="pre">names.bnames</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.bt"><code class="docutils literal notranslate"><span class="pre">names.bt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.columns"><code class="docutils literal notranslate"><span class="pre">names.columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.crs"><code class="docutils literal notranslate"><span class="pre">names.crs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.cwav"><code class="docutils literal notranslate"><span class="pre">names.cwav</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.datetime"><code class="docutils literal notranslate"><span class="pre">names.datetime</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.description"><code class="docutils literal notranslate"><span class="pre">names.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.detector"><code class="docutils literal notranslate"><span class="pre">names.detector</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.flags"><code class="docutils literal notranslate"><span class="pre">names.flags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.input_directory"><code class="docutils literal notranslate"><span class="pre">names.input_directory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.lat"><code class="docutils literal notranslate"><span class="pre">names.lat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.lon"><code class="docutils literal notranslate"><span class="pre">names.lon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.ltoa"><code class="docutils literal notranslate"><span class="pre">names.ltoa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.mus"><code class="docutils literal notranslate"><span class="pre">names.mus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.muv"><code class="docutils literal notranslate"><span class="pre">names.muv</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.platform"><code class="docutils literal notranslate"><span class="pre">names.platform</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.product_name"><code class="docutils literal notranslate"><span class="pre">names.product_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.quality"><code class="docutils literal notranslate"><span class="pre">names.quality</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.raa"><code class="docutils literal notranslate"><span class="pre">names.raa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.resolution"><code class="docutils literal notranslate"><span class="pre">names.resolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.rho_w"><code class="docutils literal notranslate"><span class="pre">names.rho_w</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.rows"><code class="docutils literal notranslate"><span class="pre">names.rows</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.rtoa"><code class="docutils literal notranslate"><span class="pre">names.rtoa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.saa"><code class="docutils literal notranslate"><span class="pre">names.saa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.sensor"><code class="docutils literal notranslate"><span class="pre">names.sensor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.shortname"><code class="docutils literal notranslate"><span class="pre">names.shortname</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.sza"><code class="docutils literal notranslate"><span class="pre">names.sza</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.unit"><code class="docutils literal notranslate"><span class="pre">names.unit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.vaa"><code class="docutils literal notranslate"><span class="pre">names.vaa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.vza"><code class="docutils literal notranslate"><span class="pre">names.vza</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.geo.naming.html#core.geo.naming.names.wav"><code class="docutils literal notranslate"><span class="pre">names.wav</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.geo.product_name.html">core.geo.product_name</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.decompose"><code class="docutils literal notranslate"><span class="pre">decompose()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.get_fields"><code class="docutils literal notranslate"><span class="pre">get_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.get_level"><code class="docutils literal notranslate"><span class="pre">get_level()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.get_pattern"><code class="docutils literal notranslate"><span class="pre">get_pattern()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.product_name.html#core.geo.product_name.retrieve_product"><code class="docutils literal notranslate"><span class="pre">retrieve_product()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.network.html">core.network package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.network.auth.html">core.network.auth</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.network.auth.html#core.network.auth.get_auth"><code class="docutils literal notranslate"><span class="pre">get_auth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.auth.html#core.network.auth.get_auth_dhus"><code class="docutils literal notranslate"><span class="pre">get_auth_dhus()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.network.download.html">core.network.download</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.network.download.html#core.network.download.download_url"><code class="docutils literal notranslate"><span class="pre">download_url()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.network.ftp.html">core.network.ftp</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.network.ftp.html#core.network.ftp.ftp_create_dir"><code class="docutils literal notranslate"><span class="pre">ftp_create_dir()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.ftp.html#core.network.ftp.ftp_download"><code class="docutils literal notranslate"><span class="pre">ftp_download()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.ftp.html#core.network.ftp.ftp_file_exists"><code class="docutils literal notranslate"><span class="pre">ftp_file_exists()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.ftp.html#core.network.ftp.ftp_list"><code class="docutils literal notranslate"><span class="pre">ftp_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.ftp.html#core.network.ftp.ftp_upload"><code class="docutils literal notranslate"><span class="pre">ftp_upload()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.ftp.html#core.network.ftp.get_auth_ftp"><code class="docutils literal notranslate"><span class="pre">get_auth_ftp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.ftp.html#core.network.ftp.get_url_ftpfs"><code class="docutils literal notranslate"><span class="pre">get_url_ftpfs()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.process.html">core.process package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.process.condor.html">core.process.condor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.process.condor.html#core.process.condor.get_htcondor_client"><code class="docutils literal notranslate"><span class="pre">get_htcondor_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.condor.html#core.process.condor.get_htcondor_logdir"><code class="docutils literal notranslate"><span class="pre">get_htcondor_logdir()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.condor.html#core.process.condor.get_htcondor_params"><code class="docutils literal notranslate"><span class="pre">get_htcondor_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.condor.html#core.process.condor.get_htcondor_runner"><code class="docutils literal notranslate"><span class="pre">get_htcondor_runner()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.process.deptree.html">core.process.deptree</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task"><code class="docutils literal notranslate"><span class="pre">Task</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task.output"><code class="docutils literal notranslate"><span class="pre">Task.output</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task.deps"><code class="docutils literal notranslate"><span class="pre">Task.deps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task.status"><code class="docutils literal notranslate"><span class="pre">Task.status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task.dependencies"><code class="docutils literal notranslate"><span class="pre">Task.dependencies()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task.run"><code class="docutils literal notranslate"><span class="pre">Task.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task.done"><code class="docutils literal notranslate"><span class="pre">Task.done()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.Task.cleanup"><code class="docutils literal notranslate"><span class="pre">Task.cleanup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#id0"><code class="docutils literal notranslate"><span class="pre">Task.cleanup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#id1"><code class="docutils literal notranslate"><span class="pre">Task.dependencies()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#id2"><code class="docutils literal notranslate"><span class="pre">Task.done()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#id3"><code class="docutils literal notranslate"><span class="pre">Task.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.TaskList"><code class="docutils literal notranslate"><span class="pre">TaskList</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.TaskList.dependencies"><code class="docutils literal notranslate"><span class="pre">TaskList.dependencies()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.TaskProduct"><code class="docutils literal notranslate"><span class="pre">TaskProduct</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.TaskProduct.dependencies"><code class="docutils literal notranslate"><span class="pre">TaskProduct.dependencies()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.format_time"><code class="docutils literal notranslate"><span class="pre">format_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.gen"><code class="docutils literal notranslate"><span class="pre">gen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.gen_executor"><code class="docutils literal notranslate"><span class="pre">gen_executor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.gen_sync"><code class="docutils literal notranslate"><span class="pre">gen_sync()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.print_execution_summary"><code class="docutils literal notranslate"><span class="pre">print_execution_summary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.deptree.html#core.process.deptree.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.process.deptree_prefect.html">core.process.deptree_prefect</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.static.html">core.static package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.static.Exceptions.html">core.static.Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.static.Exceptions.html#core.static.Exceptions.ClassIsAbstract"><code class="docutils literal notranslate"><span class="pre">ClassIsAbstract</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.Exceptions.html#core.static.Exceptions.InterfaceException"><code class="docutils literal notranslate"><span class="pre">InterfaceException</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.Exceptions.html#core.static.Exceptions.MethodIsAbstract"><code class="docutils literal notranslate"><span class="pre">MethodIsAbstract</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.Exceptions.html#core.static.Exceptions.WrongUsage"><code class="docutils literal notranslate"><span class="pre">WrongUsage</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.static.abstract.html">core.static.abstract</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.static.abstract.html#core.static.abstract.abstract"><code class="docutils literal notranslate"><span class="pre">abstract()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.static.constraint.html">core.static.constraint</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.Constraint"><code class="docutils literal notranslate"><span class="pre">Constraint</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.Constraint.check"><code class="docutils literal notranslate"><span class="pre">Constraint.check()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.Constraint.context"><code class="docutils literal notranslate"><span class="pre">Constraint.context</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.Constraint.contextstr"><code class="docutils literal notranslate"><span class="pre">Constraint.contextstr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.Constraint.throw"><code class="docutils literal notranslate"><span class="pre">Constraint.throw()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.ConstraintError"><code class="docutils literal notranslate"><span class="pre">ConstraintError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool"><code class="docutils literal notranslate"><span class="pre">bool</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool.check"><code class="docutils literal notranslate"><span class="pre">bool.check()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float"><code class="docutils literal notranslate"><span class="pre">float</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float.check"><code class="docutils literal notranslate"><span class="pre">float.check()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int"><code class="docutils literal notranslate"><span class="pre">int</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int.check"><code class="docutils literal notranslate"><span class="pre">int.check()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.literal"><code class="docutils literal notranslate"><span class="pre">literal</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.literal.check"><code class="docutils literal notranslate"><span class="pre">literal.check()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.none"><code class="docutils literal notranslate"><span class="pre">none</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.path"><code class="docutils literal notranslate"><span class="pre">path</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.path.check"><code class="docutils literal notranslate"><span class="pre">path.check()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.static.interface.html">core.static.interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.static.interface.html#core.static.interface.interface"><code class="docutils literal notranslate"><span class="pre">interface()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.static.parametrized.html">core.static.parametrized</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.static.parametrized.html#core.static.parametrized.parametrized"><code class="docutils literal notranslate"><span class="pre">parametrized()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.static.singleton.html">core.static.singleton</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.static.singleton.html#core.static.singleton.singleton"><code class="docutils literal notranslate"><span class="pre">singleton()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.static.virtual.html">core.static.virtual</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.static.virtual.html#core.static.virtual.virtual"><code class="docutils literal notranslate"><span class="pre">virtual()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.tests.html">core.tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.tests.conftest.html">core.tests.conftest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tests.pytest_utils.html">core.tests.pytest_utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.pytest_utils.html#core.tests.pytest_utils.parametrize_dict"><code class="docutils literal notranslate"><span class="pre">parametrize_dict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<hr class="docutils" />
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="core.ascii_table.html">core.ascii_table</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.ascii_table.html#core.ascii_table.ascii_table"><code class="docutils literal notranslate"><span class="pre">ascii_table</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html#core.ascii_table.ascii_table.print"><code class="docutils literal notranslate"><span class="pre">ascii_table.print()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html#core.ascii_table.ascii_table.style"><code class="docutils literal notranslate"><span class="pre">ascii_table.style</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html#core.ascii_table.ascii_table.to_string"><code class="docutils literal notranslate"><span class="pre">ascii_table.to_string()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.auth.html">core.auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.cache.html">core.cache</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.condor.html">core.condor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.config.html">core.config</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.config.html#core.config.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html#core.config.Config.copy"><code class="docutils literal notranslate"><span class="pre">Config.copy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html#core.config.Config.get"><code class="docutils literal notranslate"><span class="pre">Config.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html#core.config.Config.get_subsection"><code class="docutils literal notranslate"><span class="pre">Config.get_subsection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html#core.config.Config.ingest"><code class="docutils literal notranslate"><span class="pre">Config.ingest()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html#core.config.Config.new_from_dict"><code class="docutils literal notranslate"><span class="pre">Config.new_from_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html#core.config.Config.new_from_toml"><code class="docutils literal notranslate"><span class="pre">Config.new_from_toml()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.conftest.html">core.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.dates.html">core.dates</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.dates.html#core.dates.closest"><code class="docutils literal notranslate"><span class="pre">closest()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.dates.html#core.dates.date_range"><code class="docutils literal notranslate"><span class="pre">date_range()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.dates.html#core.dates.duration"><code class="docutils literal notranslate"><span class="pre">duration()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.dates.html#core.dates.get_month_range"><code class="docutils literal notranslate"><span class="pre">get_month_range()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.dates.html#core.dates.now_isofmt"><code class="docutils literal notranslate"><span class="pre">now_isofmt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.dates.html#core.dates.round_date"><code class="docutils literal notranslate"><span class="pre">round_date()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.dates.html#core.dates.time_range"><code class="docutils literal notranslate"><span class="pre">time_range()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.deptree.html">core.deptree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.deptree_prefect.html">core.deptree_prefect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.download.html">core.download</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.env.html">core.env</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.env.html#core.env.find_dotenvs"><code class="docutils literal notranslate"><span class="pre">find_dotenvs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.env.html#core.env.getdir"><code class="docutils literal notranslate"><span class="pre">getdir()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.env.html#core.env.getvar"><code class="docutils literal notranslate"><span class="pre">getvar()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.env.html#core.env.load_dotenvs"><code class="docutils literal notranslate"><span class="pre">load_dotenvs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.fileutils.html">core.fileutils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.ftp.html">core.ftp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.fuzzy.html">core.fuzzy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.fuzzy.html#core.fuzzy.search"><code class="docutils literal notranslate"><span class="pre">search()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.interpolate.html">core.interpolate</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Index"><code class="docutils literal notranslate"><span class="pre">Index</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Index.get_indexer"><code class="docutils literal notranslate"><span class="pre">Index.get_indexer()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Interpolator"><code class="docutils literal notranslate"><span class="pre">Interpolator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Interpolator.created_dims"><code class="docutils literal notranslate"><span class="pre">Interpolator.created_dims()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Interpolator.created_vars"><code class="docutils literal notranslate"><span class="pre">Interpolator.created_vars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Interpolator.input_vars"><code class="docutils literal notranslate"><span class="pre">Interpolator.input_vars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Interpolator.process_block"><code class="docutils literal notranslate"><span class="pre">Interpolator.process_block()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Linear"><code class="docutils literal notranslate"><span class="pre">Linear</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Linear.get_indexer"><code class="docutils literal notranslate"><span class="pre">Linear.get_indexer()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Linear_Indexer"><code class="docutils literal notranslate"><span class="pre">Linear_Indexer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Locator"><code class="docutils literal notranslate"><span class="pre">Locator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Locator.handle_oob"><code class="docutils literal notranslate"><span class="pre">Locator.handle_oob()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Locator.locate_index"><code class="docutils literal notranslate"><span class="pre">Locator.locate_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Locator.locate_index_weight"><code class="docutils literal notranslate"><span class="pre">Locator.locate_index_weight()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Locator_Regular"><code class="docutils literal notranslate"><span class="pre">Locator_Regular</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Locator_Regular.locate_index"><code class="docutils literal notranslate"><span class="pre">Locator_Regular.locate_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Locator_Regular.locate_index_weight"><code class="docutils literal notranslate"><span class="pre">Locator_Regular.locate_index_weight()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Nearest"><code class="docutils literal notranslate"><span class="pre">Nearest</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Nearest.get_indexer"><code class="docutils literal notranslate"><span class="pre">Nearest.get_indexer()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Nearest_Indexer"><code class="docutils literal notranslate"><span class="pre">Nearest_Indexer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Spline"><code class="docutils literal notranslate"><span class="pre">Spline</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html#core.interpolate.Spline.get_indexer"><code class="docutils literal notranslate"><span class="pre">Spline.get_indexer()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.Spline_Indexer"><code class="docutils literal notranslate"><span class="pre">Spline_Indexer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.align_lists"><code class="docutils literal notranslate"><span class="pre">align_lists()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.broadcast_numpy"><code class="docutils literal notranslate"><span class="pre">broadcast_numpy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.broadcast_shapes"><code class="docutils literal notranslate"><span class="pre">broadcast_shapes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.create_locator"><code class="docutils literal notranslate"><span class="pre">create_locator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.determine_output_dimensions"><code class="docutils literal notranslate"><span class="pre">determine_output_dimensions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.find_indices"><code class="docutils literal notranslate"><span class="pre">find_indices()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.interp"><code class="docutils literal notranslate"><span class="pre">interp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.interp_var"><code class="docutils literal notranslate"><span class="pre">interp_var()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.interpolate.html#core.interpolate.product_dict"><code class="docutils literal notranslate"><span class="pre">product_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.lock.html">core.lock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.log.html">core.log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.config"><code class="docutils literal notranslate"><span class="pre">config</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.config.show_color"><code class="docutils literal notranslate"><span class="pre">config.show_color</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.debug"><code class="docutils literal notranslate"><span class="pre">debug()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.disp"><code class="docutils literal notranslate"><span class="pre">disp()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.error"><code class="docutils literal notranslate"><span class="pre">error()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.info"><code class="docutils literal notranslate"><span class="pre">info()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.log"><code class="docutils literal notranslate"><span class="pre">log()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.lvl"><code class="docutils literal notranslate"><span class="pre">lvl</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.lvl.DEBUG"><code class="docutils literal notranslate"><span class="pre">lvl.DEBUG</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.lvl.ERROR"><code class="docutils literal notranslate"><span class="pre">lvl.ERROR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.lvl.INFO"><code class="docutils literal notranslate"><span class="pre">lvl.INFO</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.lvl.PROMPT"><code class="docutils literal notranslate"><span class="pre">lvl.PROMPT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.lvl.WARNING"><code class="docutils literal notranslate"><span class="pre">lvl.WARNING</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.prompt"><code class="docutils literal notranslate"><span class="pre">prompt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.rgb"><code class="docutils literal notranslate"><span class="pre">rgb</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.blue"><code class="docutils literal notranslate"><span class="pre">rgb.blue</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.bold"><code class="docutils literal notranslate"><span class="pre">rgb.bold</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.cyan"><code class="docutils literal notranslate"><span class="pre">rgb.cyan</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.default"><code class="docutils literal notranslate"><span class="pre">rgb.default</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.gray"><code class="docutils literal notranslate"><span class="pre">rgb.gray</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.green"><code class="docutils literal notranslate"><span class="pre">rgb.green</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.orange"><code class="docutils literal notranslate"><span class="pre">rgb.orange</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.purple"><code class="docutils literal notranslate"><span class="pre">rgb.purple</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.red"><code class="docutils literal notranslate"><span class="pre">rgb.red</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html#core.log.rgb.underline"><code class="docutils literal notranslate"><span class="pre">rgb.underline</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.set_format"><code class="docutils literal notranslate"><span class="pre">set_format()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.set_lvl"><code class="docutils literal notranslate"><span class="pre">set_lvl()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.silence"><code class="docutils literal notranslate"><span class="pre">silence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.log.html#core.log.warning"><code class="docutils literal notranslate"><span class="pre">warning()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.masks.html">core.masks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.masks.html#core.masks.explicit_bitmask"><code class="docutils literal notranslate"><span class="pre">explicit_bitmask()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.masks.html#core.masks.gen_bitmask"><code class="docutils literal notranslate"><span class="pre">gen_bitmask()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.monitor.html">core.monitor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono"><code class="docutils literal notranslate"><span class="pre">Chrono</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono.display"><code class="docutils literal notranslate"><span class="pre">Chrono.display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono.elapsed"><code class="docutils literal notranslate"><span class="pre">Chrono.elapsed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono.laps"><code class="docutils literal notranslate"><span class="pre">Chrono.laps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono.pause"><code class="docutils literal notranslate"><span class="pre">Chrono.pause()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono.reset"><code class="docutils literal notranslate"><span class="pre">Chrono.reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono.restart"><code class="docutils literal notranslate"><span class="pre">Chrono.restart()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Chrono.stop"><code class="docutils literal notranslate"><span class="pre">Chrono.stop()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.monitor.html#core.monitor.MemHist"><code class="docutils literal notranslate"><span class="pre">MemHist</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor"><code class="docutils literal notranslate"><span class="pre">Monitor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor.display"><code class="docutils literal notranslate"><span class="pre">Monitor.display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor.elapsed"><code class="docutils literal notranslate"><span class="pre">Monitor.elapsed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor.laps"><code class="docutils literal notranslate"><span class="pre">Monitor.laps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor.pause"><code class="docutils literal notranslate"><span class="pre">Monitor.pause()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor.reset"><code class="docutils literal notranslate"><span class="pre">Monitor.reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor.restart"><code class="docutils literal notranslate"><span class="pre">Monitor.restart()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.Monitor.stop"><code class="docutils literal notranslate"><span class="pre">Monitor.stop()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.monitor.html#core.monitor.RAM"><code class="docutils literal notranslate"><span class="pre">RAM</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.RAM.display"><code class="docutils literal notranslate"><span class="pre">RAM.display()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.RAM.elapsed"><code class="docutils literal notranslate"><span class="pre">RAM.elapsed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.RAM.laps"><code class="docutils literal notranslate"><span class="pre">RAM.laps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.RAM.pause"><code class="docutils literal notranslate"><span class="pre">RAM.pause()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.RAM.reset"><code class="docutils literal notranslate"><span class="pre">RAM.reset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.RAM.restart"><code class="docutils literal notranslate"><span class="pre">RAM.restart()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html#core.monitor.RAM.stop"><code class="docutils literal notranslate"><span class="pre">RAM.stop()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.monitor.html#core.monitor.dask_graph_stats"><code class="docutils literal notranslate"><span class="pre">dask_graph_stats()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.monitor.html#core.monitor.ram_probe"><code class="docutils literal notranslate"><span class="pre">ram_probe()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.progressbar.html">core.progressbar</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack"><code class="docutils literal notranslate"><span class="pre">msg_stack</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.add"><code class="docutils literal notranslate"><span class="pre">msg_stack.add()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.clean_above"><code class="docutils literal notranslate"><span class="pre">msg_stack.clean_above()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.get"><code class="docutils literal notranslate"><span class="pre">msg_stack.get()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.info"><code class="docutils literal notranslate"><span class="pre">msg_stack.info()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.reset_cursor"><code class="docutils literal notranslate"><span class="pre">msg_stack.reset_cursor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.reset_screen"><code class="docutils literal notranslate"><span class="pre">msg_stack.reset_screen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.stack"><code class="docutils literal notranslate"><span class="pre">msg_stack.stack</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.msg_stack.update_and_print_stack"><code class="docutils literal notranslate"><span class="pre">msg_stack.update_and_print_stack()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.progressbar.html#core.progressbar.progressbar"><code class="docutils literal notranslate"><span class="pre">progressbar</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.progressbar.ascii_loading"><code class="docutils literal notranslate"><span class="pre">progressbar.ascii_loading()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.progressbar.ascii_pbar"><code class="docutils literal notranslate"><span class="pre">progressbar.ascii_pbar()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.progressbar.finish"><code class="docutils literal notranslate"><span class="pre">progressbar.finish()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.progressbar.get_depth"><code class="docutils literal notranslate"><span class="pre">progressbar.get_depth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.progressbar.pbar_length"><code class="docutils literal notranslate"><span class="pre">progressbar.pbar_length</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html#core.progressbar.progressbar.update"><code class="docutils literal notranslate"><span class="pre">progressbar.update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.pseudoinverse.html">core.pseudoinverse</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.pseudoinverse.html#core.pseudoinverse.pseudoinverse"><code class="docutils literal notranslate"><span class="pre">pseudoinverse()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.pseudoinverse.html#core.pseudoinverse.weighted_pseudoinverse"><code class="docutils literal notranslate"><span class="pre">weighted_pseudoinverse()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.pytest_utils.html">core.pytest_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.save.html">core.save</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.table.html">core.table</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.table.html#core.table.read_csv"><code class="docutils literal notranslate"><span class="pre">read_csv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.table.html#core.table.read_xml"><code class="docutils literal notranslate"><span class="pre">read_xml()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.table.html#core.table.select"><code class="docutils literal notranslate"><span class="pre">select()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.table.html#core.table.select_cell"><code class="docutils literal notranslate"><span class="pre">select_cell()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.tools.html">core.tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.MapBlocksOutput"><code class="docutils literal notranslate"><span class="pre">MapBlocksOutput</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.MapBlocksOutput.conform"><code class="docutils literal notranslate"><span class="pre">MapBlocksOutput.conform()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.MapBlocksOutput.subset"><code class="docutils literal notranslate"><span class="pre">MapBlocksOutput.subset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.MapBlocksOutput.template"><code class="docutils literal notranslate"><span class="pre">MapBlocksOutput.template()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.Var"><code class="docutils literal notranslate"><span class="pre">Var</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.attrs"><code class="docutils literal notranslate"><span class="pre">Var.attrs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.conform"><code class="docutils literal notranslate"><span class="pre">Var.conform()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.desc"><code class="docutils literal notranslate"><span class="pre">Var.desc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.describe"><code class="docutils literal notranslate"><span class="pre">Var.describe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.dims"><code class="docutils literal notranslate"><span class="pre">Var.dims</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.dims_like"><code class="docutils literal notranslate"><span class="pre">Var.dims_like</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.dtype"><code class="docutils literal notranslate"><span class="pre">Var.dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.flags"><code class="docutils literal notranslate"><span class="pre">Var.flags</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.getdims"><code class="docutils literal notranslate"><span class="pre">Var.getdims()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.merge_with"><code class="docutils literal notranslate"><span class="pre">Var.merge_with()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.tags"><code class="docutils literal notranslate"><span class="pre">Var.tags</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.to_template"><code class="docutils literal notranslate"><span class="pre">Var.to_template()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html#core.tools.Var.unit"><code class="docutils literal notranslate"><span class="pre">Var.unit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.chunk"><code class="docutils literal notranslate"><span class="pre">chunk()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.conform"><code class="docutils literal notranslate"><span class="pre">conform()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.contains"><code class="docutils literal notranslate"><span class="pre">contains()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.convert"><code class="docutils literal notranslate"><span class="pre">convert()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.datetime"><code class="docutils literal notranslate"><span class="pre">datetime()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.drop_unused_dims"><code class="docutils literal notranslate"><span class="pre">drop_unused_dims()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.getflag"><code class="docutils literal notranslate"><span class="pre">getflag()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.getflags"><code class="docutils literal notranslate"><span class="pre">getflags()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.haversine"><code class="docutils literal notranslate"><span class="pre">haversine()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.locate"><code class="docutils literal notranslate"><span class="pre">locate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.merge"><code class="docutils literal notranslate"><span class="pre">merge()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.only"><code class="docutils literal notranslate"><span class="pre">only()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.raiseflag"><code class="docutils literal notranslate"><span class="pre">raiseflag()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.reglob"><code class="docutils literal notranslate"><span class="pre">reglob()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.split"><code class="docutils literal notranslate"><span class="pre">split()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.str_to_bool"><code class="docutils literal notranslate"><span class="pre">str_to_bool()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.sub"><code class="docutils literal notranslate"><span class="pre">sub()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.sub_pt"><code class="docutils literal notranslate"><span class="pre">sub_pt()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.sub_rect"><code class="docutils literal notranslate"><span class="pre">sub_rect()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.trim_dims"><code class="docutils literal notranslate"><span class="pre">trim_dims()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.wrap"><code class="docutils literal notranslate"><span class="pre">wrap()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.xr_filter"><code class="docutils literal notranslate"><span class="pre">xr_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.xr_filter_decorator"><code class="docutils literal notranslate"><span class="pre">xr_filter_decorator()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.xr_flat"><code class="docutils literal notranslate"><span class="pre">xr_flat()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.xr_sample"><code class="docutils literal notranslate"><span class="pre">xr_sample()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.xr_unfilter"><code class="docutils literal notranslate"><span class="pre">xr_unfilter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.tools.html#core.tools.xrcrop"><code class="docutils literal notranslate"><span class="pre">xrcrop()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="core.uncompress.html">core.uncompress</a></li>
+<li class="toctree-l1"><a class="reference internal" href="core.xrtags.html">core.xrtags</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="core.xrtags.html#core.xrtags.tag_add"><code class="docutils literal notranslate"><span class="pre">tag_add()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.xrtags.html#core.xrtags.tag_filter"><code class="docutils literal notranslate"><span class="pre">tag_filter()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="CORE Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.files.html" class="btn btn-neutral float-right" title="core.files package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

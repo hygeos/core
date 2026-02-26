@@ -1,0 +1,1495 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.tools &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            core
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.tools</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Various utility functions for modifying xarray object</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dask</span><span class="w"> </span><span class="kn">import</span> <span class="n">array</span> <span class="k">as</span> <span class="n">da</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">arcsin</span> <span class="k">as</span> <span class="n">asin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">cos</span><span class="p">,</span> <span class="n">radians</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">where</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">shapely.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Polygon</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dateutil.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+
+
+<span class="n">flags</span>          <span class="o">=</span> <span class="s1">&#39;flags&#39;</span>
+<span class="n">flags_dtype</span>    <span class="o">=</span> <span class="s1">&#39;uint16&#39;</span>
+<span class="n">flags_meanings</span> <span class="o">=</span> <span class="s1">&#39;flag_meanings&#39;</span>
+<span class="n">flags_masks</span>    <span class="o">=</span> <span class="s1">&#39;flag_masks&#39;</span>
+<span class="n">flags_meanings_separator</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span>
+
+<span class="n">footprint_lat</span> <span class="o">=</span> <span class="s1">&#39;footprint_lat&#39;</span>
+<span class="n">footprint_lon</span> <span class="o">=</span> <span class="s1">&#39;footprint_lon&#39;</span>
+
+<div class="viewcode-block" id="datetime">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.datetime">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">datetime</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Parse datetime (in isoformat) from `ds` attributes</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;start_time&#39;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;end_time&#39;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">):</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">start_time</span>
+        <span class="n">et</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">end_time</span>
+        <span class="k">return</span> <span class="n">st</span> <span class="o">+</span> <span class="p">(</span><span class="n">et</span> <span class="o">-</span> <span class="n">st</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">elif</span> <span class="s1">&#39;datetime&#39;</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">parse</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;datetime&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span></div>
+
+
+
+<div class="viewcode-block" id="haversine">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.haversine">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">haversine</span><span class="p">(</span>
+    <span class="n">lat1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">lon1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">lat2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">lon2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">6371</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Calculate the great circle distance between two points (specified in</span>
+<span class="sd">    decimal degrees) on a sphere of a given radius</span>
+
+<span class="sd">    Returns the distance in the same unit as radius (defaults to earth radius in km)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># convert decimal degrees to radians</span>
+    <span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span> <span class="o">=</span> <span class="p">[</span><span class="n">radians</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">]]</span>
+
+    <span class="c1"># haversine formula</span>
+    <span class="n">dlon</span> <span class="o">=</span> <span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span>
+    <span class="n">dlat</span> <span class="o">=</span> <span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">sin</span><span class="p">(</span><span class="n">dlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">dlon</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">asin</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">c</span>
+
+    <span class="k">return</span> <span class="n">dist</span></div>
+
+
+
+<div class="viewcode-block" id="locate">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.locate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">locate</span><span class="p">(</span>
+    <span class="n">lat</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">lon</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">lat0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">lon0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">dist_min_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Locate `lat0`, `lon0` within `lat`, `lon` (xr.DataArrays)</span>
+
+<span class="sd">    if dist_min_km is specified and if the minimal distance</span>
+<span class="sd">    exceeds it, a ValueError is raised</span>
+
+<span class="sd">    returns a dictionary of the pixel coordinates</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Locating lat=</span><span class="si">{</span><span class="n">lat0</span><span class="si">}</span><span class="s1">, lon=</span><span class="si">{</span><span class="n">lon0</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="n">haversine</span><span class="p">(</span><span class="n">lat</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">lon</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">lat0</span><span class="p">,</span> <span class="n">lon0</span><span class="p">)</span>
+    <span class="n">dist_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">dist</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dist_min</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No valid input coordinate&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">dist_min_km</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">dist_min</span> <span class="o">&gt;</span> <span class="n">dist_min_km</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;locate: minimal distance is </span><span class="si">{</span><span class="n">dist_min</span><span class="si">}</span><span class="s1">, &#39;</span>
+                         <span class="sa">f</span><span class="s1">&#39;should be at most </span><span class="si">{</span><span class="n">dist_min_km</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">dist</span> <span class="o">==</span> <span class="n">dist_min</span><span class="p">)]</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">coords</span><span class="p">[</span><span class="n">idim</span><span class="p">]</span> <span class="k">for</span> <span class="n">idim</span><span class="p">,</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lat</span><span class="o">.</span><span class="n">dims</span><span class="p">)}</span></div>
+
+
+
+<div class="viewcode-block" id="drop_unused_dims">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.drop_unused_dims">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_unused_dims</span><span class="p">(</span><span class="n">ds</span><span class="p">):</span> 
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simple function to remove unused dimensions in a xarray.Dataset&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">([</span><span class="n">var</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span> <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="contains">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.contains">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">contains</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">)</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">footprint_lat</span><span class="p">],</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">footprint_lon</span><span class="p">]</span>
+    <span class="p">))</span>
+    <span class="c1"># TODO: proper inclusion test</span>
+    <span class="c1"># TODO: make it work with arrays</span>
+    <span class="k">return</span> <span class="n">area</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sub">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.sub">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sub</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> 
+        <span class="n">cond</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> 
+        <span class="n">drop_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
+        <span class="n">int_default_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a Dataset based on the conditions passed in parameters</span>
+
+<span class="sd">    cond : a DataArray of booleans that defines which pixels are kept</span>
+
+<span class="sd">    drop_invalid, bool</span>
+<span class="sd">        if True invalid pixels will be replace by nan for floats and</span>
+<span class="sd">        int_default_value for other types</span>
+
+<span class="sd">    int_default_value, int</span>
+<span class="sd">        for DataArrays of type int, this value is assigned on non-valid pixels</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">drop_invalid</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="s1">&#39;mask_valid&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">res</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;mask_valid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cond</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;mask_valid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;mask_valid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s1">&#39;mask_valid&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="n">slice_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">cond</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">cond</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">cond</span><span class="o">.</span><span class="n">dims</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">dim</span><span class="p">])</span>
+        <span class="n">wh</span> <span class="o">=</span> <span class="n">where</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wh</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">slice_dict</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">slice_dict</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">wh</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wh</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">cond</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cond</span><span class="o">.</span><span class="n">dims</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">drop_invalid</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;float16&#39;</span><span class="p">,</span> <span class="s1">&#39;float32&#39;</span><span class="p">,</span> <span class="s1">&#39;float64&#39;</span><span class="p">]:</span>
+                    <span class="n">res</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">res</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">slice_dict</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s1">&#39;mask_valid&#39;</span><span class="p">],</span> <span class="n">int_default_value</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">slice_dict</span><span class="p">)</span>
+
+    <span class="n">res</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+
+<div class="viewcode-block" id="sub_rect">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.sub_rect">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sub_rect</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">lat_min</span><span class="p">,</span> <span class="n">lon_min</span><span class="p">,</span> <span class="n">lat_max</span><span class="p">,</span> <span class="n">lon_max</span><span class="p">,</span> 
+             <span class="n">drop_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">int_default_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns a Dataset based on the coordinates of the rectangle passed in parameters</span>
+
+<span class="sd">    lat_min, lat_max, lon_min, lon_max : delimitations of the region of interest</span>
+
+<span class="sd">    drop_invalid, bool : if True, invalid pixels will be replace by nan</span>
+<span class="sd">    for floats and int_default_value for other types</span>
+
+<span class="sd">    int_default_value, int : for DataArrays of type int, this value is assigned on non-valid pixels</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">latitude</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">longitude</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+    <span class="n">cond</span> <span class="o">=</span> <span class="p">(</span><span class="n">lat</span> <span class="o">&lt;</span> <span class="n">lat_max</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lat</span> <span class="o">&gt;</span> <span class="n">lat_min</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lon</span> <span class="o">&lt;</span> <span class="n">lon_max</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lon</span> <span class="o">&gt;</span> <span class="n">lon_min</span><span class="p">)</span>
+    <span class="n">cond</span> <span class="o">=</span> <span class="n">cond</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">sub</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">cond</span><span class="p">,</span> <span class="n">drop_invalid</span><span class="p">,</span> <span class="n">int_default_value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sub_pt">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.sub_pt">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sub_pt</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">pt_lat</span><span class="p">,</span> <span class="n">pt_lon</span><span class="p">,</span> <span class="n">rad</span><span class="p">,</span> 
+           <span class="n">drop_invalid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">int_default_value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a Dataset based on the circle specified in parameters</span>
+
+<span class="sd">    pt_lat, pt_lon : Coordonates of the center of the point</span>
+
+<span class="sd">    rad : radius of the circle in km</span>
+
+<span class="sd">    drop_invalid, bool</span>
+<span class="sd">        if True invalid pixels will be replace by nan for floats</span>
+<span class="sd">        and int_default_value for other types</span>
+
+<span class="sd">    int_default_value, int</span>
+<span class="sd">        for DataArrays of type int, this value is assigned on non-valid pixels</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+    <span class="n">lon</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+    <span class="n">cond</span> <span class="o">=</span> <span class="n">haversine</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">pt_lat</span><span class="p">,</span> <span class="n">pt_lon</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rad</span>
+    <span class="n">cond</span> <span class="o">=</span> <span class="n">cond</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">sub</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">cond</span><span class="p">,</span> <span class="n">drop_invalid</span><span class="p">,</span> <span class="n">int_default_value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="split">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.split">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">split</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span> <span class="o">|</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns a Dataset where a given dimension is split into as many variables</span>
+
+<span class="sd">    d: Dataset or DataArray</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">assert</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">dims</span>
+    <span class="k">assert</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">coords</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;The split dimension &quot;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s1">&quot; must have coordinates.&#39;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">([</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">i</span><span class="p">})</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="si">}{</span><span class="n">sep</span><span class="si">}{</span><span class="n">d</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">dim</span><span class="p">]))</span>
+            <span class="p">])</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">split</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="n">dim</span><span class="p">)</span>
+             <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span>
+             <span class="k">else</span> <span class="n">d</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">d</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;`split` expects Dataset or DataArray.&#39;</span><span class="p">)</span>
+
+    <span class="n">m</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">attrs</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;split_dimension&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dim</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">m</span></div>
+
+
+
+<div class="viewcode-block" id="merge">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.merge">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+          <span class="n">dim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+          <span class="n">varname</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+          <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;(.+)_(\d+)&#39;</span><span class="p">,</span>
+          <span class="n">dtype</span><span class="p">:</span> <span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Merge DataArrays in `ds` along dimension `dim`.</span>
+
+<span class="sd">    ds: xr.Dataset</span>
+
+<span class="sd">    dim: str or None</span>
+<span class="sd">        name of the new or existing dimension</span>
+<span class="sd">        if None, use the attribute `split_dimension`</span>
+<span class="sd">    </span>
+<span class="sd">    varname: str or None</span>
+<span class="sd">        name of the variable to create</span>
+<span class="sd">        if None, detect variable name from regular expression</span>
+
+<span class="sd">    pattern: str</span>
+<span class="sd">        Regular expression for matching variable names and coordinates</span>
+<span class="sd">        if varname is None:</span>
+<span class="sd">            First group represents the new variable name.</span>
+<span class="sd">            Second group represents the coordinate value</span>
+<span class="sd">            Ex: r&#39;(.+)_(\d+)&#39;</span>
+<span class="sd">                    First group matches all characters.</span>
+<span class="sd">                    Second group matches digits.</span>
+<span class="sd">                r&#39;(\D+)(\d+)&#39;</span>
+<span class="sd">                    First group matches non-digit.</span>
+<span class="sd">                    Second group matches digits.</span>
+<span class="sd">        if varname is not None:</span>
+<span class="sd">            Match a single group representing the coordinate value</span>
+
+<span class="sd">    dtype: data type</span>
+<span class="sd">        data type of the coordinate items</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">copy</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;split_dimension&#39;</span><span class="p">]</span>
+
+    <span class="n">mapping</span> <span class="o">=</span> <span class="p">{}</span>   <span class="c1"># {new_name: [(old_name, value), ...], ...}</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">copy</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># does not match</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Expecting a single match&#39;</span>
+
+        <span class="k">if</span> <span class="n">varname</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;Expecting two groups in regular expression&#39;</span>
+            <span class="n">var</span><span class="p">,</span> <span class="n">coord</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">),</span> <span class="s1">&#39;Expecting a single group in regular expression&#39;</span>
+            <span class="n">coord</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">var</span> <span class="o">=</span> <span class="n">varname</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">dtype</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">mapping</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">copy</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">[</span><span class="n">var</span><span class="p">]],</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">[</span><span class="n">var</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">copy</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+            <span class="c1"># check that the coordinates are matching</span>
+            <span class="n">existing_coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">existing_coords</span> <span class="o">==</span> <span class="n">coords</span><span class="p">,</span> \
+                <span class="sa">f</span><span class="s1">&#39;Error: </span><span class="si">{</span><span class="n">existing_coords</span><span class="si">}</span><span class="s1"> != </span><span class="si">{</span><span class="n">coords</span><span class="si">}</span><span class="s1"> (in variable </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">)&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">coords</span><span class="p">})</span>
+        <span class="n">copy</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">[</span><span class="n">var</span><span class="p">]])</span>
+
+    <span class="k">return</span> <span class="n">copy</span></div>
+
+
+
+<div class="viewcode-block" id="getflags">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.getflags">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">getflags</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">meanings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">masks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    returns the flags in attributes of `A` as a dictionary {meaning: value}</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">    ---------</span>
+
+<span class="sd">    provide either:</span>
+<span class="sd">        A: Dataarray</span>
+<span class="sd">    or:</span>
+<span class="sd">        meanings: flag meanings &#39;FLAG1 FLAG2&#39;</span>
+<span class="sd">        masks: flag values [1, 2]</span>
+<span class="sd">        sep: string separator</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">meanings</span> <span class="o">=</span> <span class="n">meanings</span> <span class="k">if</span> <span class="p">(</span><span class="n">meanings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="k">else</span> <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">flags_meanings</span><span class="p">]</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="n">masks</span> <span class="k">if</span> <span class="p">(</span><span class="n">masks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="k">else</span> <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">flags_masks</span><span class="p">]</span>
+        <span class="n">sep</span> <span class="o">=</span> <span class="n">sep</span> <span class="ow">or</span> <span class="n">flags_meanings_separator</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">meanings</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sep</span><span class="p">),</span> <span class="n">masks</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="getflag">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.getflag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">getflag</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the binary flag with given `name` as a boolean array</span>
+
+<span class="sd">    A: DataArray</span>
+<span class="sd">    name: str</span>
+
+<span class="sd">    example: getflag(flags, &#39;LAND&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">getflags</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">flags</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Error, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> no in </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">A</span> <span class="o">&amp;</span> <span class="n">flags</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="raiseflag">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.raiseflag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">raiseflag</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">flag_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">flag_value</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raise a flag in DataArray `A` with name `flag_name`, value `flag_value` and `condition`</span>
+<span class="sd">    The name and value of the flag is recorded in the attributes of `A`</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A: DataArray of integers</span>
+
+<span class="sd">    flag_name: str</span>
+<span class="sd">        Name of the flag</span>
+<span class="sd">    flag_value: int</span>
+<span class="sd">        Value of the flag</span>
+<span class="sd">    condition: boolean array-like of same shape as `A`</span>
+<span class="sd">        Condition to raise flag.</span>
+<span class="sd">        If None, the flag values are unchanged ; the flag is simple registered in the</span>
+<span class="sd">        attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flag_name</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+        <span class="n">flag_name</span> <span class="o">=</span> <span class="n">flag_name</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">flag_name</span> <span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;raiseflag can only be used on integer DataArrays, got </span><span class="si">{</span><span class="n">A</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">getflags</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+    <span class="n">dtype_flag_masks</span> <span class="o">=</span> <span class="s1">&#39;uint16&#39;</span>
+
+    <span class="k">if</span> <span class="n">flags_meanings</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+        <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">flags_meanings</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">flags_masks</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+        <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">flags_masks</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype_flag_masks</span><span class="p">)</span>
+
+    <span class="c1"># update the attributes if necessary</span>
+    <span class="k">if</span> <span class="n">flag_name</span> <span class="ow">in</span> <span class="n">flags</span><span class="p">:</span>
+        <span class="c1"># existing flag: check value</span>
+        <span class="k">assert</span> <span class="n">flags</span><span class="p">[</span><span class="n">flag_name</span><span class="p">]</span> <span class="o">==</span> <span class="n">flag_value</span><span class="p">,</span> \
+            <span class="sa">f</span><span class="s1">&#39;Flag </span><span class="si">{</span><span class="n">flag_name</span><span class="si">}</span><span class="s1"> already exists with a different value&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">flag_value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">flags</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> \
+            <span class="sa">f</span><span class="s1">&#39;Flag value </span><span class="si">{</span><span class="n">flag_value</span><span class="si">}</span><span class="s1"> is already assigned to a different flags (assigned flags are </span><span class="si">{</span><span class="n">flags</span><span class="o">.</span><span class="n">values</span><span class="p">()</span><span class="si">}</span><span class="s1">)&#39;</span>
+
+        <span class="n">flags</span><span class="p">[</span><span class="n">flag_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">flag_value</span>
+
+        <span class="c1"># sort the flags by values</span>
+        <span class="n">keys</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">(</span><span class="n">flags</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">flags_meanings</span><span class="p">]</span> <span class="o">=</span> <span class="n">flags_meanings_separator</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+        <span class="n">A</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">flags_masks</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype_flag_masks</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">notraised</span> <span class="o">=</span> <span class="p">(</span><span class="n">A</span> <span class="o">&amp;</span> <span class="n">flag_value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="n">A</span> <span class="o">+=</span> <span class="n">flag_value</span> <span class="o">*</span> <span class="p">((</span><span class="n">condition</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">notraised</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">flags_dtype</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="wrap">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.wrap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wrap</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">vmin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">vmax</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrap and reorder a cyclic dimension between vmin and vmax.</span>
+<span class="sd">    The border value is duplicated at the edges.</span>
+<span class="sd">    The period is (vmax-vmin)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    * Dimension [0, 359] -&gt; [-180, 180]</span>
+<span class="sd">    * Dimension [-180, 179] -&gt; [-180, 180]</span>
+<span class="sd">    * Dimension [0, 359] -&gt; [0, 360]</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    ds: xarray.Dataset</span>
+<span class="sd">    dim: str</span>
+<span class="sd">        Name of the dimension to wrap</span>
+<span class="sd">    vmin, vmax: float</span>
+<span class="sd">        new values for the edges</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pivot</span> <span class="o">=</span> <span class="n">vmax</span> <span class="k">if</span> <span class="p">(</span><span class="n">vmin</span> <span class="o">&lt;</span> <span class="n">ds</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">else</span> <span class="n">vmin</span>
+
+    <span class="n">left</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">sel</span><span class="p">({</span><span class="n">dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">pivot</span><span class="p">)})</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">sel</span><span class="p">({</span><span class="n">dim</span><span class="p">:</span> <span class="nb">slice</span><span class="p">(</span><span class="n">pivot</span><span class="p">,</span> <span class="kc">None</span><span class="p">)})</span>
+
+    <span class="k">if</span> <span class="n">right</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">vmax</span><span class="p">:</span>
+        <span class="c1"># apply the offset at the right part</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">right</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">({</span><span class="n">dim</span><span class="p">:</span> <span class="n">right</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">vmax</span><span class="o">-</span><span class="n">vmin</span><span class="p">)})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># apply the offset at the left part</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">left</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">({</span><span class="n">dim</span><span class="p">:</span> <span class="n">left</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">vmax</span><span class="o">-</span><span class="n">vmin</span><span class="p">)})</span>
+
+    <span class="c1"># swaps the two parts</span>
+    <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">right</span><span class="p">,</span> <span class="n">left</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="convert">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.convert">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">unit_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">unit_from</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">converter</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unit conversion</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">    ---------</span>
+
+<span class="sd">    A: DataArray to convert</span>
+
+<span class="sd">    unit_from: str or None</span>
+<span class="sd">        unit to convert from. If not provided, uses da.units</span>
+
+<span class="sd">    unit_to: str</span>
+<span class="sd">        unit to convert to</span>
+<span class="sd">    </span>
+<span class="sd">    converter: a dictionary for unit conversion</span>
+<span class="sd">        example: converter={&#39;Pa&#39;: 1, &#39;hPa&#39;: 1e-2}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">unit_from</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">unit_from</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">units</span>
+    
+    <span class="n">default_converters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="c1"># pressure</span>
+        <span class="p">{</span><span class="s1">&#39;Pa&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+         <span class="s1">&#39;hPa&#39;</span><span class="p">:</span> <span class="mf">1e-2</span><span class="p">,</span>
+         <span class="s1">&#39;millibars&#39;</span><span class="p">:</span> <span class="mf">1e-2</span><span class="p">,</span>
+         <span class="p">},</span>
+
+        <span class="c1"># ozone</span>
+        <span class="p">{</span><span class="s1">&#39;kg/m2&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+         <span class="s1">&#39;kg m**-2&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+         <span class="s1">&#39;DU&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="mf">2.1415E-05</span><span class="p">,</span>
+         <span class="s1">&#39;Dobson units&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="o">/</span><span class="mf">2.1415E-05</span><span class="p">,</span>
+         <span class="p">}</span>
+    <span class="p">]</span>
+
+    <span class="n">conversion_factor</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">(</span><span class="n">default_converters</span> <span class="k">if</span> <span class="n">converter</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">converter</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">unit_from</span> <span class="ow">in</span> <span class="n">c</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">unit_to</span> <span class="ow">in</span> <span class="n">c</span><span class="p">):</span>
+            <span class="n">conversion_factor</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="n">unit_to</span><span class="p">]</span><span class="o">/</span><span class="n">c</span><span class="p">[</span><span class="n">unit_from</span><span class="p">]</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">conversion_factor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unknown conversion from </span><span class="si">{</span><span class="n">unit_from</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">unit_to</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">converted</span> <span class="o">=</span> <span class="n">A</span><span class="o">*</span><span class="n">conversion_factor</span>
+    <span class="n">converted</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">unit_to</span>
+    <span class="k">return</span> <span class="n">converted</span></div>
+
+
+
+<div class="viewcode-block" id="chunk">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.chunk">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">chunk</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply rechunking to a xr.Dataset `ds` along dimensions provided as kwargs</span>
+
+<span class="sd">    Works like `ds.chunk` but works also for Datasets with repeated dimensions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+        <span class="n">chks</span> <span class="o">=</span> <span class="p">[</span><span class="n">kwargs</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;chunks&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">([</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chks</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]):</span>
+            <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">rechunk</span><span class="p">(</span><span class="n">chks</span><span class="p">)</span>
+            
+    <span class="k">return</span> <span class="n">ds</span></div>
+
+
+
+<div class="viewcode-block" id="trim_dims">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.trim_dims">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">trim_dims</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Trim the dimensions of Dataset A</span>
+<span class="sd">    </span>
+<span class="sd">    Rename all possible dimensions to avoid duplicate dimensions with same sizes</span>
+<span class="sd">    Avoid any DataArray with duplicate dimensions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># list of lists of dimensions that should be grouped together</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># loop over all dimensions sizes</span>
+    <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">sizes</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="c1"># list all dimensions with current size</span>
+        <span class="n">groups_current</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dims_current</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">A</span><span class="o">.</span><span class="n">sizes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">size</span><span class="p">]</span>
+
+        <span class="c1"># for each variable, add its dimensions (intersecting dims_current)</span>
+        <span class="c1"># to separate groups to avoid duplicated</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">A</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">A</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span>
+                 <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dims_current</span><span class="p">]</span>
+                <span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">groups_current</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">i</span><span class="p">:</span>
+                    <span class="n">groups_current</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">groups_current</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">groups_current</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="n">groups</span> <span class="o">+=</span> <span class="n">groups_current</span>
+
+    <span class="c1"># check that intersection of all groups is empty</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="nb">set</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">])</span>
+
+    <span class="n">rename_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sum</span><span class="p">([[(</span><span class="n">dim</span><span class="p">,</span> <span class="s1">&#39;new_&#39;</span><span class="o">+</span><span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                             <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>  <span class="c1"># don&#39;t rename if not useful</span>
+                            <span class="p">],</span> <span class="p">[]))</span>
+    <span class="k">return</span> <span class="n">A</span><span class="o">.</span><span class="n">rename_dims</span><span class="p">(</span><span class="n">rename_dict</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="only">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.only">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">only</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If *iterable* has only one item, return it.</span>
+<span class="sd">    Otherwise raise a ValueError</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> </div>
+
+
+<div class="viewcode-block" id="reglob">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.reglob">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reglob</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="n">regexp</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">assert</span> <span class="n">regexp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;Avoid using wildcard in regular expression&#39;</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span> 
+        <span class="n">a</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">regexp</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">group</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">files</span></div>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">xrcrop</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span> <span class="o">...</span>
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">xrcrop</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="xrcrop">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.xrcrop">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">xrcrop</span><span class="p">(</span>
+    <span class="n">A</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Crop a Dataset or DataArray along dimensions based on min/max values.</span>
+<span class="sd">    </span>
+<span class="sd">    For each dimension provided as kwarg, the min/max values along that dimension</span>
+<span class="sd">    can be provided:</span>
+<span class="sd">        - As a min/max tuple</span>
+<span class="sd">        - As a DataArrat, for which the min/max are computed</span>
+
+<span class="sd">    Ex: crop dimensions `latitude` and `longitude` of `gsw` based on the min/max</span>
+<span class="sd">        of ds.lat and ds.lon</span>
+<span class="sd">        gsw = xrcrop(</span>
+<span class="sd">            gsw,</span>
+<span class="sd">            latitude=ds.lat,</span>
+<span class="sd">            longitude=ds.lon,</span>
+<span class="sd">        )</span>
+<span class="sd">    </span>
+<span class="sd">    Note: the purpose of this function is to make it possible to .compute() the result</span>
+<span class="sd">    of the cropped data, thus allowing to perform a sel over large arrays (otherwise</span>
+<span class="sd">    extremely slow with dask based arrays).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">isel_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">)</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">assert</span> <span class="n">vmin</span> <span class="o">&lt;</span> <span class="n">vmax</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+            <span class="n">vmin</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">vmax</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">indexes</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="c1"># Get bracketing indices for vmin/vmax</span>
+        <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">is_monotonic_increasing</span><span class="p">:</span>
+            <span class="n">imin</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">get_slice_bound</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">imax</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="n">index</span><span class="o">.</span><span class="n">get_slice_bound</span><span class="p">(</span><span class="n">vmax</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">index</span><span class="o">.</span><span class="n">is_monotonic_decreasing</span><span class="p">:</span>
+            <span class="n">imin</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">get_slice_bound</span><span class="p">(</span><span class="n">vmax</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">imax</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="n">index</span><span class="o">.</span><span class="n">get_slice_bound</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+
+        <span class="k">assert</span> <span class="n">imin</span> <span class="o">&lt;</span> <span class="n">imax</span>
+        <span class="n">isel_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">imin</span><span class="p">,</span> <span class="n">imax</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">A</span><span class="o">.</span><span class="n">isel</span><span class="p">(</span><span class="n">isel_dict</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MapBlocksOutput">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.MapBlocksOutput">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MapBlocksOutput</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
+        <span class="n">new_dims</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Describe a Dataset structure, for use with xr.map_blocks to ensure consistency</span>
+<span class="sd">        between the output of the blockwise function and the call to xr.map_blocks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model: list of DataArrays of Var objects describing the output</span>
+<span class="sd">            new_dims: dictionary providing the new dimensions</span>
+<span class="sd">                ex: new_dims={&#39;new_dim&#39;: xr.DataArray([0, 2, 3])}</span>
+<span class="sd">                or simply the dimension size if new_dim has no coordinate</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            model = MapBlockOutput([</span>
+<span class="sd">                # Either describe the variable with a `Var` object</span>
+<span class="sd">                Var(&#39;latitude&#39;, &#39;float32&#39;, [&#39;x&#39;, &#39;y&#39;]),</span>
+<span class="sd">                # or with a renamed DataArray</span>
+<span class="sd">                ds.rho_toa.rename(&#39;rho_gc&#39;)</span>
+<span class="sd">            ])</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_dims</span> <span class="o">=</span> <span class="n">new_dims</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">concatenated</span> <span class="o">=</span> <span class="n">MapBlocksOutput</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+                               <span class="n">new_dims</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">new_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">other</span><span class="o">.</span><span class="n">new_dims</span><span class="p">})</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">concatenated</span><span class="o">.</span><span class="n">model</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">concatenated</span>
+
+<div class="viewcode-block" id="MapBlocksOutput.template">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.MapBlocksOutput.template">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">template</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an empty template for this model, to be provided to xr.map_blocks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">to_template</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">new_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">new_dims</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span> <span class="k">else</span> <span class="n">m</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MapBlocksOutput.subset">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.MapBlocksOutput.subset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ds</span><span class="p">[[</span><span class="n">var</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">]]</span></div>
+
+
+<div class="viewcode-block" id="MapBlocksOutput.conform">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.MapBlocksOutput.conform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">conform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">transpose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conform dataset `ds` to this model</span>
+
+<span class="sd">        transpose: whether to automatically transpose the variables in `ds` to conform</span>
+<span class="sd">            to the specified dimensions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">list_vars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">:</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="n">ds</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+            <span class="n">list_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">conform</span><span class="p">(</span><span class="n">da</span><span class="p">,</span> <span class="n">transpose</span><span class="o">=</span><span class="n">transpose</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">list_vars</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Var">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Var</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+    <span class="n">dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">dims</span><span class="p">:</span> <span class="n">Tuple</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">dims_like</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">flags</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">attrs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dims</span><span class="p">:</span> <span class="n">Tuple</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dims_like</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">flags</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">attrs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a `Var` descriptor defining the expected structure of a variable</span>
+
+<span class="sd">        `Var` is a lightweight descriptor (a `str` subclass) whose string</span>
+<span class="sd">        value is the variable name. It carries metadata about the intended</span>
+<span class="sd">        data type, dimensions and arbitrary attributes, and is used by</span>
+<span class="sd">        helpers such as `map_blocks`for blockwise processing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: The variable name. The `Var` instance itself is a `str` equal</span>
+<span class="sd">                to this name.</span>
+<span class="sd">            dtype: Expected NumPy dtype for the variable (e.g. &#39;float32&#39;,</span>
+<span class="sd">                &#39;uint16&#39;). Used by template creation and validation.</span>
+<span class="sd">            dims: Expected dimensions as a tuple of dimension names (optional)</span>
+<span class="sd">                (e.g. (&#39;x&#39;, &#39;y&#39;)).</span>
+<span class="sd">            dims_like: Name of an existing variable in a reference dataset;</span>
+<span class="sd">                the dimensions will be taken from that variable in the dataset </span>
+<span class="sd">                (see `getdims`). Use this to define dimensions &quot;like another Var&quot;.</span>
+<span class="sd">            flags: mapping for bitmask flags (optional),</span>
+<span class="sd">                e.g. {&#39;CLEAR&#39;: 1, &#39;CLOUDY&#39;: 2}.</span>
+<span class="sd">            tags: Variable tags, used for further selection.</span>
+<span class="sd">                e.g. tags=[&#39;debug&#39;, &#39;level2&#39;]</span>
+<span class="sd">            attrs: Optional dictionary of attributes to attach to the variable</span>
+<span class="sd">                descriptor, including &#39;desc&#39; (description), &#39;units&#39;,</span>
+<span class="sd">                &#39;minv&#39; (minimum valid value), &#39;maxv&#39; (maximum valid value).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="c1"># Use object.__setattr__ because str is immutable</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="n">dtype</span><span class="p">,</span>
+            <span class="s1">&#39;dims&#39;</span><span class="p">:</span> <span class="n">dims</span><span class="p">,</span>
+            <span class="s1">&#39;dims_like&#39;</span><span class="p">:</span> <span class="n">dims_like</span><span class="p">,</span>
+            <span class="s1">&#39;flags&#39;</span><span class="p">:</span> <span class="n">flags</span><span class="p">,</span>
+            <span class="s1">&#39;tags&#39;</span><span class="p">:</span> <span class="n">tags</span><span class="p">,</span>
+        <span class="p">}</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="c1"># Store attrs</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="s1">&#39;attrs&#39;</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="k">return</span> <span class="n">instance</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Var(</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+    
+<div class="viewcode-block" id="Var.unit">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var.unit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return unit</span>
+<span class="sd">        For backward compatibility</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="s2">&quot;units&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Var.desc">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var.desc">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns variable description</span>
+<span class="sd">        For backward compatibility</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="s2">&quot;desc&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;desc&quot;</span><span class="p">],</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;desc&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Var.describe">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var.describe">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prints the description of the variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Variable: </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="Var.getdims">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var.getdims">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">getdims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the actual dimensions for that variable.</span>
+<span class="sd">        If dims is defined as a tuple, it is returned as is.</span>
+<span class="sd">        If dims_like is defined, the dimensions of the corresponding </span>
+<span class="sd">        variable in ds are returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims_like</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">ds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">ds</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dims_like</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">ds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ds</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span><span class="o">.</span><span class="n">dims</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Either dims or dims_like must be specified for created variables (</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Var.to_template">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var.to_template">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_template</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">meta</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">new_dims</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert to a DataArray with dims infos provided by `ds`</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ds: Dataset providing dimension and coordinate information</span>
+<span class="sd">            meta: Optional dataset containing the variable with the same name,</span>
+<span class="sd">                used to infer dtype and dims if not specified in the Var object</span>
+<span class="sd">            new_dims: Dictionary mapping dimension names to their size or coordinates.</span>
+<span class="sd">                For dimensions not present in `ds`, this parameter is required.</span>
+<span class="sd">                Values can be:</span>
+<span class="sd">                - An integer specifying the dimension size (no coordinates)</span>
+<span class="sd">                - An array-like object (list, numpy array, etc.) providing coordinate</span>
+<span class="sd">                  values. The dimension size is inferred from the length.</span>
+<span class="sd">                Example: {&#39;new_dim&#39;: 5} or {&#39;new_dim&#39;: [0, 1, 2, 3, 4]}</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            xr.DataArray: Empty DataArray with appropriate dimensions, chunks, and coordinates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_dims</span> <span class="o">=</span> <span class="n">new_dims</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">meta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">):</span>
+            <span class="n">actual_dims</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">actual_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getdims</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">actual_dims</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+                <span class="n">shape</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="n">d</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">chunks</span><span class="p">:</span>
+                    <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">chunks</span><span class="p">[</span><span class="n">d</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_dims</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;dimension &quot;</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s1">&quot; has not been described.&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">new_dims</span><span class="p">[</span><span class="n">d</span><span class="p">],</span> <span class="s2">&quot;__len__&quot;</span><span class="p">):</span>
+                    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_dims</span><span class="p">[</span><span class="n">d</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">n</span> <span class="o">=</span> <span class="n">new_dims</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+                <span class="n">shape</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n</span><span class="p">,))</span>
+
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">d</span> <span class="ow">in</span> <span class="n">new_dims</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">new_dims</span><span class="p">[</span><span class="n">d</span><span class="p">],</span> <span class="s2">&quot;__len__&quot;</span><span class="p">):</span>
+                <span class="n">coords</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_dims</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">meta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">):</span>
+                <span class="n">dtype</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Please define the dtype for created variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span>
+
+        <span class="k">return</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">da</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">),</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">actual_dims</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">coords</span><span class="o">=</span><span class="n">coords</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Var.merge_with">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var.merge_with">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">merge_with</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Var&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Var&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Merge this Var with another Var, combining their attributes.</span>
+
+<span class="sd">        Attributes are merged by preferring non-None values. If both have</span>
+<span class="sd">        non-None values for the same attribute and they differ, a ValueError</span>
+<span class="sd">        is raised.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">merged_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dims&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dims_like&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;flags&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tags&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="n">self_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="n">other_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">self_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">self_val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other_val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="c1"># merge dicts</span>
+                    <span class="n">merged_dict</span> <span class="o">=</span> <span class="n">self_val</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other_val</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">merged_dict</span> <span class="ow">and</span> <span class="n">merged_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">v</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Conflicting </span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> key &#39;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">merged_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                        <span class="n">merged_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                    <span class="n">merged_kwargs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged_dict</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">self_val</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other_val</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="c1"># merge lists</span>
+                    <span class="n">merged_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">self_val</span> <span class="o">+</span> <span class="n">other_val</span><span class="p">))</span>
+                    <span class="n">merged_kwargs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged_list</span>
+                <span class="k">elif</span> <span class="n">self_val</span> <span class="o">==</span> <span class="n">other_val</span><span class="p">:</span>
+                    <span class="n">merged_kwargs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">self_val</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Conflicting </span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">self_val</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">other_val</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">self_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">merged_kwargs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">self_val</span>
+            <span class="k">elif</span> <span class="n">other_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">merged_kwargs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">other_val</span>
+
+        <span class="c1"># Merge attrs dict with proper conflict resolution</span>
+        <span class="n">merged_attrs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">all_keys</span><span class="p">:</span>
+            <span class="n">self_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">other_val</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">self_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">self_val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other_val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="c1"># merge dicts</span>
+                    <span class="n">merged_dict</span> <span class="o">=</span> <span class="n">self_val</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">other_val</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">merged_dict</span> <span class="ow">and</span> <span class="n">merged_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">v</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Conflicting </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> key &#39;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">merged_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                        <span class="n">merged_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                    <span class="n">merged_attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged_dict</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">self_val</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other_val</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="c1"># merge lists</span>
+                    <span class="n">merged_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">self_val</span> <span class="o">+</span> <span class="n">other_val</span><span class="p">))</span>
+                    <span class="n">merged_attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged_list</span>
+                <span class="k">elif</span> <span class="n">self_val</span> <span class="o">==</span> <span class="n">other_val</span><span class="p">:</span>
+                    <span class="n">merged_attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">self_val</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Conflicting </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">self_val</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">other_val</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">self_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">merged_attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">self_val</span>
+            <span class="k">elif</span> <span class="n">other_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">merged_attrs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">other_val</span>
+        <span class="n">merged_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">merged_attrs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">merged_kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Var.conform">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.Var.conform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">conform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">da</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">transpose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conform a DataArray to the variable definition</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dims must be set for Var </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># type check</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">da</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Expected type &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s1">&quot; for &quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s1">&quot; but &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;encountered &quot;</span><span class="si">{</span><span class="n">da</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s1">&quot;&#39;</span>
+            <span class="p">)</span>
+        
+        <span class="c1"># dimensions check</span>
+        <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Expected dimensions &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="si">}</span><span class="s1">&quot; for variable &quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s1">&quot; &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;but encountered &quot;</span><span class="si">{</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="si">}</span><span class="s1">&quot;.&#39;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">transpose</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">da</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Expected dimensions &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="si">}</span><span class="s1">&quot; for variable &quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s1">&quot; &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;but encountered &quot;</span><span class="si">{</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="si">}</span><span class="s1">&quot;. Please consider `transpose=True`&#39;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">da</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="xr_filter">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.xr_filter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">xr_filter</span><span class="p">(</span>
+    <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">condition</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">stackdim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">transparent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts a subset of the dataset where the condition is True, stacking the</span>
+<span class="sd">    `condition` dimensions. Equivalent to numpy&#39;s boolean indexing, A[condition].</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    ds (xr.Dataset): The input dataset.</span>
+<span class="sd">    condition (xr.DataArray): A boolean DataArray indicating where the condition is True.</span>
+<span class="sd">    stackdim (str, optional): The name of the new stacked dimension. If None, it will be</span>
+<span class="sd">        determined automatically from the condition dimensions.</span>
+<span class="sd">    transparent (bool, optional): whether to reassign the original dimension names to</span>
+<span class="sd">        the Dataset (expanding with length-one dimensions).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    xr.Dataset: A new dataset with the subset of data where the condition is True.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stackdim</span> <span class="o">=</span> <span class="n">stackdim</span> <span class="ow">or</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">stackdim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">dims</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">stack</span><span class="p">({</span><span class="n">stackdim</span><span class="p">:</span> <span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">})</span>
+
+    <span class="c1"># Extract sub Dataset</span>
+    <span class="n">stacked</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">stack</span><span class="p">({</span><span class="n">stackdim</span><span class="p">:</span> <span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">})</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">stacked</span><span class="p">:</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">stacked</span><span class="p">[</span><span class="n">var</span><span class="p">]</span>
+        <span class="n">sub</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">da</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
+                <span class="nb">tuple</span><span class="p">(</span><span class="n">ok</span> <span class="k">if</span> <span class="p">(</span><span class="n">dim</span> <span class="o">==</span> <span class="n">stackdim</span><span class="p">)</span> <span class="k">else</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+            <span class="p">],</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">da</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="n">da</span><span class="o">.</span><span class="n">attrs</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Assign required coordinates to sub</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">coords</span> <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">condition</span><span class="o">.</span><span class="n">coords</span><span class="p">}</span>
+    <span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">transparent</span><span class="p">:</span>
+        <span class="c1"># reassign the initial dimension names to the Dataset</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">stackdim</span><span class="p">:</span> <span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]})</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="k">return</span> <span class="n">sub</span></div>
+
+
+
+<div class="viewcode-block" id="xr_unfilter">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.xr_unfilter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">xr_unfilter</span><span class="p">(</span>
+    <span class="n">sub</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">condition</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">stackdim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fill_value_float</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+    <span class="n">fill_value_int</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">transparent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reconstructs the original dataset from a subset dataset where the condition is True,</span>
+<span class="sd">    unstacking the condition dimensions.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    sub (xr.Dataset): The subset dataset where the condition is True.</span>
+<span class="sd">    condition (xr.DataArray): A boolean DataArray indicating where the condition is True.</span>
+<span class="sd">    stackdim (str, optional): The name of the stacked dimension. If None, it will be</span>
+<span class="sd">        determined automatically from the condition dimensions.</span>
+<span class="sd">    fill_value_float (float, optional): The fill value for floating point data types.</span>
+<span class="sd">        Default is np.nan.</span>
+<span class="sd">    fill_value_int (int, optional): The fill value for integer data types. Default is 0.</span>
+<span class="sd">    transparent (bool, optional): whether to revert the transparent compatibility</span>
+<span class="sd">        conversion applied in xrwhere.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    xr.DataArray: The reconstructed dataset with the specified dimensions unstacked.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stackdim</span> <span class="o">=</span> <span class="n">stackdim</span> <span class="ow">or</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">transparent</span><span class="p">:</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">stackdim</span><span class="p">})</span><span class="o">.</span><span class="n">squeeze</span><span class="p">([</span><span class="o">*</span><span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+
+    <span class="k">assert</span> <span class="n">stackdim</span> <span class="ow">in</span> <span class="n">sub</span><span class="o">.</span><span class="n">dims</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">condition</span><span class="o">.</span><span class="n">stack</span><span class="p">({</span><span class="n">stackdim</span><span class="p">:</span> <span class="n">condition</span><span class="o">.</span><span class="n">dims</span><span class="p">})</span>
+
+    <span class="n">stacked</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">:</span>
+        <span class="c1"># determine the shape of the stacked array</span>
+        <span class="n">stacked_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">sub</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">!=</span> <span class="n">stackdim</span> <span class="k">else</span> <span class="n">condition</span><span class="o">.</span><span class="n">size</span>
+            <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span>
+        <span class="p">)</span>
+
+        <span class="c1"># determine fill value</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">):</span>
+            <span class="n">fill_value</span> <span class="o">=</span> <span class="n">fill_value_float</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+            <span class="n">fill_value</span> <span class="o">=</span> <span class="n">fill_value_int</span>
+        <span class="k">elif</span> <span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="nb">bool</span><span class="p">):</span>
+            <span class="n">fill_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Undefined fill value for type </span><span class="si">{</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># initialize the stacked array</span>
+        <span class="n">stacked</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">stacked_shape</span><span class="p">,</span> <span class="n">fill_value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">),</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">sub</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span>
+            <span class="n">attrs</span><span class="o">=</span><span class="n">sub</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># affect the sub values to the stacked array</span>
+        <span class="n">stacked</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="n">ok</span> <span class="k">if</span> <span class="p">(</span><span class="n">dim</span> <span class="o">==</span> <span class="n">stackdim</span><span class="p">)</span> <span class="k">else</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># unstack the array</span>
+    <span class="n">full</span> <span class="o">=</span> <span class="n">stacked</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">({</span><span class="n">stackdim</span><span class="p">:</span> <span class="n">ok</span><span class="p">[</span><span class="n">stackdim</span><span class="p">]})</span><span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">stackdim</span><span class="p">)</span>
+
+    <span class="c1"># remove all coords</span>
+    <span class="n">full</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">drop_vars</span><span class="p">(</span><span class="n">full</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+
+    <span class="c1"># reassign all required coords</span>
+    <span class="n">full</span> <span class="o">=</span> <span class="n">full</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">full</span></div>
+
+
+
+<div class="viewcode-block" id="xr_filter_decorator">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.xr_filter_decorator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">xr_filter_decorator</span><span class="p">(</span>
+    <span class="n">argpos</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">condition</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">fill_value_float</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+    <span class="n">fill_value_int</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">transparent</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">stackdim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A decorator which applies the decorated function only where the condition is True.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        argpos (int): Position index of the input dataset in the decorated function call.</span>
+<span class="sd">        condition (Callable): A callable taking the Dataset as input and returning a</span>
+<span class="sd">            boolean DataArray.</span>
+<span class="sd">        fill_value_float (float, optional): Fill value for floating point data types.</span>
+<span class="sd">            Default is np.nan.</span>
+<span class="sd">        fill_value_int (int, optional): Fill value for integer data types.</span>
+<span class="sd">            Default is 0</span>
+<span class="sd">        transparent (bool, optional): Whether to reassign the original dimension names</span>
+<span class="sd">            to the Dataset (expanding with length-one dimensions). Default is False.</span>
+<span class="sd">        stackdim (str | None, optional): The name of the new stacked dimension.</span>
+<span class="sd">            If None, it will be determined automatically from the condition dimensions. Default is None.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        @xr_filter_decorator(0, lambda x: x.flags == 0)</span>
+<span class="sd">        def my_func(ds: xr.Dataset) -&gt; xr.Dataset:</span>
+<span class="sd">            # my_func is applied only where ds.flags == 0</span>
+<span class="sd">            ...</span>
+
+<span class="sd">    The decorator works by:</span>
+<span class="sd">    1. Extracting a subset of the dataset where the condition is True using `xr_filter`.</span>
+<span class="sd">    2. Applying the decorated function to the subset.</span>
+<span class="sd">    3. Reconstructing the original dataset from the subset using `xr_unfilter`.</span>
+
+<span class="sd">    Behavior with in-place vs. non-in-place modifications:</span>
+<span class="sd">    - If the decorated function returns a Dataset (non-in-place), the decorator returns</span>
+<span class="sd">      the unfiltered result.</span>
+<span class="sd">    - If the decorated function returns None (in-place modification), the decorator</span>
+<span class="sd">      updates the original input dataset in-place with the unfiltered modified subset.</span>
+
+<span class="sd">    NOTE: this decorator does not guarantee that the order of dimensions is maintained.</span>
+<span class="sd">    When using this decorator with `xr.apply_blocks`, you may want to wrap your</span>
+<span class="sd">    xr_filter_decorator decorated method with the `conform` decorator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="n">argpos</span><span class="p">]</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="n">condition</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="n">xr_filter</span><span class="p">(</span>
+                <span class="n">ds</span><span class="p">,</span>
+                <span class="n">ok</span><span class="p">,</span>
+                <span class="n">stackdim</span><span class="o">=</span><span class="n">stackdim</span><span class="p">,</span>
+                <span class="n">transparent</span><span class="o">=</span><span class="n">transparent</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">new_args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sub</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">argpos</span> <span class="k">else</span> <span class="n">a</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">new_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            
+            <span class="c1"># unfilter the result</span>
+            <span class="c1"># if `func` does in-place modification, then modify the input dataset `ds`</span>
+            <span class="c1"># in-place with the unfiltered modified input `sub`.</span>
+            <span class="c1"># otherwise, return the unfiltered result.</span>
+            <span class="n">unf</span> <span class="o">=</span> <span class="n">xr_unfilter</span><span class="p">(</span>
+                <span class="n">result</span> <span class="ow">or</span> <span class="n">sub</span><span class="p">,</span>
+                <span class="n">ok</span><span class="p">,</span>
+                <span class="n">fill_value_float</span><span class="o">=</span><span class="n">fill_value_float</span><span class="p">,</span>
+                <span class="n">fill_value_int</span><span class="o">=</span><span class="n">fill_value_int</span><span class="p">,</span>
+                <span class="n">stackdim</span><span class="o">=</span><span class="n">stackdim</span><span class="p">,</span>
+                <span class="n">transparent</span><span class="o">=</span><span class="n">transparent</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">unf</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">unf</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="conform">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.conform">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">conform</span><span class="p">(</span><span class="n">attrname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">transpose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A method decorator which applies MapBlocksOutput.conform to the method output.</span>
+
+<span class="sd">    The MapBlocksOutput should be an attribute `attrname` of the class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># get the MapBlocksOutput model</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrname</span><span class="p">)</span>
+
+            <span class="c1"># apply the function</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="c1"># return the conformed result</span>
+            <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">conform</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">transpose</span><span class="o">=</span><span class="n">transpose</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<div class="viewcode-block" id="xr_flat">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.xr_flat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">xr_flat</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A method which flat a xarray.Dataset on a new dimension named &#39;index&#39;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ds (xr.Dataset): Dataset to flat</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">&#39;index&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dims</span>
+    <span class="n">flat_ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">dims</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">flat_ds</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span><span class="o">.</span><span class="n">reset_coords</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="xr_sample">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.xr_sample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">xr_sample</span><span class="p">(</span><span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">nb_sample</span><span class="p">:</span> <span class="nb">int</span><span class="o">|</span><span class="nb">float</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A method to extract a subset of sample from a flat xarray.Dataset</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ds (xr.Dataset): Input flat dataset</span>
+<span class="sd">        nb_sample (int|float): Number or percentage of sample to extract</span>
+<span class="sd">        seed (int, optional): Random seed to use. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span> <span class="n">seed</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    
+    <span class="c1"># Retrieve index dimension</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">sizes</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Input dataset should be flatten, got sizes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">size</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">index_dim</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">size</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Sample input dataset</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="n">size</span><span class="p">[</span><span class="n">index_dim</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nb_sample</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span> 
+        <span class="n">log</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">nb_sample</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nb_sample</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Invalid number of sample.&#39;</span>
+                  <span class="sa">f</span><span class="s1">&#39;If float, should be between 0 and 1, got </span><span class="si">{</span><span class="n">nb_sample</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">nb_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">length</span><span class="o">*</span><span class="n">nb_sample</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nb_sample</span> <span class="o">&gt;</span> <span class="n">length</span><span class="p">:</span>
+        <span class="n">nb_sample</span> <span class="o">=</span> <span class="n">length</span>
+    <span class="n">selec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">nb_sample</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ds</span><span class="o">.</span><span class="n">isel</span><span class="p">({</span><span class="n">index_dim</span><span class="p">:</span> <span class="n">selec</span><span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="str_to_bool">
+<a class="viewcode-back" href="../../core.tools.html#core.tools.str_to_bool">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">str_to_bool</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a string representation to a boolean value.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        value: String value to convert. Case-insensitive comparison with &#39;true&#39;.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        True if the lowercase value equals &#39;true&#39;, False otherwise.</span>
+<span class="sd">        </span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; str_to_bool(&#39;True&#39;)</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; str_to_bool(&#39;false&#39;)</span>
+<span class="sd">        False</span>
+<span class="sd">        &gt;&gt;&gt; str_to_bool(&#39;TRUE&#39;)</span>
+<span class="sd">        True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;true&#39;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

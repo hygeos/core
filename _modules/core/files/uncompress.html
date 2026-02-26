@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.files.uncompress &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            core
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.files.uncompress</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.files.uncompress</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">bz2</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemporaryDirectory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">only</span>
+
+
+<div class="viewcode-block" id="uncompress_decorator">
+<a class="viewcode-back" href="../../../core.files.uncompress.html#core.files.uncompress.uncompress_decorator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uncompress_decorator</span><span class="p">(</span><span class="n">target_name_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A decorator that uncompresses the result of function `f`</span>
+<span class="sd">    </span>
+<span class="sd">    Signature of `f` is assumed to be as follows:</span>
+<span class="sd">        f(identifier: str, dirname: Path, *args, **kwargs)</span>
+<span class="sd">    </span>
+<span class="sd">    The file returned by `f` is uncompressed to dirname</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    target_name_func : callable, optional</span>
+<span class="sd">        A function that takes an identifier and returns the target name/path</span>
+<span class="sd">        for the uncompressed file. The identifier can be a URL or any string.</span>
+<span class="sd">        If None, defaults to using Path(identifier).stem.</span>
+<span class="sd">    verbose : bool</span>
+<span class="sd">        Whether to display verbose output during uncompression</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Provide default target_name_func if none is given</span>
+    <span class="k">if</span> <span class="n">target_name_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">default_target_name_func</span><span class="p">(</span><span class="n">identifier</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+        <span class="n">target_name_func</span> <span class="o">=</span> <span class="n">default_target_name_func</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="c1"># Get target name from the provided function</span>
+            <span class="n">target_name</span> <span class="o">=</span> <span class="n">target_name_func</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dirname</span><span class="p">)</span> <span class="o">/</span> <span class="n">target_name</span>
+            
+            <span class="c1"># Check if target already exists</span>
+            <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">target</span>
+            
+            <span class="c1"># Uncompress to target location</span>
+            <span class="k">with</span> <span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
+                <span class="n">f_compressed</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">tmpdir</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">uncompress</span><span class="p">(</span><span class="n">f_compressed</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">extract_to</span><span class="o">=</span><span class="s1">&#39;target_dir&#39;</span><span class="p">)</span>
+                
+                <span class="c1"># Find the uncompressed result in dirname and rename if needed</span>
+                <span class="n">uncompressed_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">dirname</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> 
+                                    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()]</span>
+                
+                <span class="c1"># Find the most recently created file/directory</span>
+                <span class="k">if</span> <span class="n">uncompressed_files</span><span class="p">:</span>
+                    <span class="n">newest</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">uncompressed_files</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">newest</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">target_name</span><span class="p">:</span>
+                        <span class="n">newest</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                
+            <span class="k">assert</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;Target </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> does not exist after uncompression&quot;</span>
+            <span class="k">return</span> <span class="n">target</span>
+        <span class="k">return</span> <span class="n">wrapper</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="uncompress_single">
+<a class="viewcode-back" href="../../../core.files.uncompress.html#core.files.uncompress.uncompress_single">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uncompress_single</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">output_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decompress a single compressed file (not an archive).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    filename : Path</span>
+<span class="sd">        Path to the compressed file</span>
+<span class="sd">    output_path : Path  </span>
+<span class="sd">        Path where the decompressed file should be written</span>
+<span class="sd">    verbose : bool</span>
+<span class="sd">        Whether to display verbose output</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    Path</span>
+<span class="sd">        Path to the decompressed file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.gz&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;.tar.gz&#39;</span><span class="p">,</span> <span class="s1">&#39;.tgz&#39;</span><span class="p">]):</span>
+        <span class="c1"># Single gzip file</span>
+        <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_out</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">f_in</span><span class="p">,</span> <span class="n">f_out</span><span class="p">)</span>
+            
+    <span class="k">elif</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.bz2&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tar.bz2&#39;</span><span class="p">):</span>
+        <span class="c1"># Single bzip2 file  </span>
+        <span class="k">with</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_in</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_out</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f_in</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">f_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            
+    <span class="k">elif</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.Z&#39;</span><span class="p">):</span>
+        <span class="c1"># Unix compress format</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;gunzip </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Executing:&#39;</span><span class="p">,</span> <span class="n">cmd</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">cmd</span><span class="o">.</span><span class="n">split</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error executing command </span><span class="si">{</span><span class="n">cmd</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="c1"># For .Z files, gunzip creates the output file directly</span>
+        <span class="n">expected_output</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">filename</span><span class="o">.</span><span class="n">stem</span>
+        <span class="k">if</span> <span class="n">expected_output</span> <span class="o">!=</span> <span class="n">output_path</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">expected_output</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported single file compression format: </span><span class="si">{</span><span class="n">filename</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">output_path</span></div>
+
+
+
+<div class="viewcode-block" id="uncompress">
+<a class="viewcode-back" href="../../../core.files.uncompress.html#core.files.uncompress.uncompress">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uncompress</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+               <span class="n">target_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+               <span class="n">create_out_dir</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+               <span class="n">extract_to</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s1">&#39;subdir&#39;</span><span class="p">,</span> <span class="s1">&#39;target_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+               <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uncompress `filename` to `dirname`</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    filename : str or Path</span>
+<span class="sd">        Path to the file to uncompress</span>
+
+<span class="sd">    target_dir : str or Path</span>
+<span class="sd">        Directory to uncompress the file to</span>
+
+<span class="sd">    create_out_dir : bool, optional</span>
+<span class="sd">        If True, create the output directory if it does not exist. Default is True.</span>
+
+<span class="sd">    extract_to : {&#39;auto&#39;, &#39;subdir&#39;, &#39;target_dir&#39;}, default &#39;auto&#39;</span>
+<span class="sd">        &#39;auto&#39;: if the root of the archive contains a single file or directory, uncompress</span>
+<span class="sd">            it to `target_dir`. Otherwise uncompress it to &lt;target_dir&gt;/&lt;archivefolder&gt;, where</span>
+<span class="sd">            `archivefolder` is a directory named after `filename` but without the extension.</span>
+<span class="sd">        &#39;subdir&#39;: Uncompress the content of the archive to &lt;target_dir&gt;/&lt;archivefolder&gt;, where</span>
+<span class="sd">            `archivefolder` is a directory named after `filename` but without the extension.</span>
+<span class="sd">        &#39;target_dir&#39;: uncompress the content of the archive to &lt;target_dir&gt; regardless of the</span>
+<span class="sd">            content of the archive.</span>
+
+<span class="sd">    verbose : bool, optional</span>
+<span class="sd">        If True, print verbose output. Default is False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    Path</span>
+<span class="sd">        Path to the uncompressed file or directory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Uncompressing </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="n">target_dir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">target_dir</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">create_out_dir</span><span class="p">:</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">target_dir</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Directory </span><span class="si">{</span><span class="n">target_dir</span><span class="si">}</span><span class="s1"> does not exist.&#39;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">TemporaryDirectory</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;tmp_uncompress&#39;</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">target_dir</span><span class="p">)</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
+        <span class="n">extracted_path</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="c1"># Check if it&#39;s a single compressed file first</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.gz&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tar.gz&#39;</span><span class="p">))</span> <span class="ow">or</span>
+            <span class="p">(</span><span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.bz2&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tar.bz2&#39;</span><span class="p">))</span> <span class="ow">or</span>
+            <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.Z&#39;</span><span class="p">)):</span>
+            <span class="c1"># Single compressed file</span>
+            <span class="n">extracted_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span><span class="o">.</span><span class="n">stem</span>
+            <span class="n">uncompress_single</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">extracted_path</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Try archive formats with shutil.unpack_archive</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">unpack_archive</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">tmpdir</span><span class="p">)</span>
+            <span class="n">extracted_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">)</span>
+        
+        <span class="c1"># Determine whether the archive shall be uncompressed to a subdirectory or</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">extracted_path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">))</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extract_to</span> <span class="o">==</span> <span class="s1">&#39;target_dir&#39;</span><span class="p">:</span>
+            <span class="n">extract_to_subdir</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">extract_to</span> <span class="o">==</span> <span class="s1">&#39;subdir&#39;</span><span class="p">:</span>
+            <span class="n">extract_to_subdir</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">extract_to</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="n">extract_to_subdir</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">extract_to</span><span class="p">)</span>
+
+        <span class="c1"># Determine final target path</span>
+        <span class="k">if</span> <span class="n">extract_to_subdir</span><span class="p">:</span>
+            <span class="c1"># Handle compound extensions properly</span>
+            <span class="k">if</span> <span class="n">fname</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;.tar.gz&#39;</span><span class="p">,</span> <span class="s1">&#39;.tar.bz2&#39;</span><span class="p">,</span> <span class="s1">&#39;.tar.xz&#39;</span><span class="p">)):</span>
+                <span class="c1"># For compound extensions, remove both parts</span>
+                <span class="n">target_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">stem</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">target_name</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">stem</span>
+            
+            <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">target_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">target_name</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s1">&#39;Error, </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1"> exists.&#39;</span>
+            <span class="c1"># Move to final destination</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">extracted_path</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">target_dir</span><span class="p">)</span>
+            <span class="c1"># Move the contents of extracted_path to target_dir</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">extracted_path</span><span class="p">]</span> <span class="k">if</span> <span class="n">extracted_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">extracted_path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                <span class="n">dest</span> <span class="o">=</span> <span class="n">target</span> <span class="o">/</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">assert</span> <span class="ow">not</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s1">&#39;Error, </span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s1"> exists.&#39;</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">extract_to</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+                <span class="c1"># a single file was moved: we shall return its path instead of the</span>
+                <span class="c1"># containing folder</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="o">/</span> <span class="n">only</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+        
+    <span class="k">assert</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">target</span></div>
+
+
+
+<div class="viewcode-block" id="get_compression_ext">
+<a class="viewcode-back" href="../../../core.files.uncompress.html#core.files.uncompress.get_compression_ext">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_compression_ext</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="n">Path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Detect the compression format of a file using the system &#39;file&#39; command.</span>
+<span class="sd">    </span>
+<span class="sd">    This function uses the Unix &#39;file&#39; command to determine the compression format</span>
+<span class="sd">    of a file based on its content (magic numbers), not just its extension.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    f : str or Path</span>
+<span class="sd">        Path to the file to analyze</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    str or None</span>
+<span class="sd">        The detected compression extension (&#39;.zip&#39;, &#39;.tar&#39;, &#39;.tar.gz&#39;, &#39;.tgz&#39;, </span>
+<span class="sd">        &#39;.gz&#39;, &#39;.bz2&#39;, &#39;.Z&#39;) or None if no compression is detected</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Use file module to deduce format</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s1">&#39;file&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">file_type</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    
+    <span class="c1"># Check for various compression formats based on file command output</span>
+    <span class="k">if</span> <span class="s1">&#39;zip archive&#39;</span> <span class="ow">in</span> <span class="n">file_type</span><span class="p">:</span> 
+        <span class="k">return</span> <span class="s1">&#39;.zip&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;gzip compressed&#39;</span> <span class="ow">in</span> <span class="n">file_type</span><span class="p">:</span>
+        <span class="c1"># Check if it&#39;s a tar.gz by looking for tar content</span>
+        <span class="k">if</span> <span class="s1">&#39;tar archive&#39;</span> <span class="ow">in</span> <span class="n">file_type</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;.tar.gz&#39;</span><span class="p">,</span> <span class="s1">&#39;.tgz&#39;</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="s1">&#39;.tar.gz&#39;</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tar.gz&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;.tgz&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;.gz&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;bzip2 compressed&#39;</span> <span class="ow">in</span> <span class="n">file_type</span><span class="p">:</span>
+        <span class="c1"># Check if it&#39;s a tar.bz2</span>
+        <span class="k">if</span> <span class="s1">&#39;tar archive&#39;</span> <span class="ow">in</span> <span class="n">file_type</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.tar.bz2&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s1">&#39;.tar.bz2&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;.bz2&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;compress</span><span class="se">\&#39;</span><span class="s1">d data&#39;</span> <span class="ow">in</span> <span class="n">file_type</span> <span class="ow">or</span> <span class="s1">&#39;unix compress&#39;</span> <span class="ow">in</span> <span class="n">file_type</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;.Z&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;tar archive&#39;</span> <span class="ow">in</span> <span class="n">file_type</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;.tar&#39;</span>
+    
+    <span class="c1"># Return None if no compression is detected</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

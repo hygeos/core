@@ -1,0 +1,532 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.progressbar &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            core
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.progressbar</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.progressbar</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">env</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+<span class="c1"># Add IPython support for notebooks</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">clear_output</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">IPython</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_ipython</span>
+    <span class="n">HAS_IPYTHON</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">HAS_IPYTHON</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_utils</span><span class="p">:</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_terminal_width</span><span class="p">():</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">get_terminal_size</span><span class="p">((</span><span class="mi">80</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">size</span><span class="o">.</span><span class="n">columns</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">inside_notebook</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect if we&#39;re running in a Jupyter notebook&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">HAS_IPYTHON</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shell</span> <span class="o">=</span> <span class="n">get_ipython</span><span class="p">()</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">return</span> <span class="n">shell</span> <span class="o">==</span> <span class="s1">&#39;ZMQInteractiveShell&#39;</span>  <span class="c1"># Jupyter notebook</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">NameError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+
+<div class="viewcode-block" id="msg_stack">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">msg_stack</span><span class="p">:</span>
+
+    <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+        
+<div class="viewcode-block" id="msg_stack.get">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="n">obj</span><span class="p">:</span> <span class="k">return</span> <span class="n">item</span>
+            <span class="c1"># else: print(item.object, obj)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Object not found in stack&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="msg_stack.add">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack.add">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+            <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Object already in stack&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="msg_stack.clean_above">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack.clean_above">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_above</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="s1">&#39;progressbar&#39;</span><span class="p">):</span>
+        <span class="c1"># remove the objects above from stack, excluding the object itself</span>
+        
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            
+            <span class="c1"># intercept case where it&#39;s the last item</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span>
+            
+            <span class="n">msg_stack</span><span class="o">.</span><span class="n">reset_screen</span><span class="p">()</span>
+            <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span> <span class="o">=</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">[:</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># should not happen</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Object not found in stack&quot;</span><span class="p">)</span></div>
+
+    
+    
+<div class="viewcode-block" id="msg_stack.reset_screen">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack.reset_screen">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_screen</span><span class="p">():</span>
+        
+        <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="n">_utils</span><span class="o">.</span><span class="n">get_terminal_width</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">size</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">disp</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">msg_stack</span><span class="o">.</span><span class="n">reset_cursor</span><span class="p">(</span><span class="n">size</span><span class="p">)</span></div>
+
+    
+    
+<div class="viewcode-block" id="msg_stack.info">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack.info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">info</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        
+        <span class="n">msg_stack</span><span class="o">.</span><span class="n">reset_screen</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">msg_stack</span><span class="o">.</span><span class="n">update_and_print_stack</span><span class="p">()</span></div>
+
+        
+        
+        
+<div class="viewcode-block" id="msg_stack.update_and_print_stack">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack.update_and_print_stack">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_and_print_stack</span><span class="p">():</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">finished</span><span class="p">:</span> 
+            <span class="n">msg_stack</span><span class="o">.</span><span class="n">reset_screen</span><span class="p">()</span>
+            <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">return</span>
+        
+        <span class="n">meta_msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+            <span class="n">meta_msg</span> <span class="o">+=</span> <span class="n">msg</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        
+        <span class="n">log</span><span class="o">.</span><span class="n">disp</span><span class="p">(</span><span class="n">meta_msg</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">meta_msg</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        
+        <span class="n">msg_stack</span><span class="o">.</span><span class="n">reset_cursor</span><span class="p">(</span><span class="n">size</span><span class="p">)</span></div>
+
+        
+    
+<div class="viewcode-block" id="msg_stack.reset_cursor">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.msg_stack.reset_cursor">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset_cursor</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span>
+        
+        <span class="c1"># Move the cursor up to the start of the stack</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\r\033</span><span class="s2">[</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">A&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</div>
+
+        
+            
+            
+<div class="viewcode-block" id="progressbar">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.progressbar">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">progressbar</span><span class="p">:</span>
+    
+    <span class="n">pbar_length</span> <span class="o">=</span> <span class="mi">30</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">nth</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterable</span> <span class="o">=</span> <span class="n">iterable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nth</span> <span class="o">=</span> <span class="n">nth</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finished</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nth</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;nth cannot be greater than the length of the iterable&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span> <span class="ow">in</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+            <span class="n">msg_stack</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iterable</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">return</span> <span class="bp">self</span>
+        
+<div class="viewcode-block" id="progressbar.update">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.progressbar.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">:</span> <span class="k">return</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">green</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ascii_pbar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pbar_length</span><span class="p">)</span>        
+        <span class="k">return</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span></div>
+
+            
+<div class="viewcode-block" id="progressbar.finish">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.progressbar.finish">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finished</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ascii_pbar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pbar_length</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> 
+                <span class="n">display</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">nth</span>   <span class="o">=</span> <span class="nb">bool</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">nth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">first</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="o">+</span><span class="mi">1</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">last</span>  <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="o">+</span><span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+                <span class="n">display</span> <span class="o">=</span> <span class="n">nth</span> <span class="ow">or</span> <span class="n">first</span> <span class="ow">or</span> <span class="n">last</span> 
+                
+            <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+                <span class="n">msg_stack</span><span class="o">.</span><span class="n">clean_above</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                
+                <span class="n">n</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iterator</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">frame_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+                <span class="n">msg_stack</span><span class="o">.</span><span class="n">update_and_print_stack</span><span class="p">()</span>
+                
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iterator</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+            <span class="k">return</span> <span class="n">n</span>
+            
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+            <span class="n">msg_stack</span><span class="o">.</span><span class="n">update_and_print_stack</span><span class="p">()</span>
+            
+            <span class="k">raise</span>
+    
+<div class="viewcode-block" id="progressbar.ascii_loading">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.progressbar.ascii_loading">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ascii_loading</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;dots&quot;</span><span class="p">,</span> <span class="s2">&quot;vbar&quot;</span><span class="p">,</span> <span class="s2">&quot;moon&quot;</span><span class="p">,</span> <span class="s2">&quot;earth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;dots&quot;</span><span class="p">):</span>
+        
+        <span class="n">f1</span> <span class="o">=</span> <span class="s2">&quot;√&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">:</span> <span class="k">return</span> <span class="n">f1</span>
+        
+        <span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="c1"># cdots = &quot;⠁ |⠉ |⠉⠁|⠈⠉| ⠙| ⠸| ⢰| ⣠|⢀⣀|⣀⡀|⣄ |⡆ |⠇ |⠃ &quot;,</span>
+            <span class="n">dots</span> <span class="o">=</span> <span class="s2">&quot;⠋|⠉|⠙|⠸|⢰|⣠|⣄|⠇&quot;</span><span class="p">,</span>
+            <span class="n">vbar</span> <span class="o">=</span> <span class="s2">&quot;▁|▂|▃|▄|▅|▆|▇|█&quot;</span><span class="p">,</span>
+            <span class="n">moon</span> <span class="o">=</span> <span class="s2">&quot;🌘|🌗|🌖|🌕|🌔|🌓|🌒|🌑&quot;</span><span class="p">,</span>
+            <span class="n">earth</span> <span class="o">=</span> <span class="s2">&quot;🌍|🌎|🌏&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+        <span class="n">s</span> <span class="o">=</span> <span class="n">styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">style</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;vpbar&quot;</span><span class="p">:</span>
+            <span class="n">ratio</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">ratio</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            
+            <span class="c1"># Escape code to change background color to gray</span>
+            <span class="n">bgc</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\033</span><span class="s2">[48;2;100;100;100m&quot;</span>
+            <span class="k">return</span> <span class="n">bgc</span> <span class="o">+</span> <span class="n">c</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+        
+        <span class="c1"># Calculate frame index based on current time and desired FPS</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">fps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">frame_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">current_time</span> <span class="o">*</span> <span class="n">fps</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="n">frame_index</span><span class="p">]</span></div>
+
+    
+<div class="viewcode-block" id="progressbar.get_depth">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.progressbar.get_depth">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_depth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the depth of the progress bar in the stack (ignoring finished bars)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">msg_stack</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="bp">self</span><span class="p">:</span> <span class="k">return</span> <span class="n">depth</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">finished</span><span class="p">:</span> <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">depth</span></div>
+
+        
+
+<div class="viewcode-block" id="progressbar.ascii_pbar">
+<a class="viewcode-back" href="../../core.progressbar.html#core.progressbar.progressbar.ascii_pbar">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ascii_pbar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nchars</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+    <span class="n">bar_style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
+        <span class="s2">&quot;square_dot&quot;</span><span class="p">,</span> <span class="s2">&quot;square_void&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;block_void&quot;</span><span class="p">,</span> <span class="s2">&quot;block_dot&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;hash_dash&quot;</span><span class="p">,</span> <span class="s2">&quot;hash_void&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;equal_void&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> 
+    <span class="n">border_style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;brackets&quot;</span><span class="p">,</span> <span class="s2">&quot;pipes&quot;</span><span class="p">,</span> <span class="s2">&quot;none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">icon_style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;dots&quot;</span><span class="p">,</span> <span class="s2">&quot;vbar&quot;</span><span class="p">,</span> <span class="s2">&quot;moon&quot;</span><span class="p">,</span> <span class="s2">&quot;earth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate an ASCII progress bar string.</span>
+<span class="sd">        - nchars: Length of the progress bar in characters.</span>
+<span class="sd">        - bar_style: any of:</span>
+<span class="sd">            - square_dot  : [■■■···]</span>
+<span class="sd">            - square_void : [■■■   ]</span>
+<span class="sd">            - block_void  : [███░  ]</span>
+<span class="sd">            - block_dot   : [███···]</span>
+<span class="sd">            - hash_dash   : [###---]</span>
+<span class="sd">            - hash_void   : [###   ]</span>
+<span class="sd">            - equal_void  : [===   ]</span>
+<span class="sd">        - border_style: any of:</span>
+<span class="sd">            - brackets : [bar]</span>
+<span class="sd">            - pipes    : |bar|</span>
+<span class="sd">            - none     : bar</span>
+<span class="sd">        - loading_style: any of:</span>
+<span class="sd">            - dots  : ⣠</span>
+<span class="sd">            - vbar  : ▁▂▃▄▅▆▇█</span>
+<span class="sd">            - moon  : 🌗</span>
+<span class="sd">            - earth : 🌍</span>
+<span class="sd">        - fmt can contain:</span>
+<span class="sd">            - %icon : loading animation</span>
+<span class="sd">            - %pct     : percentage completed</span>
+<span class="sd">            - %bar     : the progress bar itself</span>
+<span class="sd">            - %itr     : current iteration / total iterations</span>
+<span class="sd">            - %time    : elapsed time and estimated remaining time</span>
+<span class="sd">            </span>
+<span class="sd">        - if any of the style parameters is None, it will try to get it from the env var HYGEOS_PBAR_STYLE</span>
+<span class="sd">          which is a string like &quot;fmt|bar_style|border_style|icon_style&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">env_style</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="s2">&quot;HYGEOS_PBAR_STYLE&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="c1"># like: &quot;square_dot|brackets|dots&quot; or &quot;square_void||dots&quot;</span>
+        
+        <span class="n">l</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">env_style</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+        <span class="c1"># fill list to 3 elements</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">l</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">))</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="k">if</span> <span class="n">l</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">parts</span> <span class="p">]</span>
+        <span class="n">env_fmt</span><span class="p">,</span> <span class="n">env_bar_style</span><span class="p">,</span> <span class="n">env_border_style</span><span class="p">,</span> <span class="n">env_loading_style</span> <span class="o">=</span> <span class="n">parts</span>
+    
+        <span class="n">env_fmt</span>           <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">env_bar_style</span>     <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">env_border_style</span>  <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">env_icon_style</span>    <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+        
+        <span class="n">default_fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%i</span><span class="s2">tr </span><span class="si">%i</span><span class="s2">con %pct %bar %time&quot;</span>
+        <span class="n">default_bar_style</span> <span class="o">=</span> <span class="s2">&quot;square_dot&quot;</span>
+        <span class="n">default_border_style</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+        <span class="n">default_icon_style</span> <span class="o">=</span> <span class="s2">&quot;dots&quot;</span>
+        
+        <span class="c1"># Apply priority: params &gt; env &gt; default</span>
+        <span class="n">final_fmt</span> <span class="o">=</span> <span class="n">fmt</span> <span class="ow">or</span> <span class="n">env_fmt</span> <span class="ow">or</span> <span class="n">default_fmt</span>
+        <span class="n">final_bar_style</span> <span class="o">=</span> <span class="n">bar_style</span> <span class="ow">or</span> <span class="n">env_bar_style</span> <span class="ow">or</span> <span class="n">default_bar_style</span>
+        <span class="n">final_border_style</span> <span class="o">=</span> <span class="n">border_style</span> <span class="ow">or</span> <span class="n">env_border_style</span> <span class="ow">or</span> <span class="n">default_border_style</span>
+        <span class="n">final_icon_style</span> <span class="o">=</span> <span class="n">icon_style</span> <span class="ow">or</span> <span class="n">env_icon_style</span> <span class="ow">or</span> <span class="n">default_icon_style</span>
+    
+        
+        <span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">square_dot</span>  <span class="o">=</span> <span class="s2">&quot;■·&quot;</span><span class="p">,</span>
+            <span class="n">square_void</span> <span class="o">=</span> <span class="s2">&quot;■ &quot;</span><span class="p">,</span>
+            <span class="n">block_void</span>  <span class="o">=</span> <span class="s2">&quot;█░&quot;</span><span class="p">,</span>
+            <span class="n">block_dot</span>   <span class="o">=</span> <span class="s2">&quot;█·&quot;</span><span class="p">,</span>
+            <span class="n">hash_dash</span>   <span class="o">=</span> <span class="s2">&quot;#-&quot;</span><span class="p">,</span>
+            <span class="n">hash_void</span>   <span class="o">=</span> <span class="s2">&quot;# &quot;</span><span class="p">,</span>
+            <span class="n">equal_void</span>  <span class="o">=</span> <span class="s2">&quot;= &quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+        <span class="n">border_styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">brackets</span> <span class="o">=</span> <span class="s2">&quot;[]&quot;</span><span class="p">,</span>
+            <span class="n">pipes</span>  <span class="o">=</span> <span class="s2">&quot;||&quot;</span><span class="p">,</span>
+            <span class="n">none</span>   <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+        <span class="n">s</span> <span class="o">=</span> <span class="n">styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">final_bar_style</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">border_styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">final_border_style</span><span class="p">)</span>
+        
+        <span class="n">char</span><span class="p">,</span> <span class="n">void</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        
+        <span class="n">itr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+        
+        <span class="n">ratio</span> <span class="o">=</span> <span class="p">((</span><span class="n">itr</span> <span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="p">))</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span>
+        <span class="n">filled_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nchars</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span>
+        
+        <span class="n">bar</span> <span class="o">=</span> <span class="n">char</span> <span class="o">*</span> <span class="n">filled_length</span> <span class="o">+</span> <span class="n">void</span> <span class="o">*</span> <span class="p">(</span><span class="n">nchars</span> <span class="o">-</span> <span class="n">filled_length</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">b1</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">bar</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">b1</span><span class="si">}{</span><span class="n">bar</span><span class="si">}{</span><span class="n">b2</span><span class="si">}</span><span class="s2">&quot;</span>
+            
+        
+        <span class="n">pct</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ratio</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">%&quot;</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="c1"># format counter with paded itr from total like 001/999</span>
+        <span class="n">nchar_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">total</span><span class="p">))</span>
+        <span class="n">padded_itr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">itr</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">nchar_total</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">itr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">padded_itr</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span>
+        
+        <span class="n">etime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="s2">&quot;?&quot;</span> <span class="k">if</span> <span class="n">ratio</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="n">etime</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">ratio</span><span class="p">)</span> <span class="o">-</span> <span class="n">etime</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">format_time</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">&quot;?&quot;</span><span class="p">:</span> <span class="k">return</span> <span class="n">t</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">60</span><span class="p">:</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s&quot;</span>
+            <span class="k">elif</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">3600</span><span class="p">:</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">t</span> <span class="o">//</span> <span class="mi">60</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">t</span> <span class="o">%</span> <span class="mi">60</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">m </span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">h</span> <span class="o">=</span> <span class="n">t</span> <span class="o">//</span> <span class="mi">3600</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">//</span> <span class="mi">60</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">t</span> <span class="o">%</span> <span class="mi">60</span>
+                
+                <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">h</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">h</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">h&quot;</span><span class="p">)</span>
+                    
+                <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">02.0f</span><span class="si">}</span><span class="s2">m&quot;</span><span class="p">)</span>
+                    
+                <span class="k">if</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">h</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># only show seconds if no hours</span>
+                    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">02.0f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+                    
+                <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+        
+        
+        <span class="n">stime</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;took </span><span class="si">{</span><span class="n">format_time</span><span class="p">(</span><span class="n">etime</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">format_time</span><span class="p">(</span><span class="n">eta</span><span class="p">)</span><span class="si">}</span><span class="s2"> remaining&quot;</span>
+        
+        <span class="n">icon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ascii_loading</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="n">final_icon_style</span><span class="p">)</span>
+        
+        <span class="n">color</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">finished</span> <span class="k">else</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">green</span>
+        
+        <span class="c1"># apply fmt</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="n">final_fmt</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%i</span><span class="s2">con&quot;</span><span class="p">,</span>  <span class="n">color</span><span class="p">(</span><span class="n">icon</span><span class="p">))</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;%bar&quot;</span><span class="p">,</span>   <span class="n">color</span><span class="p">(</span><span class="n">bar</span><span class="p">))</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;%pct&quot;</span><span class="p">,</span>   <span class="n">color</span><span class="p">(</span><span class="n">pct</span><span class="p">))</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%i</span><span class="s2">tr&quot;</span><span class="p">,</span>   <span class="n">color</span><span class="p">(</span><span class="n">itr</span><span class="p">))</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;%time&quot;</span><span class="p">,</span>  <span class="n">color</span><span class="p">(</span><span class="n">stime</span><span class="p">))</span>
+        
+        <span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">):</span> <span class="n">prefix</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span>
+        
+        <span class="n">depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_depth</span><span class="p">()</span>
+        <span class="n">nesting</span> <span class="o">=</span> <span class="s2">&quot;    &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">depth</span><span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;└── &quot;</span> <span class="o">*</span> <span class="nb">bool</span><span class="p">(</span><span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        
+        
+        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">nesting</span><span class="p">)</span><span class="si">}{</span><span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span><span class="si">}{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">_utils</span><span class="o">.</span><span class="n">get_terminal_width</span><span class="p">())</span>
+        
+        <span class="k">return</span> <span class="n">message</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.ascii_table &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            core
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.ascii_table</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.ascii_table</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+
+<div class="viewcode-block" id="ascii_table">
+<a class="viewcode-back" href="../../core.ascii_table.html#core.ascii_table.ascii_table">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ascii_table</span><span class="p">:</span>
+<span class="w">    </span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class to represent a table for displaying data in a formatted way.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="ascii_table.style">
+<a class="viewcode-back" href="../../core.ascii_table.html#core.ascii_table.ascii_table.style">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">style</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A class to define the style of a table using specific characters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+            <span class="n">inner_vbar</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">inner_hbar</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">h_padding</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">v_padding</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;squared&quot;</span><span class="p">,</span> <span class="s2">&quot;rounded&quot;</span><span class="p">,</span> <span class="s2">&quot;simple&quot;</span><span class="p">,</span> <span class="s2">&quot;double&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;squared&quot;</span><span class="p">,</span>
+        <span class="p">):</span>
+        
+            <span class="n">styles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">squared</span> <span class="o">=</span> <span class="s2">&quot;─│┌┐└┘├┤┬┴┼&quot;</span><span class="p">,</span>
+                <span class="n">rounded</span> <span class="o">=</span> <span class="s2">&quot;─│╭╮╰╯├┤┬┴┼&quot;</span><span class="p">,</span>
+                <span class="n">simple</span>  <span class="o">=</span> <span class="s2">&quot;-|+++++++++&quot;</span><span class="p">,</span>
+                <span class="n">double</span>  <span class="o">=</span> <span class="s2">&quot;═║╔╗╚╝╠╣╦╩╬&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">styles</span><span class="p">[</span><span class="n">style</span><span class="p">]</span>
+        
+            <span class="bp">self</span><span class="o">.</span><span class="n">inner_vbar</span> <span class="o">=</span> <span class="n">inner_vbar</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inner_hbar</span> <span class="o">=</span> <span class="n">inner_hbar</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">h_padding</span> <span class="o">=</span> <span class="n">h_padding</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v_padding</span> <span class="o">=</span> <span class="n">v_padding</span>
+        
+            <span class="c1"># internal config</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">h</span>      <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># horizontal char</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span>      <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="c1"># vertical char</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tl</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>   <span class="c1"># corner top left</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tr</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>   <span class="c1"># corner top right</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bl</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>   <span class="c1"># corner bot left</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">br</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>   <span class="c1"># corner bot right</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ml</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span>   <span class="c1"># mid left </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mr</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>   <span class="c1"># mid right</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mt</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span>   <span class="c1"># mid top</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mb</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span>   <span class="c1"># mid bot</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cr</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>  <span class="c1"># cross</span>
+        
+            <span class="bp">self</span><span class="o">.</span><span class="n">live_print_target_time</span> <span class="o">=</span> <span class="mf">0.100</span> <span class="c1"># s</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">(),</span> <span class="n">colors</span><span class="o">=</span><span class="p">{},</span> <span class="n">sides</span><span class="o">=</span><span class="p">{},</span> <span class="n">max_width</span><span class="p">:</span> <span class="nb">int</span><span class="o">|</span><span class="kc">None</span><span class="o">=</span><span class="mi">35</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ascii table constructor</span>
+<span class="sd">        df: source table, pd.DataFrame</span>
+<span class="sd">        style: allows to override the styling of the table</span>
+<span class="sd">        colors: is a dictionnary of core.log.rgb colors like {column: rgb.green}</span>
+<span class="sd">        </span>
+<span class="sd">        Basic usage:</span>
+<span class="sd">                ascii_table(res).print()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="o">=</span> <span class="n">style</span>
+        
+        <span class="n">df_str</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_str</span><span class="o">.</span><span class="n">columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spaces</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_str</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">col</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">col</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">len</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        
+        <span class="c1"># NOTE: could use interactive / dynamic ranges, more complex tough</span>
+        <span class="c1"># self.terminal = shutil.get_terminal_size()</span>
+        
+        <span class="c1"># lowercase the columns keys</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">colors</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">sides</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sides</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        
+        
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">colors</span><span class="p">:</span> <span class="c1"># no colors by default</span>
+                <span class="n">colors</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="kc">None</span>
+                
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sides</span><span class="p">:</span> <span class="c1"># left side by default</span>
+                <span class="n">sides</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sides</span> <span class="o">=</span> <span class="p">[</span><span class="n">sides</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        
+        <span class="c1"># limiting column max width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_width</span> <span class="o">=</span> <span class="n">max_width</span>
+        <span class="k">if</span> <span class="n">max_width</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spaces</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="n">max_width</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">spaces</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_width</span>
+        
+        
+        
+<div class="viewcode-block" id="ascii_table.print">
+<a class="viewcode-back" href="../../core.ascii_table.html#core.ascii_table.ascii_table.print">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">live_print</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_color</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">live_print</span><span class="p">,</span> <span class="n">no_color</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="p">)</span></div>
+
+        
+    
+<div class="viewcode-block" id="ascii_table.to_string">
+<a class="viewcode-back" href="../../core.ascii_table.html#core.ascii_table.ascii_table.to_string">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">live_print</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_color</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates an ascii representation of the dataset provided in the constructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># NOTE: does not (yet) handle line reduction with ellipsis</span>
+            <span class="c1"># ellipsis_char = &quot;‥&quot; # &quot;…&quot; # two dots variants seems more readable </span>
+            <span class="c1"># width_footprint = sum(self.widths) + 3*len(self.widths) + 1</span>
+            <span class="c1"># width_overshoot = width_footprint - self.terminal.columns</span>
+    
+        <span class="c1"># config</span>
+        <span class="n">ivb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">inner_vbar</span>
+        <span class="n">ihb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">inner_hbar</span>
+        <span class="n">hp</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">h_padding</span>
+        <span class="n">vp</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">v_padding</span>
+        
+        <span class="c1"># style characters</span>
+        <span class="n">h</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">h</span>  <span class="c1"># horizontal</span>
+        <span class="n">v</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">v</span>  <span class="c1"># vertical </span>
+        <span class="n">tl</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">tl</span> <span class="c1"># top left corner            </span>
+        <span class="n">tr</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">tr</span> <span class="c1"># top right corner</span>
+        <span class="n">bl</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">bl</span> <span class="c1"># bottom left</span>
+        <span class="n">br</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">br</span> <span class="c1"># bottom right</span>
+        <span class="n">mr</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">mr</span> <span class="c1"># mid right              </span>
+        <span class="n">mt</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">mt</span> <span class="c1"># mid top         </span>
+        <span class="n">ml</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">ml</span> <span class="c1"># mid left           </span>
+        <span class="n">mb</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">mb</span> <span class="c1"># mid bottom         </span>
+        <span class="n">cr</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">cr</span> <span class="c1"># cross</span>
+    
+        <span class="n">max_width</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_width</span>
+    
+        <span class="n">spaces</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">sides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sides</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    
+        <span class="c1"># Precompute common strings</span>
+        <span class="n">hhp</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="n">hp</span>
+        <span class="n">shp</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="n">hp</span>
+        <span class="n">h_line</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="p">(</span><span class="n">hp</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># For cases without inner bars</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">_line_separator</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Generates an ascii separator line for the table based on position.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="s2">&quot;mid&quot;</span><span class="p">:</span>
+                
+                <span class="n">ivbc</span> <span class="o">=</span> <span class="n">cr</span> <span class="k">if</span> <span class="n">ivb</span> <span class="k">else</span> <span class="n">h</span>       <span class="c1"># cross if inner vertical bars, line otherwise</span>
+                <span class="n">sep</span> <span class="o">=</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">ivbc</span> <span class="o">+</span> <span class="n">hhp</span>      <span class="c1"># construct mid separator (not on the outer side)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ivb</span><span class="p">:</span> <span class="n">sep</span> <span class="o">=</span> <span class="n">hhp</span>        <span class="c1"># if no vertical bar, reduce padding</span>
+                
+                <span class="n">mids</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span><span class="o">*</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">spaces</span><span class="p">]</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">ml</span> <span class="o">+</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mids</span><span class="p">)</span> <span class="o">+</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">mr</span>
+                <span class="k">return</span> <span class="n">line</span>
+            
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="s2">&quot;top&quot;</span><span class="p">:</span>
+                
+                <span class="n">ivbc</span> <span class="o">=</span> <span class="n">mt</span> <span class="k">if</span> <span class="n">ivb</span> <span class="k">else</span> <span class="n">h</span>
+                <span class="n">sep</span> <span class="o">=</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">ivbc</span> <span class="o">+</span> <span class="n">hhp</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ivb</span><span class="p">:</span> <span class="n">sep</span> <span class="o">=</span> <span class="n">hhp</span>
+                
+                <span class="n">mids</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span><span class="o">*</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">spaces</span><span class="p">]</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">tl</span> <span class="o">+</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mids</span><span class="p">)</span> <span class="o">+</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">tr</span>
+                <span class="k">return</span> <span class="n">line</span>
+            
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="s2">&quot;bot&quot;</span><span class="p">:</span>
+                
+                <span class="n">ivbc</span> <span class="o">=</span> <span class="n">mb</span> <span class="k">if</span> <span class="n">ivb</span> <span class="k">else</span> <span class="n">h</span>
+                <span class="n">sep</span> <span class="o">=</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">ivbc</span> <span class="o">+</span> <span class="n">hhp</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ivb</span><span class="p">:</span> <span class="n">sep</span> <span class="o">=</span> <span class="n">hhp</span>
+                
+                <span class="n">mids</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span><span class="o">*</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">spaces</span><span class="p">]</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">bl</span> <span class="o">+</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mids</span><span class="p">)</span> <span class="o">+</span> <span class="n">hhp</span> <span class="o">+</span> <span class="n">br</span>
+                <span class="k">return</span> <span class="n">line</span>
+            
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">_line_padding</span><span class="p">():</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Generates an ascii padding line for the table.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+            <span class="n">ivbc</span> <span class="o">=</span> <span class="n">v</span> <span class="k">if</span> <span class="n">ivb</span> <span class="k">else</span> <span class="n">h</span>
+            <span class="n">sep</span> <span class="o">=</span> <span class="n">shp</span> <span class="o">+</span> <span class="n">ivbc</span> <span class="o">+</span> <span class="n">shp</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ihb</span><span class="p">:</span> <span class="n">sep</span> <span class="o">=</span> <span class="n">shp</span>
+        
+            <span class="n">mids</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot; &quot;</span><span class="o">*</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">spaces</span><span class="p">]</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">ml</span> <span class="o">+</span> <span class="n">shp</span> <span class="o">+</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mids</span><span class="p">)</span> <span class="o">+</span> <span class="n">shp</span> <span class="o">+</span> <span class="n">mr</span>
+            <span class="k">return</span> <span class="n">line</span>
+        
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">_color_str</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">c</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">s</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">_format_str</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            
+            <span class="n">l</span> <span class="o">=</span> <span class="n">max_width</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">l</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[:</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;‥&quot;</span>
+            <span class="k">return</span> <span class="n">s</span>
+
+                
+        <span class="c1"># disable for performance reason</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">max_width</span><span class="p">:</span>
+            <span class="n">_format_str</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+        
+        <span class="c1"># disable colors</span>
+        <span class="k">if</span> <span class="n">no_color</span><span class="p">:</span>
+            <span class="n">_color_str</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span>
+        
+        <span class="k">def</span><span class="w"> </span><span class="nf">_line_content</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Generates an ascii content line for the table.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            
+            <span class="n">ivbc</span> <span class="o">=</span> <span class="n">v</span> <span class="k">if</span> <span class="n">ivb</span> <span class="k">else</span> <span class="n">h</span>
+            <span class="n">sep</span> <span class="o">=</span> <span class="n">shp</span> <span class="o">+</span> <span class="n">ivbc</span> <span class="o">+</span> <span class="n">shp</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ivb</span><span class="p">:</span> <span class="n">sep</span> <span class="o">=</span> <span class="n">shp</span>
+        
+            <span class="k">def</span><span class="w"> </span><span class="nf">align_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">side</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">width</span><span class="p">)</span> <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="s2">&quot;left&quot;</span> <span class="k">else</span> <span class="n">text</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+
+            <span class="n">mids</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">_color_str</span><span class="p">(</span><span class="n">align_text</span><span class="p">(</span><span class="n">_format_str</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">w</span><span class="p">)),</span> <span class="n">spaces</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sides</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">i</span><span class="p">)</span> 
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="p">]</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">shp</span> <span class="o">+</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mids</span><span class="p">)</span> <span class="o">+</span> <span class="n">shp</span> <span class="o">+</span> <span class="n">v</span>
+            <span class="k">return</span> <span class="n">line</span>
+<span class="w">    </span>
+<span class="w">    </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Main routine using the previous subroutines</span>
+<span class="sd">        Iterates over each lines of the dataframe and builds the ascii representation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">entries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        
+        
+        <span class="n">itr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_style</span><span class="o">.</span><span class="n">live_print_target_time</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">itr</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="mf">0.015</span><span class="p">)</span> 
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">append</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">live_print</span> <span class="k">else</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">itr</span><span class="p">),</span> <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        
+        <span class="n">fn</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">fn</span><span class="p">(</span><span class="n">_line_separator</span><span class="p">(</span><span class="s2">&quot;top&quot;</span> <span class="p">))</span>
+        <span class="n">fn</span><span class="p">(</span><span class="n">_line_content</span><span class="p">(</span><span class="n">headers</span><span class="p">))</span>
+        <span class="n">fn</span><span class="p">(</span><span class="n">_line_separator</span><span class="p">(</span><span class="s2">&quot;mid&quot;</span> <span class="p">))</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vp</span><span class="p">):</span> <span class="n">fn</span><span class="p">(</span><span class="n">_line_padding</span><span class="p">(</span><span class="s2">&quot;mid&quot;</span><span class="p">))</span>
+            <span class="n">fn</span><span class="p">(</span><span class="n">_line_content</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">vp</span><span class="p">):</span> <span class="n">fn</span><span class="p">(</span><span class="n">_line_padding</span><span class="p">(</span><span class="s2">&quot;mid&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">ihb</span><span class="p">:</span>
+                <span class="n">fn</span><span class="p">(</span><span class="n">_line_separator</span><span class="p">(</span><span class="s2">&quot;mid&quot;</span><span class="p">))</span>
+                
+        <span class="n">fn</span><span class="p">(</span><span class="n">_line_separator</span><span class="p">(</span><span class="s2">&quot;bot&quot;</span><span class="p">))</span>
+        <span class="n">fn</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">live_print</span><span class="p">:</span> 
+            <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">message</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

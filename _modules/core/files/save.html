@@ -1,0 +1,209 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.files.save &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            core
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.files.save</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.files.save</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">nullcontext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">xarray</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">xr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dask.diagnostics.progress</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProgressBar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.files.fileutils</span><span class="w"> </span><span class="kn">import</span> <span class="n">filegen</span><span class="p">,</span> <span class="n">get_git_commit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+
+<div class="viewcode-block" id="to_netcdf">
+<a class="viewcode-back" href="../../../core.files.save.html#core.files.save.to_netcdf">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_netcdf</span><span class="p">(</span>
+    <span class="n">ds</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">engine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;h5netcdf&quot;</span><span class="p">,</span>
+    <span class="n">zlib</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">complevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">tmpdir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lock_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">git_comit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;skip&quot;</span><span class="p">,</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">,</span> <span class="s2">&quot;backup&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span>
+    <span class="n">clean_attrs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write an xarray Dataset `ds` using `.to_netcdf` with several additional features:</span>
+
+<span class="sd">    - Use file compression</span>
+<span class="sd">    - Wrapped by filegen: use temporary files, detect existing output files...</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ds (xr.Dataset): Input dataset</span>
+<span class="sd">        filename (Path): Output file path</span>
+<span class="sd">        engine (str, optional): Engine driver to use. Defaults to &#39;h5netcdf&#39;.</span>
+<span class="sd">        zlib (bool, optional): activate zlib. Defaults to True.</span>
+<span class="sd">        complevel (int, optional): Compression level. Defaults to 5.</span>
+<span class="sd">        verbose (bool, optional): Verbosity. Defaults to True.</span>
+<span class="sd">        tmpdir (Path, optional): use a given temporary directory. Defaults to None.</span>
+<span class="sd">        lock_timeout (int, optional): timeout in case of existing lock file</span>
+<span class="sd">        git_commit (bool, optional): Option to add git commit tag to input dataset attributes</span>
+<span class="sd">        if_exists (str, optional): what to do if output file exists. Defaults to &#39;error&#39;.</span>
+<span class="sd">        clean_attrs: whether to remove attributes in the xarray object, that cannot</span>
+<span class="sd">            be written to netcdf.</span>
+<span class="sd">        other kwargs are passed to ds.to_netcdf</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">soluce</span> <span class="o">=</span> <span class="s1">&#39;, got an xarray DataArray. Please use .to_dataset method and &#39;</span> \
+             <span class="s1">&#39;specify a variable name&#39;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;to_netcdf expects an xarray Dataset&quot;</span> <span class="o">+</span> <span class="n">soluce</span><span class="p">,</span> 
+                  <span class="n">e</span><span class="o">=</span><span class="ne">AssertionError</span><span class="p">)</span>
+
+    <span class="n">encoding</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">{</span><span class="n">var</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">zlib</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">complevel</span><span class="o">=</span><span class="n">complevel</span><span class="p">)</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">data_vars</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">zlib</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">clean_attrs</span><span class="p">:</span>
+        <span class="n">clean_attributes</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">clean_attrs</span><span class="p">:</span>
+        <span class="n">clean_attributes</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+
+    <span class="n">PBar</span> <span class="o">=</span> <span class="p">{</span><span class="kc">True</span><span class="p">:</span> <span class="n">ProgressBar</span><span class="p">,</span> <span class="kc">False</span><span class="p">:</span> <span class="n">nullcontext</span><span class="p">}[</span><span class="n">verbose</span><span class="p">]</span>
+
+    <span class="k">with</span> <span class="n">PBar</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Writing:&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">git_comit</span><span class="p">:</span> <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">git_commit</span><span class="o">=</span><span class="n">get_git_commit</span><span class="p">())</span>
+
+        <span class="n">filegen</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">tmpdir</span><span class="o">=</span><span class="n">tmpdir</span><span class="p">,</span>
+            <span class="n">lock_timeout</span><span class="o">=</span><span class="n">lock_timeout</span><span class="p">,</span>
+            <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+        <span class="p">)(</span><span class="n">ds</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">)(</span><span class="n">filename</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="clean_attributes">
+<a class="viewcode-back" href="../../../core.files.save.html#core.files.save.clean_attributes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clean_attributes</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="o">|</span><span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove attributes that can not be written to netcdf</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">],</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,)):</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">],</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">)):</span>
+            <span class="k">del</span> <span class="n">obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+    
+    <span class="c1"># recursively clean attributes in the individual variables</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+            <span class="n">clean_attributes</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="n">var</span><span class="p">])</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
