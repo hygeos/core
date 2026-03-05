@@ -295,6 +295,33 @@ def test_interp_real_case():
     ret.compute()
 
 
+def test_interp_real_case2():
+    '''
+    test avec deux ds comportant une même dimension (bands)
+    les coordonnées sont perdues (?)
+    TODO
+    '''
+    ds = create_sample_dataset()
+    anc = create_ancillary_dataset()
+    anc["dummy"] = xr.DataArray(
+        np.random.uniform(0, 1, size=(anc.lat.size, anc.lon.size, 3)),
+        dims=["lat", "lon", "band"],
+        coords={"band": [443, 560, 670]},
+    )
+    ret = Interpolator(
+        anc,
+        lat=Linear("latitude"),
+        lon=Linear("longitude"),
+    ).map_blocks(ds)
+
+    # Check that attributes are preserved
+    assert 'units' in ret.wind.attrs
+    assert 'units' in ret.ozone.attrs
+    assert 'band' in ret.coords
+
+    ret.compute()
+
+
 @pytest.mark.parametrize('regular', [True, False])
 def test_decreasing(request, regular):
     if regular:

@@ -457,7 +457,7 @@ class BlockProcessor(ABC):
         sub = ds[self.input_vars() + self.modified_vars()]
 
         # create a template
-        template = ds.copy()
+        template = sub.copy()
         if not self._preserve_attrs:
             template.attrs.clear()
         self.build_template(template)
