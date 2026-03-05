@@ -242,17 +242,15 @@ class BlockProcessor(ABC):
         return self._flag_mappings
 
     @abstractmethod
-    def process_block(self, block: xr.Dataset):
+    def process_block(self, block: xr.Dataset) -> None:
         """
-        Process a single block of data.
+        Process a single block of data (in place).
 
         Parameters
         ----------
         block : xr.Dataset
             Input data block containing the required input variables. This block is
             modified in place.
-        **kwargs : dict
-            Additional parameters for processing (e.g., algorithm parameters)
         """
         pass
 
