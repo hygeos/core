@@ -165,8 +165,8 @@ def create_ancillary_dataset() -> xr.Dataset:
     xr.Dataset
         Dataset with ozone and wind variables, lat/lon coordinates
     """
-    lat_size = 100
-    lon_size = 100
+    lat_size = 90
+    lon_size = 180
 
     seed = 42
     np.random.seed(seed)

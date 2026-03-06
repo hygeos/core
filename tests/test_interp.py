@@ -295,6 +295,16 @@ def test_interp_real_case():
     ret.compute()
 
 
+def test_interp_noop():
+    ds = create_ancillary_dataset()
+    ret = Interpolator(
+        ds,
+        lat=Linear("lat"),
+        lon=Linear("lon"),
+    ).map_blocks(ds)
+    ret.compute()
+
+
 def test_interp_real_case2():
     '''
     test avec deux ds comportant une même dimension (bands)
