@@ -114,7 +114,7 @@ class Interpolator(BlockProcessor):
         new_out_dims = [x for x in global_out_dims if x not in self.data]
 
         # get broadcasted data from block_coords (all with the same number of dimensions)
-        np_indexers = broadcast_numpy(block_sub, new_out_dims)
+        np_indexers = broadcast_numpy(block_sub, global_out_dims)
 
         # apply index searching over all dimensions (ie, v(values))
         indices_weights = {
