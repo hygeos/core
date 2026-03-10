@@ -403,7 +403,8 @@ class Locator:
         Note: when bounds == "cycle", does nothing
         """
         if self.bounds == "clip":
-            # FIXME: manage the case where coords and values
+            # FIXME:
+            # manage the case where coords and values
             # have incompatible types (eg, int and float)
             values = values.clip(self.vmin, self.vmax)
         elif self.bounds in ["nan", "error"]:
@@ -411,7 +412,8 @@ class Locator:
             oob = (values < self.vmin) | (values > self.vmax)
             if oob.any():
                 if self.bounds == "error":
-                    raise ValueError
+                    raise ValueError(f"Some values (range {values.min()} to {values.max()}) "
+                                     f"are out of bounds for the coordinate axis (range {self.vmin} to {self.vmax}).")
                 if self.bounds == "nan":
                     values = np.where(oob, np.nan, values)
 
