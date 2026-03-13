@@ -1,0 +1,733 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.tools &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.uncompress" href="core.uncompress.html" />
+    <link rel="prev" title="core.table" href="core.table.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.html">core.geo package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.html">core.network package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html">core.ascii_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.auth.html">core.auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.cache.html">core.cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.condor.html">core.condor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html">core.config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.conftest.html">core.conftest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.dates.html">core.dates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree.html">core.deptree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree_prefect.html">core.deptree_prefect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.download.html">core.download</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.env.html">core.env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fileutils.html">core.fileutils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ftp.html">core.ftp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fuzzy.html">core.fuzzy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html">core.interpolate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.lock.html">core.lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html">core.log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.masks.html">core.masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html">core.monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.progressbar.html">core.progressbar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pseudoinverse.html">core.pseudoinverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pytest_utils.html">core.pytest_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.save.html">core.save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.table.html">core.table</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">core.tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.MapBlocksOutput"><code class="docutils literal notranslate"><span class="pre">MapBlocksOutput</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.Var"><code class="docutils literal notranslate"><span class="pre">Var</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.chunk"><code class="docutils literal notranslate"><span class="pre">chunk()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.conform"><code class="docutils literal notranslate"><span class="pre">conform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.contains"><code class="docutils literal notranslate"><span class="pre">contains()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.convert"><code class="docutils literal notranslate"><span class="pre">convert()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.datetime"><code class="docutils literal notranslate"><span class="pre">datetime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.drop_unused_dims"><code class="docutils literal notranslate"><span class="pre">drop_unused_dims()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.getflag"><code class="docutils literal notranslate"><span class="pre">getflag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.getflags"><code class="docutils literal notranslate"><span class="pre">getflags()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.haversine"><code class="docutils literal notranslate"><span class="pre">haversine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.locate"><code class="docutils literal notranslate"><span class="pre">locate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.merge"><code class="docutils literal notranslate"><span class="pre">merge()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.only"><code class="docutils literal notranslate"><span class="pre">only()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.raiseflag"><code class="docutils literal notranslate"><span class="pre">raiseflag()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.reglob"><code class="docutils literal notranslate"><span class="pre">reglob()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.split"><code class="docutils literal notranslate"><span class="pre">split()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.str_to_bool"><code class="docutils literal notranslate"><span class="pre">str_to_bool()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.sub"><code class="docutils literal notranslate"><span class="pre">sub()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.sub_pt"><code class="docutils literal notranslate"><span class="pre">sub_pt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.sub_rect"><code class="docutils literal notranslate"><span class="pre">sub_rect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.trim_dims"><code class="docutils literal notranslate"><span class="pre">trim_dims()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.wrap"><code class="docutils literal notranslate"><span class="pre">wrap()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.xr_filter"><code class="docutils literal notranslate"><span class="pre">xr_filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.xr_filter_decorator"><code class="docutils literal notranslate"><span class="pre">xr_filter_decorator()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.xr_flat"><code class="docutils literal notranslate"><span class="pre">xr_flat()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.xr_sample"><code class="docutils literal notranslate"><span class="pre">xr_sample()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.xr_unfilter"><code class="docutils literal notranslate"><span class="pre">xr_unfilter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.tools.xrcrop"><code class="docutils literal notranslate"><span class="pre">xrcrop()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.uncompress.html">core.uncompress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.xrtags.html">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+      <li class="breadcrumb-item active">core.tools</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.tools.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-core.tools">
+<span id="core-tools"></span><h1>core.tools<a class="headerlink" href="#module-core.tools" title="Link to this heading"></a></h1>
+<p>Various utility functions for modifying xarray object</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="core.tools.MapBlocksOutput">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">MapBlocksOutput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#MapBlocksOutput"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.MapBlocksOutput" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.MapBlocksOutput.conform">
+<span class="sig-name descname"><span class="pre">conform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transpose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#MapBlocksOutput.conform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.MapBlocksOutput.conform" title="Link to this definition"></a></dt>
+<dd><p>Conform dataset <cite>ds</cite> to this model</p>
+<dl class="simple">
+<dt>transpose: whether to automatically transpose the variables in <cite>ds</cite> to conform</dt><dd><p>to the specified dimensions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.MapBlocksOutput.subset">
+<span class="sig-name descname"><span class="pre">subset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#MapBlocksOutput.subset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.MapBlocksOutput.subset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.MapBlocksOutput.template">
+<span class="sig-name descname"><span class="pre">template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#MapBlocksOutput.template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.MapBlocksOutput.template" title="Link to this definition"></a></dt>
+<dd><p>Return an empty template for this model, to be provided to xr.map_blocks</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.tools.Var">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">Var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims_like</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#Var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.tools.Var.attrs">
+<span class="sig-name descname"><span class="pre">attrs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#core.tools.Var.attrs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.Var.conform">
+<span class="sig-name descname"><span class="pre">conform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">da</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transpose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span><a class="reference internal" href="_modules/core/tools.html#Var.conform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var.conform" title="Link to this definition"></a></dt>
+<dd><p>Conform a DataArray to the variable definition</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.Var.desc">
+<span class="sig-name descname"><span class="pre">desc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/core/tools.html#Var.desc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var.desc" title="Link to this definition"></a></dt>
+<dd><p>Returns variable description
+For backward compatibility</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.Var.describe">
+<span class="sig-name descname"><span class="pre">describe</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#Var.describe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var.describe" title="Link to this definition"></a></dt>
+<dd><p>Prints the description of the variable.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.tools.Var.dims">
+<span class="sig-name descname"><span class="pre">dims</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#core.tools.Var.dims" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.tools.Var.dims_like">
+<span class="sig-name descname"><span class="pre">dims_like</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#core.tools.Var.dims_like" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.tools.Var.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#core.tools.Var.dtype" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.tools.Var.flags">
+<span class="sig-name descname"><span class="pre">flags</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#core.tools.Var.flags" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.Var.getdims">
+<span class="sig-name descname"><span class="pre">getdims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#Var.getdims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var.getdims" title="Link to this definition"></a></dt>
+<dd><p>Get the actual dimensions for that variable.
+If dims is defined as a tuple, it is returned as is.
+If dims_like is defined, the dimensions of the corresponding
+variable in ds are returned.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.Var.merge_with">
+<span class="sig-name descname"><span class="pre">merge_with</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#core.tools.Var" title="core.tools.Var"><span class="pre">Var</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#core.tools.Var" title="core.tools.Var"><span class="pre">Var</span></a></span></span><a class="reference internal" href="_modules/core/tools.html#Var.merge_with"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var.merge_with" title="Link to this definition"></a></dt>
+<dd><p>Merge this Var with another Var, combining their attributes.</p>
+<p>Attributes are merged by preferring non-None values. If both have
+non-None values for the same attribute and they differ, a ValueError
+is raised.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.tools.Var.tags">
+<span class="sig-name descname"><span class="pre">tags</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#core.tools.Var.tags" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.Var.to_template">
+<span class="sig-name descname"><span class="pre">to_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#Var.to_template"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var.to_template" title="Link to this definition"></a></dt>
+<dd><p>Convert to a DataArray with dims infos provided by <cite>ds</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> – Dataset providing dimension and coordinate information</p></li>
+<li><p><strong>meta</strong> – Optional dataset containing the variable with the same name,
+used to infer dtype and dims if not specified in the Var object</p></li>
+<li><p><strong>new_dims</strong> – <p>Dictionary mapping dimension names to their size or coordinates.
+For dimensions not present in <cite>ds</cite>, this parameter is required.
+Values can be:
+- An integer specifying the dimension size (no coordinates)
+- An array-like object (list, numpy array, etc.) providing coordinate</p>
+<blockquote>
+<div><p>values. The dimension size is inferred from the length.</p>
+</div></blockquote>
+<p>Example: {‘new_dim’: 5} or {‘new_dim’: [0, 1, 2, 3, 4]}</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Empty DataArray with appropriate dimensions, chunks, and coordinates</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>xr.DataArray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.tools.Var.unit">
+<span class="sig-name descname"><span class="pre">unit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/core/tools.html#Var.unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.Var.unit" title="Link to this definition"></a></dt>
+<dd><p>Return unit
+For backward compatibility</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.chunk">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">chunk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#chunk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.chunk" title="Link to this definition"></a></dt>
+<dd><p>Apply rechunking to a xr.Dataset <cite>ds</cite> along dimensions provided as kwargs</p>
+<p>Works like <cite>ds.chunk</cite> but works also for Datasets with repeated dimensions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.conform">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">conform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attrname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transpose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#conform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.conform" title="Link to this definition"></a></dt>
+<dd><p>A method decorator which applies MapBlocksOutput.conform to the method output.</p>
+<p>The MapBlocksOutput should be an attribute <cite>attrname</cite> of the class.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.contains">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">contains</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#contains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.contains" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.convert">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_to</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#convert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.convert" title="Link to this definition"></a></dt>
+<dd><p>Unit conversion</p>
+<section id="arguments">
+<h2>Arguments:<a class="headerlink" href="#arguments" title="Link to this heading"></a></h2>
+<p>A: DataArray to convert</p>
+<dl class="simple">
+<dt>unit_from: str or None</dt><dd><p>unit to convert from. If not provided, uses da.units</p>
+</dd>
+<dt>unit_to: str</dt><dd><p>unit to convert to</p>
+</dd>
+<dt>converter: a dictionary for unit conversion</dt><dd><p>example: converter={‘Pa’: 1, ‘hPa’: 1e-2}</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.datetime">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">datetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#datetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.datetime" title="Link to this definition"></a></dt>
+<dd><p>Parse datetime (in isoformat) from <cite>ds</cite> attributes</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.drop_unused_dims">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">drop_unused_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#drop_unused_dims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.drop_unused_dims" title="Link to this definition"></a></dt>
+<dd><p>Simple function to remove unused dimensions in a xarray.Dataset</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.getflag">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">getflag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#getflag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.getflag" title="Link to this definition"></a></dt>
+<dd><p>Return the binary flag with given <cite>name</cite> as a boolean array</p>
+<p>A: DataArray
+name: str</p>
+<p>example: getflag(flags, ‘LAND’)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.getflags">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">getflags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meanings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#getflags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.getflags" title="Link to this definition"></a></dt>
+<dd><p>returns the flags in attributes of <cite>A</cite> as a dictionary {meaning: value}</p>
+<section id="id1">
+<h2>Arguments:<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>provide either:</dt><dd><p>A: Dataarray</p>
+</dd>
+<dt>or:</dt><dd><p>meanings: flag meanings ‘FLAG1 FLAG2’
+masks: flag values [1, 2]
+sep: string separator</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.haversine">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">haversine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">6371</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#haversine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.haversine" title="Link to this definition"></a></dt>
+<dd><p>Calculate the great circle distance between two points (specified in
+decimal degrees) on a sphere of a given radius</p>
+<p>Returns the distance in the same unit as radius (defaults to earth radius in km)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.locate">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">locate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lat</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist_min_km</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span></span></span><a class="reference internal" href="_modules/core/tools.html#locate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.locate" title="Link to this definition"></a></dt>
+<dd><p>Locate <cite>lat0</cite>, <cite>lon0</cite> within <cite>lat</cite>, <cite>lon</cite> (xr.DataArrays)</p>
+<p>if dist_min_km is specified and if the minimal distance
+exceeds it, a ValueError is raised</p>
+<p>returns a dictionary of the pixel coordinates</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.merge">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'(.+)_(\\d+)'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.merge" title="Link to this definition"></a></dt>
+<dd><p>Merge DataArrays in <cite>ds</cite> along dimension <cite>dim</cite>.</p>
+<p>ds: xr.Dataset</p>
+<dl>
+<dt>dim: str or None</dt><dd><p>name of the new or existing dimension
+if None, use the attribute <cite>split_dimension</cite></p>
+</dd>
+<dt>varname: str or None</dt><dd><p>name of the variable to create
+if None, detect variable name from regular expression</p>
+</dd>
+<dt>pattern: str</dt><dd><p>Regular expression for matching variable names and coordinates
+if varname is None:</p>
+<blockquote>
+<div><p>First group represents the new variable name.
+Second group represents the coordinate value
+Ex: r’(.+)_(d+)’</p>
+<blockquote>
+<div><blockquote>
+<div><p>First group matches all characters.
+Second group matches digits.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>r’(D+)(d+)’</dt><dd><p>First group matches non-digit.
+Second group matches digits.</p>
+</dd>
+</dl>
+</div></blockquote>
+</div></blockquote>
+<dl class="simple">
+<dt>if varname is not None:</dt><dd><p>Match a single group representing the coordinate value</p>
+</dd>
+</dl>
+</dd>
+<dt>dtype: data type</dt><dd><p>data type of the coordinate items</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.only">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">only</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#only"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.only" title="Link to this definition"></a></dt>
+<dd><p>If <em>iterable</em> has only one item, return it.
+Otherwise raise a ValueError</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.raiseflag">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">raiseflag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Enum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#raiseflag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.raiseflag" title="Link to this definition"></a></dt>
+<dd><p>Raise a flag in DataArray <cite>A</cite> with name <cite>flag_name</cite>, value <cite>flag_value</cite> and <cite>condition</cite>
+The name and value of the flag is recorded in the attributes of <cite>A</cite></p>
+<section id="id2">
+<h2>Arguments:<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<p>A: DataArray of integers</p>
+<dl class="simple">
+<dt>flag_name: str</dt><dd><p>Name of the flag</p>
+</dd>
+<dt>flag_value: int</dt><dd><p>Value of the flag</p>
+</dd>
+<dt>condition: boolean array-like of same shape as <cite>A</cite></dt><dd><p>Condition to raise flag.
+If None, the flag values are unchanged ; the flag is simple registered in the
+attributes.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.reglob">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">reglob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regexp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#reglob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.reglob" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.split">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">split</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'_'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.split" title="Link to this definition"></a></dt>
+<dd><p>Returns a Dataset where a given dimension is split into as many variables</p>
+<p>d: Dataset or DataArray</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.str_to_bool">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">str_to_bool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span></span><a class="reference internal" href="_modules/core/tools.html#str_to_bool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.str_to_bool" title="Link to this definition"></a></dt>
+<dd><p>Convert a string representation to a boolean value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> – String value to convert. Case-insensitive comparison with ‘true’.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the lowercase value equals ‘true’, False otherwise.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">str_to_bool</span><span class="p">(</span><span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">str_to_bool</span><span class="p">(</span><span class="s1">&#39;false&#39;</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">str_to_bool</span><span class="p">(</span><span class="s1">&#39;TRUE&#39;</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.sub">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">sub</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cond</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_invalid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int_default_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#sub"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.sub" title="Link to this definition"></a></dt>
+<dd><p>Creates a Dataset based on the conditions passed in parameters</p>
+<p>cond : a DataArray of booleans that defines which pixels are kept</p>
+<dl class="simple">
+<dt>drop_invalid, bool</dt><dd><p>if True invalid pixels will be replace by nan for floats and
+int_default_value for other types</p>
+</dd>
+<dt>int_default_value, int</dt><dd><p>for DataArrays of type int, this value is assigned on non-valid pixels</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.sub_pt">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">sub_pt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt_lat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt_lon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rad</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_invalid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int_default_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#sub_pt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.sub_pt" title="Link to this definition"></a></dt>
+<dd><p>Creates a Dataset based on the circle specified in parameters</p>
+<p>pt_lat, pt_lon : Coordonates of the center of the point</p>
+<p>rad : radius of the circle in km</p>
+<dl class="simple">
+<dt>drop_invalid, bool</dt><dd><p>if True invalid pixels will be replace by nan for floats
+and int_default_value for other types</p>
+</dd>
+<dt>int_default_value, int</dt><dd><p>for DataArrays of type int, this value is assigned on non-valid pixels</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.sub_rect">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">sub_rect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_invalid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int_default_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#sub_rect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.sub_rect" title="Link to this definition"></a></dt>
+<dd><p>Returns a Dataset based on the coordinates of the rectangle passed in parameters</p>
+<p>lat_min, lat_max, lon_min, lon_max : delimitations of the region of interest</p>
+<p>drop_invalid, bool : if True, invalid pixels will be replace by nan
+for floats and int_default_value for other types</p>
+<p>int_default_value, int : for DataArrays of type int, this value is assigned on non-valid pixels</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.trim_dims">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">trim_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#trim_dims"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.trim_dims" title="Link to this definition"></a></dt>
+<dd><p>Trim the dimensions of Dataset A</p>
+<p>Rename all possible dimensions to avoid duplicate dimensions with same sizes
+Avoid any DataArray with duplicate dimensions</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.wrap">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">wrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#wrap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.wrap" title="Link to this definition"></a></dt>
+<dd><p>Wrap and reorder a cyclic dimension between vmin and vmax.
+The border value is duplicated at the edges.
+The period is (vmax-vmin)</p>
+<p>Example:
+* Dimension [0, 359] -&gt; [-180, 180]
+* Dimension [-180, 179] -&gt; [-180, 180]
+* Dimension [0, 359] -&gt; [0, 360]</p>
+<section id="id3">
+<h2>Arguments:<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>ds: xarray.Dataset
+dim: str</p>
+<blockquote>
+<div><p>Name of the dimension to wrap</p>
+</div></blockquote>
+<dl class="simple">
+<dt>vmin, vmax: float</dt><dd><p>new values for the edges</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.xr_filter">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">xr_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stackdim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transparent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#xr_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.xr_filter" title="Link to this definition"></a></dt>
+<dd><p>Extracts a subset of the dataset where the condition is True, stacking the
+<cite>condition</cite> dimensions. Equivalent to numpy’s boolean indexing, A[condition].</p>
+<p>Parameters:
+ds (xr.Dataset): The input dataset.
+condition (xr.DataArray): A boolean DataArray indicating where the condition is True.
+stackdim (str, optional): The name of the new stacked dimension. If None, it will be</p>
+<blockquote>
+<div><p>determined automatically from the condition dimensions.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>transparent (bool, optional): whether to reassign the original dimension names to</dt><dd><p>the Dataset (expanding with length-one dimensions).</p>
+</dd>
+</dl>
+<p>Returns:
+xr.Dataset: A new dataset with the subset of data where the condition is True.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.xr_filter_decorator">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">xr_filter_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argpos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value_float</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value_int</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transparent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stackdim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/tools.html#xr_filter_decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.xr_filter_decorator" title="Link to this definition"></a></dt>
+<dd><p>A decorator which applies the decorated function only where the condition is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>argpos</strong> (<a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><em>int</em></a>) – Position index of the input dataset in the decorated function call.</p></li>
+<li><p><strong>condition</strong> (<em>Callable</em>) – A callable taking the Dataset as input and returning a
+boolean DataArray.</p></li>
+<li><p><strong>fill_value_float</strong> (<a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><em>float</em></a><em>, </em><em>optional</em>) – Fill value for floating point data types.
+Default is np.nan.</p></li>
+<li><p><strong>fill_value_int</strong> (<a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><em>int</em></a><em>, </em><em>optional</em>) – Fill value for integer data types.
+Default is 0</p></li>
+<li><p><strong>transparent</strong> (<a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to reassign the original dimension names
+to the Dataset (expanding with length-one dimensions). Default is False.</p></li>
+<li><p><strong>stackdim</strong> (<em>str</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – The name of the new stacked dimension.
+If None, it will be determined automatically from the condition dimensions. Default is None.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>&#64;xr_filter_decorator(0, lambda x: x.flags == 0)
+def my_func(ds: xr.Dataset) -&gt; xr.Dataset:</p>
+<blockquote>
+<div><p># my_func is applied only where ds.flags == 0
+…</p>
+</div></blockquote>
+<p>The decorator works by:
+1. Extracting a subset of the dataset where the condition is True using <cite>xr_filter</cite>.
+2. Applying the decorated function to the subset.
+3. Reconstructing the original dataset from the subset using <cite>xr_unfilter</cite>.</p>
+<p>Behavior with in-place vs. non-in-place modifications:
+- If the decorated function returns a Dataset (non-in-place), the decorator returns</p>
+<blockquote>
+<div><p>the unfiltered result.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>If the decorated function returns None (in-place modification), the decorator
+updates the original input dataset in-place with the unfiltered modified subset.</p></li>
+</ul>
+<p>NOTE: this decorator does not guarantee that the order of dimensions is maintained.
+When using this decorator with <cite>xr.apply_blocks</cite>, you may want to wrap your
+xr_filter_decorator decorated method with the <cite>conform</cite> decorator.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.xr_flat">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">xr_flat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#xr_flat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.xr_flat" title="Link to this definition"></a></dt>
+<dd><p>A method which flat a xarray.Dataset on a new dimension named ‘index’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ds</strong> (<em>xr.Dataset</em>) – Dataset to flat</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.xr_sample">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">xr_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_sample</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#xr_sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.xr_sample" title="Link to this definition"></a></dt>
+<dd><p>A method to extract a subset of sample from a flat xarray.Dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds</strong> (<em>xr.Dataset</em>) – Input flat dataset</p></li>
+<li><p><strong>nb_sample</strong> (<a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><em>int</em></a><em>|</em><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><em>float</em></a>) – Number or percentage of sample to extract</p></li>
+<li><p><strong>seed</strong> (<a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><em>int</em></a><em>, </em><em>optional</em>) – Random seed to use. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.xr_unfilter">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">xr_unfilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stackdim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value_float</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.float" title="core.static.constraint.float"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value_int</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transparent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.bool" title="core.static.constraint.bool"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#xr_unfilter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.xr_unfilter" title="Link to this definition"></a></dt>
+<dd><p>Reconstructs the original dataset from a subset dataset where the condition is True,
+unstacking the condition dimensions.</p>
+<p>Parameters:
+sub (xr.Dataset): The subset dataset where the condition is True.
+condition (xr.DataArray): A boolean DataArray indicating where the condition is True.
+stackdim (str, optional): The name of the stacked dimension. If None, it will be</p>
+<blockquote>
+<div><p>determined automatically from the condition dimensions.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>fill_value_float (float, optional): The fill value for floating point data types.</dt><dd><p>Default is np.nan.</p>
+</dd>
+</dl>
+<p>fill_value_int (int, optional): The fill value for integer data types. Default is 0.
+transparent (bool, optional): whether to revert the transparent compatibility</p>
+<blockquote>
+<div><p>conversion applied in xrwhere.</p>
+</div></blockquote>
+<p>Returns:
+xr.DataArray: The reconstructed dataset with the specified dimensions unstacked.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="core.tools.xrcrop">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">xrcrop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/core/tools.html#xrcrop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.tools.xrcrop" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">core.tools.</span></span><span class="sig-name descname"><span class="pre">xrcrop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataArray</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataArray</span></span></span></dt>
+<dd><p>Crop a Dataset or DataArray along dimensions based on min/max values.</p>
+<p>For each dimension provided as kwarg, the min/max values along that dimension
+can be provided:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>As a min/max tuple</p></li>
+<li><p>As a DataArrat, for which the min/max are computed</p></li>
+</ul>
+</div></blockquote>
+<dl>
+<dt>Ex: crop dimensions <cite>latitude</cite> and <cite>longitude</cite> of <cite>gsw</cite> based on the min/max</dt><dd><p>of ds.lat and ds.lon
+gsw = xrcrop(</p>
+<blockquote>
+<div><p>gsw,
+latitude=ds.lat,
+longitude=ds.lon,</p>
+</div></blockquote>
+<p>)</p>
+</dd>
+</dl>
+<p>Note: the purpose of this function is to make it possible to .compute() the result
+of the cropped data, thus allowing to perform a sel over large arrays (otherwise
+extremely slow with dask based arrays).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.table.html" class="btn btn-neutral float-left" title="core.table" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.uncompress.html" class="btn btn-neutral float-right" title="core.uncompress" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
