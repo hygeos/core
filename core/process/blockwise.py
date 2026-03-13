@@ -119,10 +119,13 @@ class BlockProcessor(ABC):
         """
         Variables that this processor will create.
 
-        Provide Var definition: `name`, `dtype`, `dims` (plus optionally
+        Provide Var definition: `name`, `dtype`, `dims` or `dims_like` (plus optionally
         `flags` or other attributes). Declare any new dims in `created_dims()`.
-        If `dtype` or `dims` is not specified, they will be assessed by running
-        `process_block` on mockup data.
+        If `dtype` or both `dims` and `dims_like` are not specified, they will be assessed
+        by running `process_block` on mockup data.
+
+        Use `dims_like` to specify that the dimensions should match those of an existing
+        variable in the dataset (e.g., `dims_like='input_var'`).
 
         Example:
         >>> def created_vars(self):
@@ -132,7 +135,7 @@ class BlockProcessor(ABC):
 
     def output_vars(self) -> list[Var]:
         """
-        Returns the list of variables to be returned by `map_blocks`
+        Defines the list of variables to be returned by `map_blocks`
 
         By default, the created and modified variables are included as output_vars.
 
@@ -142,7 +145,7 @@ class BlockProcessor(ABC):
 
     def created_dims(self) -> dict[str, Any]:
         """
-        Return dictionary of new dimensions to be created by this processor.
+        Describes new dimensions to be created by this processor.
 
         Each dimension is defined either by:
         - An int: specifying the dimension size
