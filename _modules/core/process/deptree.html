@@ -1,0 +1,751 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.process.deptree &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            core
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.process.deptree</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.process.deptree</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sys</span><span class="w"> </span><span class="kn">import</span> <span class="n">argv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">product_dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.ascii_table</span><span class="w"> </span><span class="kn">import</span> <span class="n">ascii_table</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+
+
+<div class="viewcode-block" id="Task">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.Task">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Task</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for tasks implementing a dependency tree structure for execution workflow.</span>
+
+<span class="sd">    This class provides the foundation for creating tasks that can be organized in a</span>
+<span class="sd">    dependency graph and executed in the correct order. Tasks can be generated and run</span>
+<span class="sd">    using the `gen` function with different execution modes (sync, executor, or prefect).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        output: Optional attribute for storing the task&#39;s output path or result.</span>
+<span class="sd">        deps: Optional list of Task instances that this task depends on.</span>
+<span class="sd">        status: Task execution status</span>
+
+<span class="sd">    Methods:</span>
+<span class="sd">        dependencies(): Returns the list of dependent tasks. The default implementation</span>
+<span class="sd">            returns the `deps` attribute, if it exists.</span>
+<span class="sd">        run(): Implements the actual execution code</span>
+<span class="sd">        done(): Checks if the task is completed. The default implementation checks if</span>
+<span class="sd">            the `output` Path exists, if defined.</span>
+<span class="sd">        cleanup(): Optional cleanup method executed when all parent tasks have finished</span>
+
+<span class="sd">    Usage:</span>
+<span class="sd">        Subclass Task and implement at minimum:</span>
+<span class="sd">        - The `run()` method with your task&#39;s execution logic (if any)</span>
+<span class="sd">        - Optionally override `dependencies()` or self.deps if your task has dependencies</span>
+<span class="sd">        - Optionally override `cleanup()` if your task needs cleanup after execution</span>
+<span class="sd">        - Set `output` attribute if your task produces output files</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        See the `sample` function for a complete example of Task definition and usage.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Task.dependencies">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.Task.dependencies">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of dependencies, each being a `Task`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;deps&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;deps&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="Task.run">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.Task.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implements the actual execution code</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Task.cleanup">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.Task.cleanup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optional cleanup method executed after the task finishes running</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Task.done">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.Task.done">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">done</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Whether the task is done</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;output&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="c1"># type: ignore</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="gen">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.gen">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen</span><span class="p">(</span>
+    <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="s1">&#39;executor&#39;</span><span class="p">,</span> <span class="s1">&#39;prefect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;sync&#39;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run a task and its dependencies</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        mode (str):</span>
+<span class="sd">            - &#39;sync&#39;: sequential</span>
+<span class="sd">            - &#39;executor&#39;: using executors</span>
+<span class="sd">            - &#39;prefect&#39;: using prefect as a worflow manager</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;sync&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gen_sync</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;executor&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gen_executor</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;prefect&#39;</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">core.deptree_prefect</span><span class="w"> </span><span class="kn">import</span> <span class="n">gen_prefect</span>
+        <span class="k">return</span> <span class="n">gen_prefect</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid mode &#39;</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="gen_sync">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.gen_sync">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_sync</span><span class="p">(</span>
+    <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a Task in sequential mode</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        task (Task): The task to generate</span>
+<span class="sd">        verbose (bool): Whether to print verbose output</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+        <span class="c1"># Ensure reference counts are initialized for this task and its dependencies</span>
+        <span class="n">_ensure_ref_count_initialized</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        
+        <span class="n">deps</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">dependencies</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+            <span class="n">gen_sync</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># Try to cleanup each dependency (will only cleanup if all dependent tasks are done)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+                <span class="n">_try_cleanup_dependency</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="format_time">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.format_time">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_time</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">&quot;?&quot;</span><span class="p">:</span> 
+        <span class="k">return</span> <span class="n">t</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">60</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s&quot;</span>
+    <span class="k">elif</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">3600</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">t</span> <span class="o">//</span> <span class="mi">60</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">t</span> <span class="o">%</span> <span class="mi">60</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">m </span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">t</span> <span class="o">//</span> <span class="mi">3600</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">%</span> <span class="mi">3600</span><span class="p">)</span> <span class="o">//</span> <span class="mi">60</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">t</span> <span class="o">%</span> <span class="mi">60</span>
+        
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">h</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">h</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">h&quot;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">02.0f</span><span class="si">}</span><span class="s2">m&quot;</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">h</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># only show seconds if no hours</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">02.0f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="print_execution_summary">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.print_execution_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_execution_summary</span><span class="p">(</span>
+    <span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">log_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">finished</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print a summary table showing count of tasks by status and class name.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        tasks: List of Task instances to summarize</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">finished</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">log_file</span><span class="p">:</span>
+        <span class="k">return</span>
+    
+    <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">15</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">(</span><span class="s2">&quot;=======[ Execution Log ]=======&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    
+    <span class="c1"># dislay status of the overall execution</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;Finished&quot;</span> <span class="k">if</span> <span class="n">finished</span> <span class="k">else</span> <span class="s2">&quot;Running&quot;</span>
+    <span class="c1"># find color based on errors</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span> 
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;error&#39;</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">red</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">finished</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">green</span>  <span class="c1"># finished without errors</span>
+
+    <span class="n">msg</span> <span class="o">+=</span>  <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">(</span><span class="s2">&quot;Status: &quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">l</span><span class="p">))</span>  <span class="o">+</span> <span class="n">c</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">r</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+    
+    <span class="c1"># datetime from epoch</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
+    
+    <span class="n">msg</span> <span class="o">+=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">(</span><span class="s2">&quot;Time spent: &quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">l</span><span class="p">))</span> <span class="o">+</span> <span class="n">format_time</span><span class="p">(</span><span class="n">elapsed</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">msg</span> <span class="o">+=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">(</span><span class="s2">&quot;Start:&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">l</span><span class="p">))</span> <span class="o">+</span> <span class="n">start</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H:%M:%S&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">msg</span> <span class="o">+=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">(</span><span class="s2">&quot;Date: &quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">l</span><span class="p">))</span>  <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+    
+    <span class="c1"># Get unique statuses and classes directly from list comprehensions + set</span>
+    <span class="n">all_statuses</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">))</span>
+    <span class="n">all_classes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">all_classes</span> <span class="ow">and</span> <span class="n">all_statuses</span><span class="p">:</span>
+        <span class="c1"># Create DataFrame directly using double nested loop</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Class&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">all_statuses</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;Total&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Initialize DataFrame with the right shape</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_classes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
+        
+        <span class="c1"># Fill rows for each class</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">class_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_classes</span><span class="p">):</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">class_name</span>  <span class="c1"># Class column</span>
+            <span class="n">class_total</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">status</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_statuses</span><span class="p">):</span>
+                <span class="c1"># Count directly from tasks list</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span> 
+                           <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="n">class_name</span> 
+                           <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">status</span><span class="p">)</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">count</span><span class="p">)</span> <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+                <span class="n">class_total</span> <span class="o">+=</span> <span class="n">count</span>
+            
+            <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">class_total</span><span class="p">)</span>  <span class="c1"># Total column</span>
+        
+        <span class="c1"># Fill totals row</span>
+        <span class="n">totals_row_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_classes</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">totals_row_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;TOTAL&#39;</span>
+        <span class="n">grand_total</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">status</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_statuses</span><span class="p">):</span>
+            <span class="c1"># Count directly from tasks list</span>
+            <span class="n">status_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span> 
+                             <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">status</span><span class="p">)</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">totals_row_idx</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">status_total</span><span class="p">)</span>
+            <span class="n">grand_total</span> <span class="o">+=</span> <span class="n">status_total</span>
+        
+        <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">totals_row_idx</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">grand_total</span><span class="p">)</span>
+        
+        <span class="c1"># Replace NaN with empty strings</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">Class</span>       <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">default</span><span class="p">,</span>
+            <span class="n">Pending</span>     <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">,</span>
+            <span class="n">Running</span>     <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">blue</span><span class="p">,</span>
+            <span class="n">Success</span>     <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">green</span><span class="p">,</span>
+            <span class="n">Error</span>       <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">red</span><span class="p">,</span>
+            <span class="n">Skipped</span>     <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">cyan</span><span class="p">,</span>
+            <span class="n">Canceled</span>    <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">,</span>
+            <span class="n">Total</span>       <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">cyan</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+        <span class="n">sides</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">Class</span>       <span class="o">=</span> <span class="s2">&quot;left&quot;</span><span class="p">,</span>
+            <span class="n">Pending</span>     <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+            <span class="n">Running</span>     <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+            <span class="n">Success</span>     <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+            <span class="n">Error</span>       <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+            <span class="n">Skipped</span>     <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+            <span class="n">Canceled</span>    <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+            <span class="n">Total</span>       <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+        <span class="n">table</span> <span class="o">=</span> <span class="n">ascii_table</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">)</span>
+        <span class="n">table_msg</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">live_print</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_color</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        
+        <span class="n">msg</span> <span class="o">+=</span> <span class="n">table_msg</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    
+    <span class="c1"># Count and display failed tasks</span>
+    <span class="n">failed_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;error&#39;</span><span class="p">]</span>
+    <span class="n">nfailed</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># number of displayed failed tasks</span>
+    <span class="k">if</span> <span class="n">failed_tasks</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed tasks (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failed_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>  <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">failed_tasks</span><span class="p">[:</span><span class="n">nfailed</span><span class="p">]:</span>
+            <span class="n">e_msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;error_msg&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">error_msg</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">red</span><span class="p">(</span><span class="n">e_msg</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_tasks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot;...&quot;</span>  <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">log</span><span class="o">.</span><span class="n">rgb</span><span class="o">.</span><span class="n">orange</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;=========================&quot;</span>  <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+    <span class="c1"># pad the output by one space left</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">msg</span>
+    
+    <span class="c1"># using a lock shared accross threads to avoid race conditions</span>
+    <span class="k">if</span> <span class="n">log_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">file_lock</span><span class="p">:</span>
+            <span class="c1"># overwrite the output to a local file called /tmp/deptreelog</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">disp</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+        
+
+<div class="viewcode-block" id="gen_executor">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.gen_executor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gen_executor</span><span class="p">(</span>
+    <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+    <span class="n">executors</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">default_executor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">graph_executor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">_tasks</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_file</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recursively generate dependencies of `task`, then call its `run` method in a</span>
+<span class="sd">    custom executor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        task: a Task object</span>
+<span class="sd">        executors: dictionary of executors</span>
+<span class="sd">        default_executor: the executor to use for all tasks not included in executors. Defaults</span>
+<span class="sd">            to ThreadPoolExecutor</span>
+<span class="sd">        graph_executor: an instance of ThreadPoolExecutor used for traversing the</span>
+<span class="sd">            dependency tree with the `gen` function. It is useful to override the</span>
+<span class="sd">            default ThreadPoolExecutor(512) if the tree is too large.</span>
+<span class="sd">        _tasks: internal parameter to track tasks status and provide an execution </span>
+<span class="sd">            summary. Also used to avoid duplicate task submissions.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        from concurrent.futures import ThreadPoolExecutor</span>
+<span class="sd">        from distributed import Client # dask executor</span>
+
+<span class="sd">        gen(task,</span>
+<span class="sd">            executors={&#39;Level1&#39; : ThreadPoolExecutor(2)},</span>
+<span class="sd">            default_executor=Client()  # dask executor</span>
+<span class="sd">                # Note: can also use dask_jobqueue to instantiate</span>
+<span class="sd">                # an executor backed by a job queuing system like</span>
+<span class="sd">                # HTCondor</span>
+<span class="sd">        })</span>
+
+<span class="sd">    For details on how to implement `task`, please check function core.deptree.sample.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Note: `gen` is defined as a function instead of an task method because it includes</span>
+    <span class="c1"># non-serializable code, and task can be serialized (for example by the dask</span>
+    <span class="c1"># distributed executor).</span>
+    
+    <span class="n">_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="n">is_root_call</span> <span class="o">=</span> <span class="n">_tasks</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_tasks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">graph_executor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">graph_executor</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="mi">512</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">default_executor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">default_executor</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">()</span>
+
+    <span class="c1"># Check if task is already being processed by checking if it&#39;s in _tasks</span>
+    <span class="c1"># Use object identity comparison which is efficient and correct for task deduplication</span>
+    <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">_tasks</span><span class="p">:</span>
+        <span class="c1"># Task is already submitted, just return without reprocessing</span>
+        <span class="k">return</span>
+    
+    <span class="c1"># Set initial status</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;pending&quot;</span><span class="p">)</span>
+    
+    <span class="n">print_execution_summary</span><span class="p">(</span><span class="n">_tasks</span><span class="p">,</span> <span class="n">_start_time</span><span class="p">,</span> <span class="n">log_file</span><span class="p">)</span>
+    
+    <span class="n">_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+        <span class="c1"># Ensure reference counts are initialized for this task and its dependencies</span>
+        <span class="n">_ensure_ref_count_initialized</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        
+        <span class="c1"># run all dependencies on the graph executor</span>
+        <span class="n">deps</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">dependencies</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">deps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">graph_executor</span><span class="o">.</span><span class="n">_max_workers</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">deps</span><span class="p">)</span><span class="si">}</span><span class="s2"> dependencies, but graph_executor only &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;has </span><span class="si">{</span><span class="n">graph_executor</span><span class="o">.</span><span class="n">_max_workers</span><span class="si">}</span><span class="s2"> maximum workers. Please use a &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;graph_executor with additional workers.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">graph_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                <span class="n">gen_executor</span><span class="p">,</span>
+                <span class="n">d</span><span class="p">,</span>
+                <span class="n">executors</span><span class="o">=</span><span class="n">executors</span><span class="p">,</span>
+                <span class="n">default_executor</span><span class="o">=</span><span class="n">default_executor</span><span class="p">,</span>
+                <span class="n">graph_executor</span><span class="o">=</span><span class="n">graph_executor</span><span class="p">,</span>
+                <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span><span class="p">,</span>
+                <span class="n">_tasks</span><span class="o">=</span><span class="n">_tasks</span><span class="p">,</span>
+                <span class="n">log_file</span><span class="o">=</span><span class="n">log_file</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deps</span>
+        <span class="p">]</span>
+
+        <span class="c1"># wait for all tasks to finish</span>
+        <span class="c1"># if any error occurred in the task, it is raised now</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">futures</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+        <span class="c1"># Check if any dependency has an error status</span>
+        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dep</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;canceled&quot;</span><span class="p">]:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;canceled&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> canceled due to dependency error&quot;</span><span class="p">)</span>
+    
+        <span class="c1"># print_execution_summary(_tasks, _start_time)</span>
+
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;canceled&quot;</span><span class="p">:</span>
+            <span class="c1"># get the executor for current `task`</span>
+            <span class="n">clsname</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">executors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">clsname</span> <span class="ow">in</span> <span class="n">executors</span><span class="p">):</span>
+                <span class="n">executor</span> <span class="o">=</span> <span class="n">executors</span><span class="p">[</span><span class="n">clsname</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">executor</span> <span class="o">=</span> <span class="n">default_executor</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">run_with_status_update</span><span class="p">():</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;Wrapper function that sets status to running when actually executing&quot;&quot;&quot;</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;running&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">result</span>
+
+            <span class="c1"># Keep status as pending until the task actually starts running</span>
+            <span class="c1"># execute wrapped function on this executor and wait for result</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">run_with_status_update</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">)</span>
+                <span class="c1"># Try to cleanup each dependency (will only cleanup if all dependent tasks are done)</span>
+                <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+                    <span class="n">_try_cleanup_dependency</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_root_call</span><span class="p">:</span>
+                    <span class="n">print_execution_summary</span><span class="p">(</span><span class="n">_tasks</span><span class="p">,</span> <span class="n">_start_time</span><span class="p">,</span> <span class="n">log_file</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">result</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;error_msg&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="c1"># Try to cleanup each dependency even if the task failed</span>
+                <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+                    <span class="n">_try_cleanup_dependency</span><span class="p">(</span><span class="n">dep</span><span class="p">)</span>
+                <span class="n">print_execution_summary</span><span class="p">(</span><span class="n">_tasks</span><span class="p">,</span> <span class="n">_start_time</span><span class="p">,</span> <span class="n">log_file</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task </span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2"> failed with error </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Task is already done, mark as skipped if status is pending</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;pending&quot;</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;skipped&quot;</span><span class="p">)</span>
+            <span class="c1"># print_execution_summary(_tasks, _start_time)</span>
+    
+    <span class="n">print_execution_summary</span><span class="p">(</span><span class="n">_tasks</span><span class="p">,</span> <span class="n">_start_time</span><span class="p">,</span> <span class="n">log_file</span><span class="p">,</span> <span class="n">finished</span><span class="o">=</span><span class="n">is_root_call</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="TaskList">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.TaskList">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskList</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deps</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a Task that depends on a list of dependencies (other tasks)</span>
+
+<span class="sd">        Ex: TaskList([MyTask1(), MyTask2()])</span>
+<span class="sd">        depends on [</span>
+<span class="sd">            MyTask1(),</span>
+<span class="sd">            MyTask2(),</span>
+<span class="sd">        ]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deps</span> <span class="o">=</span> <span class="n">deps</span>
+
+<div class="viewcode-block" id="TaskList.dependencies">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.TaskList.dependencies">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deps</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TaskProduct">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.TaskProduct">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskProduct</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">,</span> <span class="n">others</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a Task that depends on the cartesian product of</span>
+<span class="sd">        the given arguments.</span>
+<span class="sd">        The `other` arguments are passed directly to the class.</span>
+
+<span class="sd">        cls: a class that inherits from Task</span>
+
+<span class="sd">        Ex: TaskProduct(MyTask, {</span>
+<span class="sd">            &#39;a&#39;: [1, 2],</span>
+<span class="sd">            &#39;b&#39;: [3, 4],</span>
+<span class="sd">        })</span>
+<span class="sd">        depends on [</span>
+<span class="sd">            MyTask(a=1, b=3),</span>
+<span class="sd">            MyTask(a=1, b=4),</span>
+<span class="sd">            MyTask(a=2, b=3),</span>
+<span class="sd">            MyTask(a=2, b=4),</span>
+<span class="sd">        ]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cls</span> <span class="o">=</span> <span class="bp">cls</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">others</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">others</span> <span class="o">=</span> <span class="n">others</span>
+
+<div class="viewcode-block" id="TaskProduct.dependencies">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.TaskProduct.dependencies">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cls</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">others</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">product_dict</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)]</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_ref_count_initialized</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ensure that a task&#39;s immediate dependencies have reference counts initialized.</span>
+<span class="sd">    This is called lazily when a task is about to be processed.</span>
+<span class="sd">    Only initializes the immediate dependencies, not their sub-dependencies.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="s1">&#39;_ref_count_initialized&#39;</span><span class="p">):</span>
+        <span class="c1"># Mark this task as having its dependencies processed</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">_ref_count_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="n">deps</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="n">dependencies</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+            <span class="c1"># Initialize ref count for dependency if not already done</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="s1">&#39;_ref_count&#39;</span><span class="p">):</span>
+                <span class="n">dep</span><span class="o">.</span><span class="n">_ref_count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="c1"># Count this task as a dependent of the dependency</span>
+            <span class="n">dep</span><span class="o">.</span><span class="n">_ref_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_try_cleanup_dependency</span><span class="p">(</span><span class="n">dep</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Try to cleanup a dependency. Only cleanup if all tasks that depend on it have finished.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="s1">&#39;_ref_count&#39;</span><span class="p">):</span>
+        <span class="n">dep</span><span class="o">.</span><span class="n">_ref_count</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">dep</span><span class="o">.</span><span class="n">_ref_count</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># All dependent tasks have finished, safe to cleanup</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="s1">&#39;cleanup&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="s1">&#39;cleanup&#39;</span><span class="p">)):</span>
+                <span class="n">dep</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="sample">
+<a class="viewcode-back" href="../../../core.process.deptree.html#core.process.deptree.sample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a sample Product for demonstration purposes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Level1</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading level1 </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        
+    <span class="k">class</span><span class="w"> </span><span class="nc">Level2</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="c1"># each Level2 depends on a single Level1</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">Level1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating level2 </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Composite</span><span class="p">(</span><span class="n">Task</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="c1"># list required level 2 products for current composite</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">Level2</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Generating monthly composite </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> from &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dependencies</span><span class="p">())</span><span class="si">}</span><span class="s2"> dependencies.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Composite</span><span class="p">(</span><span class="s2">&quot;202410&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    python -m core.process.deptree sync</span>
+<span class="sd">    python -m core.process.deptree executor</span>
+<span class="sd">    python -m core.process.deptree prefect</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">composite</span> <span class="o">=</span> <span class="n">sample</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;sync&#39;</span><span class="p">:</span>
+        <span class="n">gen_sync</span><span class="p">(</span><span class="n">composite</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;executor&#39;</span><span class="p">:</span>
+        <span class="n">gen_executor</span><span class="p">(</span>
+            <span class="n">composite</span><span class="p">,</span>
+            <span class="n">executors</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Level1&quot;</span><span class="p">:</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="mi">2</span><span class="p">)},</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="c1"># default_executor=get_htcondor_client(),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">core.deptree_prefect</span><span class="w"> </span><span class="kn">import</span> <span class="n">gen_prefect</span>
+        <span class="k">if</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;prefect&#39;</span><span class="p">:</span>
+            <span class="n">task_runner</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;prefect_dask&#39;</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">prefect_dask</span><span class="w"> </span><span class="kn">import</span> <span class="n">DaskTaskRunner</span>
+            <span class="n">task_runner</span> <span class="o">=</span> <span class="n">DaskTaskRunner</span>
+        <span class="k">elif</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;prefect_condor&#39;</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">core.condor</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_htcondor_runner</span>
+            <span class="n">task_runner</span><span class="o">=</span><span class="n">get_htcondor_runner</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid mode </span><span class="si">{</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">gen_prefect</span><span class="p">(</span>
+            <span class="n">composite</span><span class="p">,</span>
+            <span class="n">task_runner</span><span class="o">=</span><span class="n">task_runner</span><span class="p">,</span>
+            <span class="c1"># concurrency_limit={&quot;Level1&quot;: 2},</span>
+        <span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
