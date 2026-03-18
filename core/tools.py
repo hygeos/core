@@ -946,8 +946,8 @@ class Var(str):
                 merged_attrs[key] = self_val
             elif other_val is not None:
                 merged_attrs[key] = other_val
-        merged_kwargs.update(merged_attrs)
-        return Var(self, **merged_kwargs)
+
+        return Var(self, attrs=merged_attrs, **merged_kwargs)
 
     def conform(self, da: xr.DataArray, transpose: bool = False) -> xr.DataArray:
         """
