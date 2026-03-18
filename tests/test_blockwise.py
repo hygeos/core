@@ -87,6 +87,10 @@ class Aerosol(BlockProcessor):
         block["rho_w"] = xr.zeros_like(block.rho_rc, dtype="float32")
 
 
+class Noop(BlockProcessor):
+    def process_block(self, block: xr.Dataset) -> None:
+        pass
+
 def create_sample_dataset(
     small: bool = True
 ) -> xr.Dataset:
@@ -349,14 +353,6 @@ def test_blockwise_dtype_error():
     with pytest.raises(TypeError):
         BuggedInitProcessor().map_blocks(ds).compute()
 
-def test_blockwise_empty_output():
-    # Empty processing, no output variable: raise ValueError
-    ds = create_sample_dataset()
-    with pytest.raises(ValueError):
-        CompoundProcessor(
-            [InitProcessor()], outputs="named", outputs_names=[]
-        ).map_blocks(ds)
-
 def test_blockwise_wrong_order():
     # Apply modules in the wrong order
     ds = create_sample_dataset()
@@ -471,6 +467,14 @@ def test_blockwise_partial(fail: bool, kwargs: dict):
         res.compute()
 
 
+def test_blockwise_noop():
+    """
+    Test a BlockProcessor that does nothing
+    """
+    ds = create_sample_dataset()
+    Noop().map_blocks(ds)
+
+
 def test_processor_describe():
     Aerosol().describe()
 
@@ -480,6 +484,7 @@ def test_compound_describe():
         InitProcessor(),
         Cloudmask(),
         InterpolatorFactory(),
+        Noop(),
         Rayleigh(),
         Aerosol(),
     ]).describe()

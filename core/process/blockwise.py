@@ -495,8 +495,7 @@ class BlockProcessor(ABC):
         # Check that there are output variables
         output_vars = self.output_vars()
         if not output_vars:
-            raise ValueError('Missing output variables. Make sure to define at least '
-                             f'one output or created variable ({self}).')
+            return ds[[]]
 
         # take a subset of the input
         sub = ds[self.input_vars() + self.modified_vars()]
