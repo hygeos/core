@@ -304,6 +304,15 @@ def test_interp_noop():
     ).map_blocks(ds)
     ret.compute()
 
+def test_interp_commondims():
+    """
+    Test common dimensions between interpolated coords and interpolating variables
+    """
+    ds = create_sample_dataset()
+    ds = ds.rename(rho_toa='WV', band='pressure', latitude='p')[['WV', 'p']]
+    res = Interpolator(ds[['WV']], pressure=Linear('p', bounds='clip')).map_blocks(ds)
+    res.compute()
+
 
 def test_interp_real_case2():
     '''

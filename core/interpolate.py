@@ -127,6 +127,10 @@ class Interpolator(BlockProcessor):
             if (dim not in coords) and (dim in self.data.coords):
                 coords[dim] = self.data.coords[dim]
 
+        # Order of coordinate dims as they appear in the index arrays
+        # (global_out_dims filtered to dims present in block_sub)
+        coord_dims_ordered = [d for d in global_out_dims if d in block_sub.dims]
+
         # var loop
         for var in self.data:
 
@@ -142,6 +146,15 @@ class Interpolator(BlockProcessor):
                 for k in self.indexers
             }
 
+            # Shared dims: non-interpolated dims of this variable that are also
+            # dims of the coordinate variables. These need element-wise range
+            # indexing instead of slice(None) to avoid broadcasting all values.
+            shared_dims_info = {
+                d: coord_dims_ordered.index(d)
+                for d in self.data[var].dims
+                if d not in self.indexers and d in coord_dims_ordered
+            }
+
             # get the shapes for broadcasting each weight against the output dimensions
             result = interp_var(
                 self.data[var],
@@ -149,6 +162,7 @@ class Interpolator(BlockProcessor):
                 w_shape,
                 out_dims[var],
                 current_dims,
+                shared_dims_info,
             )
 
             block[var] = xr.DataArray(
@@ -165,14 +179,20 @@ def interp_var(
     w_shape: dict,
     current_out_dims: list,
     current_dims: list,
+    shared_dims_info: dict | None = None,
 ) -> NDArray[Any]:
     """
     Interpolate a single variable `da`, with indices and weights
+
+    shared_dims_info maps dim names that are shared between `da` and the
+    coordinate variables to their position in the index arrays. These dims
+    need element-wise range indexing instead of slice(None).
     """
     # cartesian product of the combination of lower and upper indices (in case of
     # linear interpolation) for each dimension
     result = None
     data_values = da.values
+    shared_dims_info = shared_dims_info or {}
 
     current_indices_weights = {
         k: v for k, v in indices_weights.items() if k in da.dims
@@ -189,7 +209,24 @@ def interp_var(
             for dim in iw
         ]
         w = reduce(lambda x, y: x*y, weights)
-        keys = [(iw[dim][0] if dim in iw else slice(None)) for dim in da.dims]
+        # Build indexing keys for each dim of da:
+        # - interpolated dims: use the fancy index from iw
+        # - shared dims (also coord dims): use element-wise range index to
+        #   avoid selecting all elements along that dim
+        # - other dims: slice(None) to keep all elements
+        any_idx = iw[next(iter(iw))][0]
+        keys = []
+        for dim in da.dims:
+            if dim in iw:
+                keys.append(iw[dim][0])
+            elif dim in shared_dims_info:
+                pos = shared_dims_info[dim]
+                size = any_idx.shape[pos] if pos < len(any_idx.shape) else 1
+                n_dims = len(any_idx.shape)
+                shape = tuple(size if i == pos else 1 for i in range(n_dims))
+                keys.append(np.arange(size).reshape(shape))
+            else:
+                keys.append(slice(None))
         term = data_values[tuple(keys)] * w
         if result is None:
             result = term
@@ -968,7 +1005,6 @@ def determine_output_dimensions(data: xr.DataArray, mapping: dict, coordinates: 
         A list of dimension names for the output DataArray, in the order they will appear.
     """
     out_dims = []
-    non_interpolated_dims = []
     # dimensions introduced by the coords (aligned, to preserve their relative order)
     dims_coords = align_lists(
         [coordinates[v].dims for k, v in mapping.items() if k in data.dims]
@@ -978,14 +1014,15 @@ def determine_output_dimensions(data: xr.DataArray, mapping: dict, coordinates: 
         if dim in mapping:
             # dimension is interpolated: replace it (once) with dims_coords
             if not dims_coords_added:
-                out_dims.extend(dims_coords)
+                for d in dims_coords:
+                    if d not in out_dims:
+                        out_dims.append(d)
                 dims_coords_added = True
         else:
             # dimension is not interpolated: it remains as-is
-            out_dims.append(dim)
-            non_interpolated_dims.append(dim)
-
-    # Detect collision between coordinate dimensions and non-interpolated dimensions
-    assert set(dims_coords).isdisjoint(set(non_interpolated_dims))
+            # (skip if already present from dims_coords, e.g. when coord vars
+            # share dimensions with the data being interpolated)
+            if dim not in out_dims:
+                out_dims.append(dim)
 
     return out_dims
