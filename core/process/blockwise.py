@@ -70,6 +70,8 @@ class BlockProcessor(ABC):
         map_blocks method (optional)
     - created_dims: Dictionary of new dimensions to be created by this processor (optional)
     - global_attrs: Dictionary of the global attributes set by this processor (optional)
+    - initialize: Method that gets called before the map_block
+    - finalize: Method that gets called after the map_block
 
     Examples
     --------
@@ -409,6 +411,46 @@ class BlockProcessor(ABC):
                 )
 
 
+    def initialize(self, ds: xr.Dataset) -> xr.Dataset:
+        """
+        Called once before `map_blocks` on the full (non-chunked) dataset.
+
+        Override to perform dataset-level setup such as adding coordinates,
+        computing scalar parameters, or modifying global attributes before
+        block-wise processing begins.
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            Input dataset, prior to block processing.
+
+        Returns
+        -------
+        xr.Dataset
+            Potentially modified dataset passed to `xr.map_blocks`.
+        """
+        return ds
+
+    def finalize(self, ds: xr.Dataset) -> xr.Dataset:
+        """
+        Called once after `map_blocks` on the full (lazy) result dataset.
+
+        Override to perform dataset-level post-processing such as updating
+        global attributes, dropping temporary variables, or applying
+        dataset-wide corrections after block-wise processing completes.
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            Lazy result dataset returned by `xr.map_blocks`.
+
+        Returns
+        -------
+        xr.Dataset
+            Potentially modified result dataset.
+        """
+        return ds
+
     def map_blocks(
         self,
         ds: xr.Dataset,
@@ -484,7 +526,14 @@ class BlockProcessor(ABC):
         # only the input data, args, and kwargs — not the function/method itself).
         sub.attrs['_processor_token'] = tokenize(self)
 
-        return xr.map_blocks(self.process_and_validate, sub, template=template)
+        # Call "initialize"
+        sub = self.initialize(sub)
+
+        # Call "map_blocks"
+        result = xr.map_blocks(self.process_and_validate, sub, template=template)
+
+        # Call "finalize"
+        return self.finalize(result)
 
 
 class CompoundProcessor(BlockProcessor):
@@ -753,6 +802,18 @@ class CompoundProcessor(BlockProcessor):
                 else:
                     assert merged_attrs[key] == value
         return merged_attrs
+
+    def initialize(self, ds: xr.Dataset) -> xr.Dataset:
+        """Call `initialize` on each child processor in order."""
+        for processor in self.list_processors:
+            ds = processor.initialize(ds)
+        return ds
+
+    def finalize(self, ds: xr.Dataset) -> xr.Dataset:
+        """Call `finalize` on each child processor in order."""
+        for processor in self.list_processors:
+            ds = processor.finalize(ds)
+        return ds
 
     def describe(self) -> None:
         """
