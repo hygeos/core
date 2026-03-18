@@ -87,6 +87,18 @@ class Interpolator(BlockProcessor):
                 
         return cdims
 
+    def initialize(self, ds: xr.Dataset) -> xr.Dataset:
+        # Check that shared (non-interpolated) dimensions have consistent coordinates
+        for dim in self.data.dims:
+            if dim not in self.indexers and dim in ds.dims:
+                if dim in self.data.coords and dim in ds.coords:
+                    if not np.array_equal(self.data.coords[dim].values, ds.coords[dim].values):
+                        raise ValueError(
+                            f"Shared dimension '{dim}' has inconsistent coordinates "
+                            f"between the interpolation data and the input dataset."
+                        )
+        return ds
+
     def process_block(self, block: xr.Dataset):
         """
         ex: block is a xr.Dataset with
