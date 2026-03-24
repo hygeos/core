@@ -70,8 +70,8 @@ class BlockProcessor(ABC):
         map_blocks method (optional)
     - created_dims: Dictionary of new dimensions to be created by this processor (optional)
     - global_attrs: Dictionary of the global attributes set by this processor (optional)
-    - initialize: Method that gets called before the map_block
-    - finalize: Method that gets called after the map_block
+    - auto_template: Method that returns whether automatic templating should be activated (optional)
+    - check: Method to validate the input dataset before processing (optional)
 
     Examples
     --------
@@ -245,8 +245,7 @@ class BlockProcessor(ABC):
                     flag_mappings[var] = var.flags
             self._flag_mappings = flag_mappings
         return self._flag_mappings
-
-    @abstractmethod
+    
     def process_block(self, block: xr.Dataset) -> None:
         """
         Process a single block of data (in place).
@@ -304,25 +303,34 @@ class BlockProcessor(ABC):
             for k, v in self.global_attrs().items():
                 print(f"  {k}: {v}")
 
+    def check(self, ds: xr.Dataset) -> None:
+        """
+        Validate the input dataset for this processor.
 
-    def has_output_info(self) -> bool:
+        This method can be overridden by subclasses to perform custom validation
+        on the input dataset before processing. By default, it does nothing.
+
+        Parameters
+        ----------
+        ds : xr.Dataset
+            The input dataset to validate.
         """
-        Returns whether all output variables contains a description of their dtype and
-        dimensions (in method `created_vars`). Otherwise, the `process_block` will be
-        run on mocked up data to determine what the output looks like (see xr.map_blocks).
-        """
-        _has_output_info = True
-        for v in self.created_vars():
-            if v.dtype is None:
-                _has_output_info = False
-            if v.dims is None and v.dims_like is None:
-                _has_output_info = False
-        return _has_output_info
+        pass
         
+    def auto_template(self) -> bool:
+        """
+        Returns whether "automatic templating" should be activated
+        
+        Automatic templating calls process_block on mocked up (empty) data to determine
+        the output variables types and dimensions.
+        
+        auto_template is disactivated by default.
+        """
+        return False
     
     def build_template(self, ds_template: xr.Dataset):
         """
-        Modified a template dataset for xr.map_blocks operations.
+        Modifies a template dataset for xr.map_blocks operations.
 
         This method builds a template dataset that defines the structure and metadata
         of the output dataset after processing. The template includes:
@@ -344,32 +352,26 @@ class BlockProcessor(ABC):
         None
             The input dataset is modified in place.
         """
+        self.check(ds_template)
+        
         # Add created vars to the template
-        if self.has_output_info():
+        if not self.auto_template():
             for var in self.created_vars():
                 ds_template[str(var)] = var.to_template(
                     ds_template, new_dims=self.created_dims()
                 )
         else:
-            # Apply process_block on mocked up data to assess the dtype and dimensions
-            # of created variables
+            # auto_template mode: apply process_block on mocked up data to assess the
+            # dtype and dimensions # of created variables
             meta: xr.Dataset = make_meta(ds_template) # type: ignore
             self.process_block(meta)
             for var in self.created_vars():
                 ds_template[str(var)] = var.to_template(
                     ds_template, meta, new_dims=self.created_dims()
                 )
-
-        # Register flags for all variables that have been defined
-        flag_mappings = self.get_flag_mappings()
-        for var, flags_dict in flag_mappings.items():
-            var_name = str(var)
-            for flag_name, flag_value in flags_dict.items():
-                raiseflag(ds_template[var_name], flag_name, flag_value)
-
-        # Update global attributes from all processors
-        ds_template.attrs.update(self.global_attrs())
-
+        
+        # Set all global and variable attributes
+        self.set_attributes(ds_template)
 
     def process_and_validate(self, block: xr.Dataset) -> xr.Dataset:
         """
@@ -410,47 +412,28 @@ class BlockProcessor(ABC):
                     f"with dims {actual_var.dims}, expected {var_dims}"
                 )
 
-
-    def initialize(self, ds: xr.Dataset) -> xr.Dataset:
+    def set_attributes(self, ds: xr.Dataset):
         """
-        Called once before `map_blocks` on the full (non-chunked) dataset.
-
-        Override to perform dataset-level setup such as adding coordinates,
-        computing scalar parameters, or modifying global attributes before
-        block-wise processing begins.
-
-        Parameters
-        ----------
-        ds : xr.Dataset
-            Input dataset, prior to block processing.
-
-        Returns
-        -------
-        xr.Dataset
-            Potentially modified dataset passed to `xr.map_blocks`.
+        Set attributes defined in created/modified vars in `ds`
+        
+        This method is called:
+        - During the template creation
+        - After each execution of process_block (in process_and_validate)
         """
-        return ds
+        # Set all variable attributes
+        for var in self.modified_vars() + self.created_vars():
+            ds[var].attrs.update(var.attrs)
 
-    def finalize(self, ds: xr.Dataset) -> xr.Dataset:
-        """
-        Called once after `map_blocks` on the full (lazy) result dataset.
+        # Register flags for all variables that have been defined
+        flag_mappings = self.get_flag_mappings()
+        for var, flags_dict in flag_mappings.items():
+            var_name = str(var)
+            for flag_name, flag_value in flags_dict.items():
+                raiseflag(ds[var_name], flag_name, flag_value)
 
-        Override to perform dataset-level post-processing such as updating
-        global attributes, dropping temporary variables, or applying
-        dataset-wide corrections after block-wise processing completes.
-
-        Parameters
-        ----------
-        ds : xr.Dataset
-            Lazy result dataset returned by `xr.map_blocks`.
-
-        Returns
-        -------
-        xr.Dataset
-            Potentially modified result dataset.
-        """
-        return ds
-
+        # Update global attributes
+        ds.attrs.update(self.global_attrs())
+        
     def map_blocks(
         self,
         ds: xr.Dataset,
@@ -525,14 +508,10 @@ class BlockProcessor(ABC):
         # only the input data, args, and kwargs — not the function/method itself).
         sub.attrs['_processor_token'] = tokenize(self)
 
-        # Call "initialize"
-        sub = self.initialize(sub)
-
         # Call "map_blocks"
         result = xr.map_blocks(self.process_and_validate, sub, template=template)
 
-        # Call "finalize"
-        return self.finalize(result)
+        return result
 
 
 class CompoundProcessor(BlockProcessor):
@@ -802,18 +781,6 @@ class CompoundProcessor(BlockProcessor):
                     assert merged_attrs[key] == value
         return merged_attrs
 
-    def initialize(self, ds: xr.Dataset) -> xr.Dataset:
-        """Call `initialize` on each child processor in order."""
-        for processor in self.list_processors:
-            ds = processor.initialize(ds)
-        return ds
-
-    def finalize(self, ds: xr.Dataset) -> xr.Dataset:
-        """Call `finalize` on each child processor in order."""
-        for processor in self.list_processors:
-            ds = processor.finalize(ds)
-        return ds
-
     def describe(self) -> None:
         """
         Print a detailed description of the compound processor.
@@ -866,7 +833,7 @@ class CompoundProcessor(BlockProcessor):
         df = pd.DataFrame(table_data)
         ascii_table(df).print()
 
-    def process_block(self, block: xr.Dataset):
+    def process_and_validate(self, block: xr.Dataset) -> xr.Dataset:
         """
         Process a single block of data by applying all required processors, hereby
         implementing the compound processor.
@@ -882,6 +849,15 @@ class CompoundProcessor(BlockProcessor):
         """
         for p in self.get_required_processors():
             p.process_block(block)
+            
+            # validate outputs
+            p.validate(block)
+            
+            # set attributes
+            p.set_attributes(block)
+        
+        # Return only output variables
+        return block[self.output_vars()]
 
     def build_template(self, ds_template: xr.Dataset):
         """

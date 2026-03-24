@@ -872,7 +872,6 @@ class Var(str):
             dims=actual_dims,
             name=self,
             coords=coords,
-            attrs=self.attrs,
         )
 
     def merge_with(self, other: "Var") -> "Var":

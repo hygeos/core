@@ -49,12 +49,19 @@ def InterpolatorFactory() -> BlockProcessor:
 
 class Rayleigh(BlockProcessor):
     def input_vars(self) -> List[Var]:
-        return [Var("rho_toa")]
+        return [Var("rho_toa"), Var("ozone")]
 
     def created_vars(self) -> List[Var]:
         return [Var("rho_rc")]
+    
+    def auto_template(self) -> bool:
+        return True
+    
+    def check(self, ds: xr.Dataset):
+        assert ds.ozone.units == 'DU'
 
     def process_block(self, block: xr.Dataset):
+        assert block.ozone.units == 'DU'
         block["rho_rc"] = xr.zeros_like(block.rho_toa, dtype="float32")
 
 class Aerosol(BlockProcessor):
