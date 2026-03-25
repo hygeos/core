@@ -246,6 +246,7 @@ class BlockProcessor(ABC):
             self._flag_mappings = flag_mappings
         return self._flag_mappings
     
+    @abstractmethod
     def process_block(self, block: xr.Dataset) -> None:
         """
         Process a single block of data (in place).
