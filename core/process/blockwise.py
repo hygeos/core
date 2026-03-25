@@ -385,6 +385,9 @@ class BlockProcessor(ABC):
         # validate outputs
         self.validate(block)
 
+        # set attributes
+        self.set_attributes(block)
+
         # Return only output variables
         return block[self.output_vars()] 
     
@@ -833,6 +836,10 @@ class CompoundProcessor(BlockProcessor):
         df = pd.DataFrame(table_data)
         ascii_table(df).print()
 
+    def process_block(self, block: xr.Dataset) -> None:
+        for p in self.get_required_processors():
+            p.process_block(block)
+    
     def process_and_validate(self, block: xr.Dataset) -> xr.Dataset:
         """
         Process a single block of data by applying all required processors, hereby
@@ -848,14 +855,8 @@ class CompoundProcessor(BlockProcessor):
             The xarray Dataset representing the block to be processed.
         """
         for p in self.get_required_processors():
-            p.process_block(block)
+            p.process_and_validate(block)
             
-            # validate outputs
-            p.validate(block)
-            
-            # set attributes
-            p.set_attributes(block)
-        
         # Return only output variables
         return block[self.output_vars()]
 
