@@ -1,6 +1,6 @@
 [project]
 name = "core"
-version = "1.2.1"
+version = "1.2.2"
 description = "Common Operations for Robust Engineering"
 authors = [
     {name = "François Steinmetz", email = "fs@hygeos.com"},
@@ -8,7 +8,7 @@ authors = [
     {name = "Nathan Capon", email = "nathan.capon@hygeos.com"}
 ]
 requires-python = ">=3.10"
-dependencies = ["tqdm", "xarray", "dask", "numba", "h5netcdf", "python-dotenv", "toml", "lxml"]
+dependencies = ["tqdm", "xarray", "dask", "h5netcdf", "python-dotenv", "toml", "lxml", "scipy"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -41,7 +41,7 @@ matplotlib-base = "*"
 lxml = "*"
 sphinx = "*"
 ipykernel = "*"
-numba = "*"
+# numba = "*"
 
 [tool.pixi.feature.hyp.dependencies]
 [tool.pixi.feature.sys.dependencies]
