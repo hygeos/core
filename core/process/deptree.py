@@ -288,6 +288,15 @@ def print_execution_summary(
         log.disp(msg)
         
 
+def run_with_status_update(task, verbose):
+    """Wrapper function that sets status to running when actually executing"""
+    setattr(task, "status", "running")
+    if verbose:
+        log.info(f"Generating {task}...")
+    result = task.run()
+    return result
+
+
 def gen_executor(
     task: Task,
     executors: dict | None = None,
@@ -403,17 +412,9 @@ def gen_executor(
             else:
                 executor = default_executor
 
-            def run_with_status_update():
-                """Wrapper function that sets status to running when actually executing"""
-                setattr(task, "status", "running")
-                if verbose:
-                    log.info(f"Generating {task}...")
-                result = task.run()
-                return result
-
             # Keep status as pending until the task actually starts running
             # execute wrapped function on this executor and wait for result
-            future = executor.submit(run_with_status_update)
+            future = executor.submit(run_with_status_update, task, verbose)
             try:
                 result = future.result()
                 setattr(task, "status", "success")
