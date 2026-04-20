@@ -12,6 +12,12 @@ from pandas.testing import assert_frame_equal
 from core.files.save import to_netcdf
 from core.files.fileutils import filegen, safe_move
 
+from core import log
+import hashlib
+import re
+
+
+
 
 def cachefunc(cache_file: Path|str,
               reader: Callable,
@@ -219,3 +225,59 @@ def cache_dataset(cache_file: Path|str,
         reader=reader,
         writer=writer,
     )
+
+
+
+
+# pre-compile the regex pattern
+_MEMORY_ADDRESS_PATTERN = re.compile(r"<.*?\bat\b\s+0x[0-9a-fA-F]+>")
+
+def hashparams(**kwargs) -> str:
+    """
+    Generates a deterministic hash based on arguments.
+    Simplifies caching based on inputs
+    
+    Args:
+        **kwargs: Keyword arguments only (positional args are not allowed).
+
+    Returns:
+        str: 16-character hexadecimal hash.
+    """
+    params_str_parts = []
+    memory_footprint_detected = []
+    
+    # --------------------------------------------------------------------------
+    # NOTE: Disabled positional args to make the function more deterministic
+    #       Users are required to explicit keys of unnamed parameters
+    # --------------------------------------------------------------------------
+    # Hash positional args with index-based keys
+    # for i, v in enumerate(args):
+    #     value_repr = repr(v)
+    #     key = f"arg{i}"
+    #     params_str_parts.append(f"{key}:{value_repr}")
+    #     
+    #     if _MEMORY_ADDRESS_PATTERN.search(value_repr):
+    #         memory_footprint_detected.append(f"- {key} repr: {value_repr}")
+    # --------------------------------------------------------------------------
+    
+    # Hash keyword args with their names
+    for k, v in sorted(kwargs.items()):
+        value_repr = repr(v)
+        params_str_parts.append(f"{k}:{value_repr}")
+        
+        if _MEMORY_ADDRESS_PATTERN.search(value_repr):
+            memory_footprint_detected.append(f"- {k} repr: {value_repr}")
+    
+    # Error messaging for cache misses caused by memory addresses
+    if memory_footprint_detected:
+        offenders_list = "\n".join(memory_footprint_detected)
+        log.error(
+            f"Volatile information detected in cache parameters:\n"
+            f"{offenders_list}\n"
+            "This will cause cache misses because memory addresses change every run."
+        )
+    
+    params_str = "_".join(params_str_parts)
+    hash = hashlib.blake2b(params_str.encode(), digest_size=16).hexdigest()
+    
+    return hash
