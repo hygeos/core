@@ -232,34 +232,30 @@ def cache_dataset(cache_file: Path|str,
 # pre-compile the regex pattern
 _MEMORY_ADDRESS_PATTERN = re.compile(r"<.*?\bat\b\s+0x[0-9a-fA-F]+>")
 
-def hashparams(**kwargs) -> str:
+def hashparams(*args, hash_digest_size=16, **kwargs) -> str:
     """
     Generates a deterministic hash based on arguments.
     Simplifies caching based on inputs
-    
+
     Args:
-        **kwargs: Keyword arguments only (positional args are not allowed).
+        *args: Positional arguments (hashed with index-based keys).
+        **kwargs: Keyword arguments.
 
     Returns:
-        str: 16-character hexadecimal hash.
+        str: 16-character hexadecimal hash. (or specified digest size)
     """
     params_str_parts = []
     memory_footprint_detected = []
-    
-    # --------------------------------------------------------------------------
-    # NOTE: Disabled positional args to make the function more deterministic
-    #       Users are required to explicit keys of unnamed parameters
-    # --------------------------------------------------------------------------
+
     # Hash positional args with index-based keys
-    # for i, v in enumerate(args):
-    #     value_repr = repr(v)
-    #     key = f"arg{i}"
-    #     params_str_parts.append(f"{key}:{value_repr}")
-    #     
-    #     if _MEMORY_ADDRESS_PATTERN.search(value_repr):
-    #         memory_footprint_detected.append(f"- {key} repr: {value_repr}")
-    # --------------------------------------------------------------------------
-    
+    for i, v in enumerate(args):
+        value_repr = repr(v)
+        key = f"arg{i}"
+        params_str_parts.append(f"{key}:{value_repr}")
+
+        if _MEMORY_ADDRESS_PATTERN.search(value_repr):
+            memory_footprint_detected.append(f"- {key} repr: {value_repr}")
+
     # Hash keyword args with their names
     for k, v in sorted(kwargs.items()):
         value_repr = repr(v)
@@ -278,6 +274,6 @@ def hashparams(**kwargs) -> str:
         )
     
     params_str = "_".join(params_str_parts)
-    hash = hashlib.blake2b(params_str.encode(), digest_size=16).hexdigest()
+    hash = hashlib.blake2b(params_str.encode(), digest_size=hash_digest_size).hexdigest()
     
     return hash
