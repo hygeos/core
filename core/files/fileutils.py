@@ -248,12 +248,24 @@ class filegen:
 
 
 def get_git_commit():
+    """
+    Returns the current git commit hash, or a placeholder if it cannot be obtained.
+    Captures both stdout and stderr to handle cases where the command fails (e.g., not a git repository).
+    """
     try:
-        return subprocess.check_output(
-            ['git', 'describe', '--always', '--dirty']).decode()[:-1]
+        cmd = "git describe --always --dirty"
+        res = subprocess.run(cmd, shell=True, capture_output=True)
+        std = res.stdout.decode().strip()
+        err = res.stderr.decode().strip()
+        
+        if "not a git repository" in err.lower():
+            return '<could not get git commit>'
+        
+        return std
+        
     except subprocess.CalledProcessError:
         return '<could not get git commit>'
-
+        
 
 def mdir(directory: Union[Path,str],
          mdir_filename: str='mdir.json',
