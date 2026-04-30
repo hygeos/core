@@ -3,8 +3,9 @@ import pytest
 from core.files import cache
 from xarray.tutorial import open_dataset
 from tempfile import TemporaryDirectory
-
-
+import matplotlib.pyplot as plt
+from core.tools import only
+from core.tests.conftest import savefig
 
 
 @pytest.mark.parametrize('cache_function,var', [
@@ -52,6 +53,53 @@ def test_cache_pickle_inputs_modes():
             result = cache.cache_pickle(cache_file, inputs=mode)(fn)(99)
             assert result == [1, 2, 3]
 
+
+def test_cache_figure(request):
+    with TemporaryDirectory() as tmpdir:
+        
+        def my_figure(x):
+            fig, ax = plt.subplots()
+            ax.plot([0, x])
+            ax.set_title(f'x: {x}')
+            return fig
+        
+        cache_dir = Path(tmpdir) / "figures"
+        
+        # first call: creates the file
+        cache.cache_figure(cache_dir)(my_figure)(3)
+        savefig(request)
+        cache_file = only(list(cache_dir.glob('*.png')))
+        assert cache_file.name.startswith("my_figure_")
+        
+        # second call with same args: returns the same cached path
+        cache.cache_figure(cache_dir)(my_figure)(3)
+        savefig(request)
+        
+        # different args: produces a different file
+        cache.cache_figure(cache_dir)(my_figure)(99)
+        savefig(request)
+        assert len(list(cache_dir.glob('*.png'))) == 2
+        
+    plt.close("all")
+
+def test_cache_figure_without_params():
+    with TemporaryDirectory() as tmpdir:
+        
+        def my_figure():
+            fig, ax = plt.subplots()
+            ax.plot([0, 1])
+            return fig
+        
+        cache_dir = Path(tmpdir) / "figures"
+        
+        # first call: creates the file
+        cache.cache_figure(cache_dir)(my_figure)()
+        cache_file = only(list(cache_dir.glob('*.png')))
+        assert cache_file.name == "my_figure.png"
+        
+    plt.close("all")
+
+
 @pytest.mark.parametrize('extension', ["pickle", "csv"])
 def test_cache_dataframe(extension):
     def my_function():
@@ -75,7 +123,6 @@ def test_cache_dataset():
             chunks={'lat': 10, 'lon': 10},
         )(my_function)()
         assert a == my_function()
-    
     
 class TestHashParams:
     """Tests for the hashparams function."""
