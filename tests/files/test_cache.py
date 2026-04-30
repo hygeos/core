@@ -54,50 +54,64 @@ def test_cache_pickle_inputs_modes():
             assert result == [1, 2, 3]
 
 
-def test_cache_figure(request):
-    with TemporaryDirectory() as tmpdir:
-        
-        def my_figure(x):
-            fig, ax = plt.subplots()
-            ax.plot([0, x])
-            ax.set_title(f'x: {x}')
-            return fig
-        
-        cache_dir = Path(tmpdir) / "figures"
-        
-        # first call: creates the file
-        cache.cache_figure(cache_dir)(my_figure)(3)
-        savefig(request)
-        cache_file = only(list(cache_dir.glob('*.png')))
-        assert cache_file.name.startswith("my_figure_")
-        
-        # second call with same args: returns the same cached path
-        cache.cache_figure(cache_dir)(my_figure)(3)
-        savefig(request)
-        
-        # different args: produces a different file
-        cache.cache_figure(cache_dir)(my_figure)(99)
-        savefig(request)
-        assert len(list(cache_dir.glob('*.png'))) == 2
-        
-    plt.close("all")
+class Test_cache_figure:
+    
+    @staticmethod
+    def my_figure():
+        fig, ax = plt.subplots()
+        ax.plot([0, 1])
+        return fig
 
-def test_cache_figure_without_params():
-    with TemporaryDirectory() as tmpdir:
-        
-        def my_figure():
-            fig, ax = plt.subplots()
-            ax.plot([0, 1])
-            return fig
-        
-        cache_dir = Path(tmpdir) / "figures"
-        
-        # first call: creates the file
-        cache.cache_figure(cache_dir)(my_figure)()
-        cache_file = only(list(cache_dir.glob('*.png')))
-        assert cache_file.name == "my_figure.png"
-        
-    plt.close("all")
+    def test_cache_philosophy(self, request):
+        with TemporaryDirectory() as tmpdir:
+            
+            def my_figure(x):
+                fig, ax = plt.subplots()
+                ax.plot([0, x])
+                ax.set_title(f'x: {x}')
+                return fig
+            
+            cache_dir = Path(tmpdir) / "figures"
+            
+            # first call: creates the file
+            cache.cache_figure(cache_dir)(my_figure)(3)
+            savefig(request)
+            cache_file = only(list(cache_dir.glob('*.png')))
+            assert cache_file.name.startswith("my_figure_")
+            
+            # second call with same args: returns the same cached path
+            cache.cache_figure(cache_dir)(my_figure)(3)
+            savefig(request)
+            
+            # different args: produces a different file
+            cache.cache_figure(cache_dir)(my_figure)(99)
+            savefig(request)
+            assert len(list(cache_dir.glob('*.png'))) == 2
+            
+        plt.close("all")
+
+    def test_without_params(self):
+        with TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir) / "figures"
+            cache.cache_figure(cache_dir)(self.my_figure)()
+            cache_file = only(list(cache_dir.glob('*.png')))
+            assert cache_file.name == "my_figure.png"
+            
+        plt.close("all")
+
+    def test_figure_saving(self, request):
+        with TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir) / "figures"
+            
+            # first call: creates the file
+            fig = cache.cache_figure(cache_dir)(self.my_figure)()
+            fig.savefig(cache_dir/'test.png')
+            
+            # second call with same args: returns the same cached path
+            fig = cache.cache_figure(cache_dir)(self.my_figure)()
+            fig.savefig(cache_dir/'test.png')
+            
+        plt.close("all")
 
 
 @pytest.mark.parametrize('extension', ["pickle", "csv"])

@@ -9,14 +9,14 @@ from tempfile import TemporaryDirectory
 from typing import Callable, Literal, Optional
 from pandas.testing import assert_frame_equal
 
+from core import log
 from core.files.save import to_netcdf
 from core.files.fileutils import filegen, safe_move
-from matplotlib.pyplot import figimage
 from matplotlib.figure import Figure
 from numpy import array
 from PIL import Image
 
-from core import log
+import matplotlib.pyplot as plt
 import hashlib
 import re
 
@@ -262,8 +262,11 @@ def cache_figure(
 
             # If exists, load image and turn it into plt.Figure
             if not overwrite and cache_file.exists():
-                img = array(Image.open(cache_file))
-                return figimage(img)
+                fig = plt.figure()
+                plt.imshow(array(Image.open(cache_file)))
+                plt.axis('off')
+                fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+                return fig
 
             # Apply function and save result into png file
             cache_dir.mkdir(parents=True, exist_ok=True)
