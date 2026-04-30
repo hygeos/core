@@ -18,7 +18,7 @@ from core.files.lock import LockFile
 from core import log
 
 
-def safe_move(src, dst, makedirs=True):
+def safe_move(src, dst, makedirs: bool = True, verbose: bool = True):
     """
     Move `src` file to `dst`
 
@@ -34,7 +34,9 @@ def safe_move(src, dst, makedirs=True):
             pdst.parent.mkdir(parents=True)
         else:
             raise IOError(f'Error, directory {pdst.parent} does not exist')
-    log.debug(f'Moving "{psrc}" to "{pdst}"...')
+    
+    if verbose:
+        log.debug(f'Moving "{psrc}" to "{pdst}"...')
 
     with TemporaryDirectory(prefix='copying_'+psrc.name+'_', dir=pdst.parent) as tmpdir:
         tmp = Path(tmpdir)/psrc.name
@@ -242,7 +244,7 @@ class filegen:
                     # because the function call may be skipped upon existing file
                     assert ret is None
 
-                    safe_move(tfile, ofile)
+                    safe_move(tfile, ofile, verbose=self.verbose)
             return
         return wrapper
 
