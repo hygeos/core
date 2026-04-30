@@ -28,6 +28,30 @@ def test_cachefunc(cache_function, var):
 
         assert a == my_function()
 
+def test_cache_json_inputs_modes():
+    """cache_json with inputs='ignore' should not raise on different args;
+    inputs='store' should store but also not check."""
+    with TemporaryDirectory() as tmpdir:
+        for mode in ("store", "ignore"):
+            cache_file = Path(tmpdir) / f"cache_{mode}.json"
+            fn = lambda *args: 42
+            cache.cache_json(cache_file, inputs=mode)(fn)()
+            # calling with different args must not raise
+            result = cache.cache_json(cache_file, inputs=mode)(fn)(99)
+            assert result == 42
+
+
+def test_cache_pickle_inputs_modes():
+    """cache_pickle with inputs='ignore' or 'store' should not raise on different args."""
+    with TemporaryDirectory() as tmpdir:
+        for mode in ("store", "ignore"):
+            cache_file = Path(tmpdir) / f"cache_{mode}.pkl"
+            fn = lambda *args: [1, 2, 3]
+            cache.cache_pickle(cache_file, inputs=mode)(fn)()
+            # calling with different args must not raise
+            result = cache.cache_pickle(cache_file, inputs=mode)(fn)(99)
+            assert result == [1, 2, 3]
+
 @pytest.mark.parametrize('extension', ["pickle", "csv"])
 def test_cache_dataframe(extension):
     def my_function():

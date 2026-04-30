@@ -172,7 +172,7 @@ class filegen:
                     (warning, starts at 1 for methods)
                 if str, defines the argname of the keyword argument defining the output file
             tmpdir: which temporary directory to use
-            lock_timeout (int): timeout in case of existing lock file
+            lock_timeout (int): timeout (in second) in case of existing lock file
             if_exists (str): what to do in case of existing file
             verbose (bool): verbosity control
 
