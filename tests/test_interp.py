@@ -310,7 +310,7 @@ def test_interp_commondims():
     """
     ds = create_sample_dataset()
     ds = ds.rename(rho_toa='WV', band='pressure', latitude='p')[['WV', 'p']]
-    res = Interpolator(ds[['WV']], pressure=Linear('p', bounds='clip')).map_blocks(ds)
+    res = Interpolator(ds[['WV']].compute(), pressure=Linear('p', bounds='clip')).map_blocks(ds)
     res.compute()
 
 

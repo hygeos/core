@@ -136,6 +136,13 @@ class Interpolator(BlockProcessor):
             self.indexers[k] = v.get_indexer(data[k])
             self.varnames[k] = varname
         
+        # ensure data is numpy-backed, not dask
+        for var in data.data_vars:
+            if hasattr(data[var].data, "compute"):
+                raise TypeError(
+                    f"Variable '{var}' is backed by a lazy array (dask). "
+                    f"Interpolator requires numpy-backed data. Use .compute() on the input Dataset."
+                )
         self.data: xr.Dataset = data
     
     def input_vars(self) -> List[Var]:
