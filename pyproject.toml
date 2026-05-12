@@ -41,6 +41,7 @@ matplotlib-base = "*"
 lxml = "*"
 sphinx = "*"
 ipykernel = "*"
+zarr = "*"
 # numba = "*"
 
 [tool.pixi.feature.hyp.dependencies]

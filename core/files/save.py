@@ -59,9 +59,6 @@ def to_netcdf(
         if zlib
         else None
     )
-    
-    if clean_attrs:
-        clean_attributes(ds)
 
     if clean_attrs:
         clean_attributes(ds)
@@ -98,3 +95,88 @@ def clean_attributes(obj: xr.Dataset|xr.DataArray):
     if isinstance(obj, xr.Dataset):
         for var in list(obj):
             clean_attributes(obj[var])
+
+
+def to_zarr(
+    ds: xr.Dataset,
+    filename: Path,
+    *,
+    zlib: bool = True,
+    complevel: int = 5,
+    verbose: bool = True,
+    tmpdir: Optional[Path] = None,
+    lock_timeout: int = 0,
+    git_comit: bool = True,
+    if_exists: Literal["skip", "overwrite", "backup", "error"] = "error",
+    clean_attrs: bool = True,
+    **kwargs
+):
+    """
+    Write an xarray Dataset `ds` using `.to_zarr` with several additional features:
+
+    - Use compression
+    - Wrapped by filegen: use temporary files, detect existing output files...
+
+    Args:
+        ds (xr.Dataset): Input dataset
+        filename (Path): Output zarr store path (directory or .zip file)
+        zlib (bool, optional): activate zlib compression. Defaults to True.
+        complevel (int, optional): Compression level. Defaults to 5.
+        verbose (bool, optional): Verbosity. Defaults to True.
+        tmpdir (Path, optional): use a given temporary directory. Defaults to None.
+        lock_timeout (int, optional): timeout in case of existing lock file
+        git_comit (bool, optional): Option to add git commit tag to input dataset attributes
+        if_exists (str, optional): what to do if output file exists. Defaults to 'error'.
+        clean_attrs: whether to remove attributes in the xarray object that cannot
+            be written to zarr.
+        other kwargs are passed to ds.to_zarr
+    """
+    soluce = ', got an xarray DataArray. Please use .to_dataset method and ' \
+             'specify a variable name' if isinstance(ds, xr.DataArray) else ''
+    if not isinstance(ds, xr.Dataset):
+        log.error("to_zarr expects an xarray Dataset" + soluce,
+                  e=AssertionError)
+
+    encoding = (
+        {var: dict(compressor=get_zarr_compressor(complevel))
+         for var in ds.data_vars}
+        if zlib
+        else None
+    )
+
+    if clean_attrs:
+        clean_attributes(ds)
+
+    PBar = {True: ProgressBar, False: nullcontext}[verbose]
+    
+    def to_zarr_with_filegen(ds, filename, encoding, **kwargs):
+        ds.to_zarr(filename, encoding=encoding, **kwargs)
+    
+    with PBar():
+        if verbose:
+            log.info("Writing:", filename)
+
+        if git_comit:
+            ds.attrs.update(git_commit=get_git_commit())
+
+        filegen(
+            1,
+            tmpdir=tmpdir,
+            lock_timeout=lock_timeout,
+            if_exists=if_exists,
+            verbose=verbose,
+        )(to_zarr_with_filegen)(ds, filename, encoding=encoding, **kwargs)
+
+
+def get_zarr_compressor(complevel: int = 5):
+    """
+    Return a Blosc compressor for zarr encoding.
+
+    Args:
+        complevel (int): Compression level (1-9). Defaults to 5.
+
+    Returns:
+        zarr.Blosc compressor instance
+    """
+    import zarr
+    return zarr.Blosc(cname="zstd", clevel=complevel, shuffle=zarr.Blosc.SHUFFLE)
