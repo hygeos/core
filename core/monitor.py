@@ -65,15 +65,17 @@ class Chrono:
         self.total_t += time.time() - self.start_t
         return timedelta(seconds=self.total_t)
 
-    def display(self, unit: Literal["m", "s", "ms", "us"] = None):
-        if unit: assert unit in ["m", "s", "ms", "us"]
-        else: unit = self.unit
+    def display(self, unit: Literal["m", "s", "ms", "us"] | None = None):
+        if unit:
+            assert unit in ["m", "s", "ms", "us"]
+        else:
+            unit = self.unit
         
         t = self.elapsed().total_seconds()
         if unit == "m":
             m = int(t) // 60
-            s = int(t) % 60
-            log.info(f"Chrono: [{self.name}] took {m:02}m{s:02}s to complete.")
+            s = t % 60
+            log.info(f"Chrono: [{self.name}] took {m:02}m{s:06.3f}s to complete.")
         else:
             coefs = {
                 "s":  1, 
@@ -149,6 +151,7 @@ class RAM:
     
     def _format_size(self, byte_size):
         scale = {
+            0: "B",
             3: "KB",  
             6: "MB", 
             9: "GB", 
@@ -157,7 +160,7 @@ class RAM:
         
         sc = None
         if 0 <= byte_size < 10**3: 
-            sc = 3
+            sc = 0
         elif 10**3 <= byte_size < 10**6: 
             sc = 3
         elif 10**6 <= byte_size < 10**9: 
@@ -182,8 +185,8 @@ class Monitor:
     """
     
     def __init__(self, name: str = 'monitor object', 
-                 time: Chrono = None, 
-                 ram: RAM = None):
+                 time: Chrono | None = None, 
+                 ram: RAM | None = None):
         self.name = name
         self.trackers = []
         
@@ -342,8 +345,10 @@ class MemHist:
         print(f"peak: {MemHist._format_size(peak)}")
         # print(f"peak (raw): {peak}")
         
-    def _format_size(byte_size):
+    @staticmethod
+    def _format_size(byte_size: int) -> str:
         scale = {
+            0: "B",
             3: "KB",  
             6: "MB", 
             9: "GB", 
@@ -352,7 +357,7 @@ class MemHist:
         
         sc = None
         if 0 <= byte_size < 10**3: 
-            sc = 3
+            sc = 0
         elif 10**3 <= byte_size < 10**6: 
             sc = 3
         elif 10**6 <= byte_size < 10**9: 
