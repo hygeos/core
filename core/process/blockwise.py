@@ -49,7 +49,6 @@ import pandas as pd
 import xarray as xr
 from core.ascii_table import ascii_table
 from core.tools import Var, raiseflag
-from dask.base import tokenize
 from xarray.core.parallel import make_meta
 
 
@@ -510,7 +509,7 @@ class BlockProcessor(ABC):
         # Without this, different processor instances receiving the same input
         # dataset produce identical tokens (because xr.map_blocks tokenizes
         # only the input data, args, and kwargs — not the function/method itself).
-        sub.attrs['_processor_token'] = tokenize(self)
+        sub.attrs['_processor_token'] = id(self)
 
         # Call "map_blocks"
         result = xr.map_blocks(self.process_and_validate, sub, template=template)
