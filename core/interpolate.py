@@ -9,7 +9,7 @@ from collections import defaultdict
 from heapq import heappop, heappush
 
 from core.process.blockwise import BlockProcessor
-from core.tools import Var
+from core.tools import Var, is_dask_based
 
 from scipy.interpolate._rgi_cython import find_indices as find_indices
 
@@ -137,12 +137,10 @@ class Interpolator(BlockProcessor):
             self.varnames[k] = varname
         
         # ensure data is numpy-backed, not dask
-        for var in data.data_vars:
-            if hasattr(data[var].data, "compute"):
-                raise TypeError(
-                    f"Variable '{var}' is backed by a lazy array (dask). "
-                    f"Interpolator requires numpy-backed data. Use .compute() on the input Dataset."
-                )
+        if is_dask_based(data):
+            raise TypeError(
+                "Interpolator requires numpy-backed data. Use .compute() on the input Dataset."
+            )
         self.data: xr.Dataset = data
     
     def input_vars(self) -> List[Var]:
@@ -380,7 +378,16 @@ def interp(da: xr.DataArray, **kwargs) -> xr.DataArray:
     ds_coords = xr.Dataset({k: v.values for k, v in kwargs.items()})
     for k, v in kwargs.items():
         v.varname = k
-    result = Interpolator(da.to_dataset(name="dummy"), **kwargs).map_blocks(ds_coords)["dummy"]
+
+    interpolator = Interpolator(da.to_dataset(name="dummy"), **kwargs)
+
+    # Use map_blocks for dask-backed coords (lazy/chunked evaluation),
+    # or process_block directly for numpy-backed coords (no dask overhead).
+    if is_dask_based(ds_coords):
+        result = interpolator.map_blocks(ds_coords)["dummy"]
+    else:
+        interpolator.process_block(ds_coords)
+        result = ds_coords["dummy"]
 
     return result
 

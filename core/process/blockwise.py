@@ -44,10 +44,12 @@ Chain multiple processors:
 from abc import ABC, abstractmethod
 from functools import reduce
 from typing import Any, Literal
+import warnings
 
 import pandas as pd
 import xarray as xr
 from core.ascii_table import ascii_table
+from core.tools import is_dask_based
 from core.tools import Var, raiseflag
 from xarray.core.parallel import make_meta
 
@@ -463,6 +465,16 @@ class BlockProcessor(ABC):
         xr.Dataset
             Processed dataset containing the output variables as defined by output_vars().
         """
+        # Warn if the dataset is not dask-backed, as map_blocks is designed for
+        # chunked arrays. The user may want to use process_block() directly
+        # for better performance.
+        if not is_dask_based(ds):
+            warnings.warn(
+                f"Dataset passed to {self.__class__.__name__}.map_blocks() is not "
+                "dask-backed. Processing would be more efficient by using "
+                f"{self.__class__.__name__}.process_block instead.",
+                UserWarning,
+            )
 
         # Validate processor inputs (can be coords as well)
         current_vars = set(ds.data_vars) | set(ds.coords)
