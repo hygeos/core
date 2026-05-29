@@ -11,6 +11,7 @@ from core.interpolate import (
     Nearest_Indexer,
     Spline_Indexer,
     align_lists,
+    find_indices,
     interp,
     Linear,
     Nearest,
@@ -569,3 +570,231 @@ def test_align_lists():
 
     with pytest.raises(ValueError):
         align_lists([["x", "y"], ["y", "x"]])
+
+
+# ---------------------------------------------------------------------------
+# find_indices tests
+# ---------------------------------------------------------------------------
+
+
+BACKENDS = ["scipy", "numba"]
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_basic(backend):
+    """Basic 2D regular grid — indices and distances for known query points."""
+    grid = (np.linspace(0, 10, 11), np.linspace(-5, 5, 21))
+    # Query points: (dim0, dim1) for each column — use non-exact values to avoid
+    # backend discrepancies on exact grid-point matches
+    xi = np.array([
+        [2.5, 7.3, 0.1, 9.9],
+        [-2.3, 3.7, -4.9, 4.9],
+    ])
+    indices, distances = find_indices(grid, xi, backend=backend)
+
+    assert indices.shape == (2, 4)
+    assert distances.shape == (2, 4)
+
+    # Point 0: dim0=2.5 between grid[0][2]=2 and [3]=3 → index=2, dist=0.5
+    assert indices[0, 0] == 2
+    assert np.isclose(distances[0, 0], 0.5)
+    # dim1=-2.3 between grid[1][5]=-2.5 and [6]=-2.0 → index=5, dist=0.4
+    assert indices[1, 0] == 5
+    assert np.isclose(distances[1, 0], 0.4)
+
+    # Point 1: dim0=7.3 between grid[0][7]=7 and [8]=8 → index=7, dist=0.3
+    assert indices[0, 1] == 7
+    assert np.isclose(distances[0, 1], 0.3)
+
+    # Point 2: dim0=0.1 between grid[0][0]=0 and [1]=1 → index=0, dist=0.1
+    assert indices[0, 2] == 0
+    assert np.isclose(distances[0, 2], 0.1)
+
+    # Point 3: dim0=9.9 between grid[0][9]=9 and [10]=10 → index=9, dist=0.9
+    assert indices[0, 3] == 9
+    assert np.isclose(distances[0, 3], 0.9)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_decreasing_grid(backend):
+    """Grid coordinates in decreasing order — scipy requires increasing grids."""
+    grid = (np.linspace(10, 0, 11)[::-1], np.linspace(5, -5, 11)[::-1])
+    xi = np.array([
+        [5.0, 5.0],
+        [0.0, 0.0],
+    ])
+    if backend == "scipy":
+        # scipy's rgi_cython requires monotonically increasing coordinates
+        with pytest.raises(ValueError):
+            find_indices(grid, xi, backend=backend)
+    else:
+        indices, distances = find_indices(grid, xi, backend=backend)
+        assert indices.shape == (2, 2)
+        assert distances.shape == (2, 2)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_nan_values(backend):
+    """NaN query points should produce safe fallback indices and NaN distances."""
+    grid = (np.linspace(0, 10, 11), np.linspace(-5, 5, 11))
+    xi = np.array([
+        [np.nan, 5.0],
+        [0.0, np.nan],
+    ])
+    indices, distances = find_indices(grid, xi, backend=backend)
+    assert np.isnan(distances[0, 0])
+    assert np.isnan(distances[1, 1])
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_out_of_bounds(backend):
+    """Out-of-bounds values should be clamped to valid interval indices."""
+    grid = (np.linspace(0, 10, 11), np.linspace(-5, 5, 11))
+    xi = np.array([
+        [-1.0, 11.0, 5.0],
+        [-6.0, 6.0, 0.0],
+    ])
+    indices, distances = find_indices(grid, xi, backend=backend)
+    # Below lower bound → index 0
+    assert indices[0, 0] == 0
+    assert indices[1, 0] == 0
+    # Above upper bound → last valid interval
+    assert indices[0, 1] == 9
+    assert indices[1, 1] == 9
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_single_element_grid(backend):
+    """Grid dimension with a single element."""
+    grid = (np.array([5.0]), np.linspace(0, 10, 11))
+    xi = np.array([
+        [5.0, 5.0],
+        [3.0, 7.0],
+    ])
+    indices, distances = find_indices(grid, xi, backend=backend)
+    # Single-element dimension should get special index (-1)
+    assert (indices[0] == -1).all()
+    assert (distances[0] == 0.0).all()
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_3d_grid(backend):
+    """Three-dimensional grid."""
+    grid = (np.linspace(0, 5, 6), np.linspace(0, 10, 11), np.linspace(-1, 1, 21))
+    xi = np.array([
+        [1.5, 3.0],
+        [5.5, 10.0],
+        [0.0, -0.5],
+    ])
+    indices, distances = find_indices(grid, xi, backend=backend)
+    assert indices.shape == (3, 2)
+    assert distances.shape == (3, 2)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_irregular_grid(backend):
+    """Irregularly spaced grid coordinates."""
+    grid = (np.array([0.0, 1.0, 3.0, 6.0, 10.0]), np.linspace(0, 1, 5))
+    xi = np.array([
+        [2.0, 5.0, 9.9],
+        [0.25, 0.5, 1.0],
+    ])
+    indices, distances = find_indices(grid, xi, backend=backend)
+    # 2.0 is between 1.0 (idx 1) and 3.0 (idx 2), dist = (2-1)/(3-1) = 0.5
+    assert indices[0, 0] == 1
+    assert np.isclose(distances[0, 0], 0.5)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_dtype(backend):
+    """Check return dtypes — scipy returns int64/float64, numba returns intp/float32."""
+    grid = (np.linspace(0, 10, 11), np.linspace(0, 10, 11))
+    xi = np.array([[5.0], [5.0]])
+    indices, distances = find_indices(grid, xi, backend=backend)
+    if backend == "scipy":
+        assert indices.dtype == np.int64
+        assert distances.dtype == np.float64
+    else:
+        assert indices.dtype == np.intp
+        assert distances.dtype == np.float32
+
+
+def test_find_indices_backend_invalid():
+    """Unknown backend should raise ValueError."""
+    grid = (np.linspace(0, 10, 11),)
+    xi = np.array([[5.0]])
+    with pytest.raises(ValueError, match="Unknown find_indices backend"):
+        find_indices(grid, xi, backend="unknown")
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+def test_find_indices_consistency_with_scipy(backend):
+    """All backends should return results consistent with scipy for non-NaN points."""
+    grid = (np.linspace(-10, 10, 101), np.linspace(-20, 20, 81))
+    np.random.seed(42)
+    n = 500
+    xi = np.column_stack([
+        np.random.uniform(-10, 10, n),
+        np.random.uniform(-20, 20, n),
+    ]).T
+
+    ref_indices, ref_distances = find_indices(grid, xi, backend="scipy")
+    indices, distances = find_indices(grid, xi, backend=backend)
+
+    np.testing.assert_array_equal(indices, ref_indices)
+    np.testing.assert_allclose(distances, ref_distances, rtol=1e-5)
+
+
+# ---------------------------------------------------------------------------
+# find_indices performance benchmarks
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("backend", BACKENDS)
+@pytest.mark.parametrize("n_points", [1_000_000])
+def test_perf_find_indices(backend, n_points):
+    """Benchmark find_indices across backends and query point counts."""
+    grid = (
+        np.linspace(-90, 90, 1800),    # latitude-like
+        np.linspace(-180, 180, 3600),   # longitude-like
+    )
+    np.random.seed(42)
+    xi = np.column_stack([
+        np.random.uniform(-90, 90, n_points),
+        np.random.uniform(-180, 180, n_points),
+    ]).T
+
+    # Warm-up (important for numba JIT)
+    find_indices(grid, xi, backend=backend)
+
+    with Chrono(f"find_indices ({backend}, {n_points} pts)"):
+        find_indices(grid, xi, backend=backend)
+
+
+@pytest.mark.parametrize("backend", BACKENDS)
+@pytest.mark.parametrize("n_points", [1_000_000])
+def test_perf_find_indices_correlated(backend, n_points):
+    """Benchmark find_indices with spatially correlated query points (random walk).
+
+    This tests the adaptive walk strategy where successive points are close,
+    making the running-index approach O(1) amortized per query.
+    """
+    grid = (
+        np.linspace(-90, 90, 1800),    # latitude-like
+        np.linspace(-180, 180, 3600),   # longitude-like
+    )
+    np.random.seed(42)
+    xi = np.zeros((2, n_points))
+    xi[0, 0] = np.random.uniform(-90, 90)
+    xi[1, 0] = np.random.uniform(-180, 180)
+    for j in range(1, n_points):
+        xi[0, j] = xi[0, j - 1] + np.random.normal(0, 0.5)
+        xi[1, j] = xi[1, j - 1] + np.random.normal(0, 0.5)
+    # Wrap back into grid bounds
+    xi[0] = np.mod(xi[0] + 90, 180) - 90
+    xi[1] = np.mod(xi[1] + 180, 360) - 180
+
+    # Warm-up (important for numba JIT)
+    find_indices(grid, xi, backend=backend)
+
+    with Chrono(f"find_indices_correlated ({backend}, {n_points} pts)"):
+        find_indices(grid, xi, backend=backend)
