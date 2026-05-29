@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import pytest
+from typing import Callable
 
 from core.monitor import Chrono
 
@@ -136,7 +137,7 @@ def test_cycle_period():
     'numpy',
     'dask',
     ])
-def test_perf_interp(mode: str, apply_function: callable, request):
+def test_perf_interp(mode: str, apply_function: Callable, request):
     factor = 1 # 1 for fast, 10 for slower
     l1 = xr.Dataset()
     shp = (500*factor, 500*factor)
