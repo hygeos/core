@@ -613,7 +613,7 @@ class MapBlocksOutput:
     def __add__(self, other):
         concatenated = MapBlocksOutput(self.model + other.model,
                                new_dims={**self.new_dims, **other.new_dims})
-        names = [x.name for x in concatenated.model]
+        names = [str(x) for x in concatenated.model]
         assert len(set(names)) == len(names)
         return concatenated
 
@@ -629,7 +629,7 @@ class MapBlocksOutput:
         )
 
     def subset(self, ds: xr.Dataset) -> xr.Dataset:
-        return ds[[var.name for var in self.model]]
+        return ds[[str(var) for var in self.model]]
 
     def conform(self, ds: xr.Dataset, transpose: bool = False) -> xr.Dataset:
         """
