@@ -450,56 +450,6 @@ def wrap(ds: xr.Dataset, dim: str, vmin: float, vmax: float):
     return xr.concat([right, left], dim=dim)
 
 
-def convert(A: xr.DataArray, unit_to: str, unit_from: str = None, converter: dict = None):
-    """
-    Unit conversion
-
-    Arguments:
-    ---------
-
-    A: DataArray to convert
-
-    unit_from: str or None
-        unit to convert from. If not provided, uses da.units
-
-    unit_to: str
-        unit to convert to
-    
-    converter: a dictionary for unit conversion
-        example: converter={'Pa': 1, 'hPa': 1e-2}
-    """
-    if unit_from is None:
-        unit_from = A.units
-    
-    default_converters = [
-        # pressure
-        {'Pa': 1,
-         'hPa': 1e-2,
-         'millibars': 1e-2,
-         },
-
-        # ozone
-        {'kg/m2': 1,
-         'kg m**-2': 1,
-         'DU': 1/2.1415E-05,
-         'Dobson units': 1/2.1415E-05,
-         }
-    ]
-
-    conversion_factor = None
-    for c in (default_converters if converter is None else [converter]):
-        if (unit_from in c) and (unit_to in c):
-            conversion_factor = c[unit_to]/c[unit_from]
-            break
-
-    if conversion_factor is None:
-        raise ValueError(f'Unknown conversion from {unit_from} to {unit_to}')
-
-    converted = A*conversion_factor
-    converted.attrs['units'] = unit_to
-    return converted
-
-
 def chunk(ds: xr.Dataset, **kwargs):
     """
     Apply rechunking to a xr.Dataset `ds` along dimensions provided as kwargs
@@ -1272,3 +1222,42 @@ def str_to_bool(value: str) -> bool:
         True
     """
     return value.lower() == 'true'
+
+
+def is_dask_based(data: xr.Dataset, strict: bool = False) -> bool:
+    """Check if data variables in a Dataset are dask-backed.
+
+    Returns True if all variables are dask-backed, False if all are numpy-backed.
+    In the mixed case (some dask, some numpy), returns True if ``strict=False``
+    (any variable is dask-backed), or raises ValueError if ``strict=True``.
+
+    Args:
+        data: The input Dataset to check.
+        strict: If True, raise ValueError when the Dataset has a mix of
+            dask-backed and numpy-backed variables. If False (default),
+            return True if any variable is dask-backed.
+
+    Returns:
+        True if any/all variables are dask-backed, False if all are numpy-backed.
+    """
+    if not data.data_vars:
+        return False
+
+    dask_vars = []
+    numpy_vars = []
+
+    for var in data.data_vars:
+        if hasattr(data[var].data, "compute"):
+            dask_vars.append(var)
+        else:
+            numpy_vars.append(var)
+
+    if dask_vars and numpy_vars:
+        if strict:
+            raise ValueError(
+                f"Dataset has a mix of dask-backed and numpy-backed variables. "
+                f"Dask variables: {dask_vars}. Numpy variables: {numpy_vars}."
+            )
+        return True
+
+    return bool(dask_vars)
