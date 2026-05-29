@@ -11,76 +11,6 @@ from heapq import heappop, heappush
 from core.process.blockwise import BlockProcessor
 from core.tools import Var, is_dask_based
 
-from scipy.interpolate._rgi_cython import find_indices as find_indices
-
-try:
-    from numba import jit, prange # type: ignore
-    
-    @jit(nopython=True, parallel=True)
-    def find_indices_numba(grid, xi) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Multi-dimensional grid interpolation preprocessing.
-        
-        Args:
-            grid: Tuple of 1D arrays defining grid coordinates for each dimension
-            xi: 2D array where each row represents a dimension and each column a query point
-            
-        Returns:
-            indices: Grid interval indices for each query point in each dimension
-            distances: Normalized distances within each interval
-        """
-        n_dims, n_points = xi.shape
-        
-        # Use np.intp for indices and np.float64 for distances
-        indices = np.empty((n_dims, n_points), dtype=np.intp)
-        distances = np.empty((n_dims, n_points), dtype=np.float32)
-        
-        # NOTE: changing the parallelization strategy could improve performance
-        for dim in prange(n_dims):  # parallel over dimensions
-            coordinates = grid[dim]
-            coord_size = len(coordinates)
-            
-            # Handle length-1 grid special case
-            if coord_size == 1:
-                for j in range(n_points):
-                    indices[dim, j] = -1  # Special hack value for downstream processing
-                    distances[dim, j] = 0.0
-                continue # exit ealy
-                
-            # Process each point in this dimension
-            for j in range(n_points):
-                value = xi[dim, j]
-                
-                # Handle NaN values
-                if value != value:  # NaN check (numba compatible)
-                    indices[dim, j] = 0  # Safe fallback index
-                    distances[dim, j] = np.nan
-                    continue
-                    
-                # Find interval using searchsorted
-                index = np.searchsorted(coordinates, value, side="left") - 1
-                
-                # Handle extrapolation by bringing index back to valid bounds
-                if index < 0:
-                    index = 0
-                elif index >= coord_size - 1:
-                    index = coord_size - 2
-                    
-                indices[dim, j] = index
-                
-                # Calculate normalized distance within interval
-                left_val = coordinates[index]
-                right_val = coordinates[index + 1]
-                distances[dim, j] = (value - left_val) / (right_val - left_val)
-        
-        return (indices, distances)
-    
-    find_indices = find_indices_numba
-    
-except ImportError:
-    jit = lambda *args, **kwargs: lambda f: f
-    prange = range
-
 
 class Interpolator(BlockProcessor):
     """
@@ -101,6 +31,7 @@ class Interpolator(BlockProcessor):
 
     Args:
         data (xr.Dataset): The input Dataset containing variables to interpolate.
+        backend (str): Backend for index finding, either "scipy" (default) or "numba".
         **kwargs: definition of the selection/interpolation coordinates for each
             dimension, using the following classes:
                 - Linear: linear interpolation (like xr.DataArray.interp)
@@ -127,15 +58,15 @@ class Interpolator(BlockProcessor):
         ... # coordinates lat and lon provided in coords_dataset
     """
 
-    def __init__(self, data: xr.Dataset, **kwargs):
+    def __init__(self, data: xr.Dataset, backend: str = "scipy", **kwargs):
         # get interpolators along all dimensions
         self.indexers = {}
         self.varnames = {}  # mapping of data coords to block variables
         for k, v in kwargs.items():
             varname = v.varname or k
-            self.indexers[k] = v.get_indexer(data[k])
+            self.indexers[k] = v.get_indexer(data[k], backend=backend)
             self.varnames[k] = varname
-        
+
         # ensure data is numpy-backed, not dask
         if is_dask_based(data):
             raise TypeError(
@@ -259,6 +190,41 @@ class Interpolator(BlockProcessor):
             )
 
 
+def find_indices(grid, xi, backend: str = "scipy") -> tuple[NDArray[np.intp], NDArray[np.float32]]:
+    """
+    Multi-dimensional grid interpolation index finding.
+
+    Args:
+        grid: Tuple of 1D arrays defining grid coordinates for each dimension.
+        xi: 2D array where each row represents a dimension and each column a query point.
+        backend: One of "scipy" (default) or "numba".
+
+    Returns:
+        indices: Grid interval indices for each query point in each dimension.
+        distances: Normalized distances within each interval.
+
+    Raises:
+        ImportError: If backend is "numba" but numba is not installed.
+        ValueError: If backend is not recognized.
+    """
+    if backend == "scipy":
+        from scipy.interpolate._rgi_cython import find_indices as _fi
+    elif backend == "numba":
+        try:
+            from core.interpolate_numba import find_indices_numba as _fi
+        except ImportError:
+            raise ImportError(
+                'numba backend requested but numba is not installed. '
+                'Install with `pip install numba` or use backend="scipy".'
+            )
+    else:
+        raise ValueError(
+            f'Unknown find_indices backend "{backend}". '
+            'Expected "scipy" or "numba".'
+        )
+    return _fi(grid, xi)
+
+
 def interp_var(
     da: xr.DataArray,
     indices_weights: dict,
@@ -335,7 +301,7 @@ def interp_var(
     return result
 
 
-def interp(da: xr.DataArray, **kwargs) -> xr.DataArray:
+def interp(da: xr.DataArray, backend: str = "scipy", **kwargs) -> xr.DataArray:
     """
     Interpolate/select a DataArray onto new coordinates.
 
@@ -351,6 +317,7 @@ def interp(da: xr.DataArray, **kwargs) -> xr.DataArray:
 
     Args:
         da (xr.DataArray): The input DataArray
+        backend (str): Backend for index finding, either "scipy" (default) or "numba".
         **kwargs: definition of the selection/interpolation coordinates for each
             dimension, using the following classes:
                 - Linear: linear interpolation (like xr.DataArray.interp)
@@ -379,7 +346,7 @@ def interp(da: xr.DataArray, **kwargs) -> xr.DataArray:
     for k, v in kwargs.items():
         v.varname = k
 
-    interpolator = Interpolator(da.to_dataset(name="dummy"), **kwargs)
+    interpolator = Interpolator(da.to_dataset(name="dummy"), backend=backend, **kwargs)
 
     # Use map_blocks for dask-backed coords (lazy/chunked evaluation),
     # or process_block directly for numpy-backed coords (no dask overhead).
@@ -455,9 +422,10 @@ class Locator:
     """
     The purpose of these classes is to locate values in coordinate axes.
     """
-    def __init__(self, coords: NDArray, bounds: str):
+    def __init__(self, coords: NDArray, bounds: str, backend: str = "scipy"):
         self.coords = coords.astype("double")
         self.bounds = bounds
+        self.backend = backend
 
         if coords[0] < coords[-1]:
             self.vmin = coords[0]
@@ -504,7 +472,8 @@ class Locator:
 
         shp = values.shape
         indices, dist = find_indices(
-            (self.coords,), values.astype("double").ravel()[None, :]
+            (self.coords,), values.astype("double").ravel()[None, :],
+            backend=self.backend,
         )
         indices = indices.reshape(shp).clip(0, None) # Note: a clip is performed because
                                                      # -1 is obtained in presence of NaN
@@ -518,13 +487,20 @@ class Locator:
     
 class Locator_Regular(Locator):
     def __init__(
-        self, coords, bounds: str, inversion_func: Callable | None = None, period=None
+        self,
+        coords,
+        bounds: str,
+        inversion_func: Callable | None = None,
+        period=None,
+        backend: str = "scipy",
     ):
         self.inversion_func = inversion_func
         if inversion_func is None:
             self.coords = coords
         else:
             self.coords = inversion_func(coords)
+        self.bounds = bounds
+        self.backend = backend
 
         # Check that the coords are regular, otherwise raise a ValueError
         diff = np.diff(self.coords)
@@ -545,7 +521,6 @@ class Locator_Regular(Locator):
             self.vmin = self.vend
             self.vmax = self.vstart
         self.N = len(self.coords)
-        self.bounds = bounds
 
         deltat = (self.vend - self.vstart)
         if self.is_time:
@@ -590,10 +565,11 @@ class Locator_Regular(Locator):
 
 
 def create_locator(
-    coords, bounds: str, spacing, period: float | None = None
+    coords, bounds: str, spacing, period: float | None = None,
+    backend: str = "scipy"
 ) -> Locator:
     """
-    Locator factory    
+    Locator factory
 
     The purpose of this method is to instantiate the appropriate "Locator" class.
 
@@ -603,14 +579,15 @@ def create_locator(
         # regular, auto, or callable
         ifunc = spacing if callable(spacing) else None
         try:
-            return Locator_Regular(coords, bounds, inversion_func=ifunc, period=period)
+            return Locator_Regular(coords, bounds, inversion_func=ifunc,
+                                   period=period, backend=backend)
         except ValueError:
             if spacing == "auto":
                 pass
-            else: # regular or callable: raise the exception
+            else:  # regular or callable: raise the exception
                 raise
 
-    return Locator(coords, bounds)
+    return Locator(coords, bounds, backend=backend)
 
 
 class Spline:
@@ -654,15 +631,15 @@ class Spline:
         self.tension = tension
         self.spacing = spacing
     
-    def get_indexer(self, coords: xr.DataArray):
+    def get_indexer(self, coords: xr.DataArray, backend: str = "scipy"):
         cval = coords.values
         if len(cval) < 3 :
             raise ValueError("You need to have at least 3 points to spline in between") #AJOUTER LA BONNE ERREUR
-        return Spline_Indexer(cval, self.bounds, self.spacing, self.tension)
+        return Spline_Indexer(cval, self.bounds, self.spacing, self.tension, backend=backend)
 
 
 class Spline_Indexer:
-    def __init__(self, coords: NDArray, bounds: str, spacing, tension: float):
+    def __init__(self, coords: NDArray, bounds: str, spacing, tension: float, backend: str = "scipy"):
         self.coords = coords
         self.spacing = spacing
         self.bounds = bounds
@@ -692,6 +669,7 @@ class Spline_Indexer:
             coords=self.coords,
             bounds=self.bounds,
             spacing=self.spacing,
+            backend=backend,
         )
         
     def __call__(self, values):
@@ -803,18 +781,18 @@ class Linear:
         self.spacing = spacing
         self.period = period
 
-    def get_indexer(self, coords: xr.DataArray):
+    def get_indexer(self, coords: xr.DataArray, backend: str = "scipy"):
         cval = coords.values
         if len(cval) < 2 :
             raise ValueError(
                 f"Cannot apply linear indexing to an axis of {len(cval)} values"
             )
-        return Linear_Indexer(cval, self.bounds, self.spacing, self.period)
+        return Linear_Indexer(cval, self.bounds, self.spacing, self.period, backend=backend)
 
 
 class Linear_Indexer:
     def __init__(
-        self, coords: NDArray, bounds: str, spacing, period=None
+        self, coords: NDArray, bounds: str, spacing, period=None, backend: str = "scipy"
     ):
         self.bounds = bounds
         self.N = len(coords)
@@ -839,6 +817,7 @@ class Linear_Indexer:
             bounds=self.bounds,
             spacing=self.spacing,
             period=period,
+            backend=backend,
         )
         
         # print(self.locator)
@@ -881,7 +860,7 @@ class Index:
         """
         self.values = values
     
-    def get_indexer(self, coords):
+    def get_indexer(self, coords, backend: str = "scipy"):
         # We can simply return self to avoid another class, since coords are not used.
         # The __call__ method of the Indexer is implemented in this class.
         return self
@@ -917,7 +896,7 @@ class Nearest:
         self.tolerance = tolerance
         self.spacing = spacing
 
-    def get_indexer(self, coords: xr.DataArray):
+    def get_indexer(self, coords: xr.DataArray, backend: str = "scipy"):
         return Nearest_Indexer(coords.values, self.tolerance, self.spacing)
 
 
