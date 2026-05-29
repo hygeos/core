@@ -68,15 +68,32 @@ img_size
 dark_mode
     Whether to enable dark mode theme in HTML reports (default false).
     Ex: true, false (default)
+monitor_peak_memory
+    Whether to monitor and report peak RSS memory usage (default false).
+    Ex: true, false (default)
 """
 
 from pathlib import Path
 import base64
 import io
+import resource
 import pytest
 
 # Module-level variable to store config
 _pytest_config = None
+
+
+def _get_peak_rss_mb():
+    """Return process peak RSS in MiB with cross-platform unit handling."""
+    peak_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return peak_rss / 1024
+
+
+def _monitor_peak_memory_enabled(config):
+    """Return whether peak memory monitoring/reporting is enabled."""
+    return {'true': True, 'false': False}[
+        (config.getini('monitor_peak_memory') or 'false').lower()
+    ]
 
 
 def add_image_to_report(request, fp):
@@ -146,6 +163,9 @@ def pytest_addoption(parser):
                   'Image size, when using img_collapsible mode. Ex: 100%, 250px (default)')
     parser.addini('dark_mode',
                   'Whether to enable dark mode theme in HTML reports (default false).')
+    parser.addini('monitor_peak_memory',
+                  'Whether to monitor and report peak RSS memory usage (default false).',
+                  default='false')
 
 
 def pytest_configure(config):
@@ -159,6 +179,9 @@ def pytest_runtest_makereport(item):
     pytest_html = item.config.pluginmanager.getplugin('html')
     outcome = yield
     report = outcome.get_result()
+    if report.when == 'call' and _monitor_peak_memory_enabled(item.config):
+        report.peak_rss_mb = _get_peak_rss_mb()
+
     extra = getattr(report, 'extra', [])
     img_size = item.config.getini('img_size') or '250px'
     img_use_extra = {'true': True, 'false': False}[
@@ -194,6 +217,25 @@ def pytest_runtest_makereport(item):
             extra.append(pytest_html.extras.extra(*a))
 
         report.extras = extra
+
+
+def pytest_html_results_table_header(cells):
+    """Insert per-test memory columns in pytest-html results table."""
+    if _pytest_config is not None and _monitor_peak_memory_enabled(_pytest_config):
+        cells.insert(2, '<th>Mem Peak (MiB)</th>')
+
+
+def pytest_html_results_table_row(report, cells):
+    """Render per-test memory values in pytest-html results table."""
+    if _pytest_config is None or not _monitor_peak_memory_enabled(_pytest_config):
+        return
+
+    peak_rss_mb = getattr(report, 'peak_rss_mb', None)
+    if peak_rss_mb is None:
+        cells.insert(2, '<td></td>')
+        return
+
+    cells.insert(2, f'<td>{peak_rss_mb:.1f}</td>')
 
 # Dark theme CSS embedded directly in conftest.py
 DARK_CSS = """
