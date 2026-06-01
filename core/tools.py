@@ -1015,6 +1015,9 @@ def xr_unfilter(
     assert stackdim in sub.dims
     ok = condition.stack({stackdim: condition.dims})
 
+    # Drop coordinates that are not dimensions
+    sub = sub.drop_vars([c for c in sub.coords if c not in sub.dims])
+
     stacked = xr.Dataset()
     for var in sub:
         # determine the shape of the stacked array
