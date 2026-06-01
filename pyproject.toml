@@ -42,7 +42,7 @@ lxml = "*"
 sphinx = "*"
 ipykernel = "*"
 zarr = "*"
-# numba = "*"
+numba = "*"
 
 [tool.pixi.feature.hyp.dependencies]
 [tool.pixi.feature.sys.dependencies]
