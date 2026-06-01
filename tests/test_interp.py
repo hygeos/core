@@ -798,3 +798,34 @@ def test_perf_find_indices_correlated(backend, n_points):
 
     with Chrono(f"find_indices_correlated ({backend}, {n_points} pts)"):
         find_indices(grid, xi, backend=backend)
+
+
+@pytest.mark.parametrize("backend", **parametrize_dict({
+    "numpy": False,
+    "dask": True,
+}))
+def test_interp_preserves_non_interpolated_coords(backend):
+    """Non-interpolated dimensions preserve their original coordinates."""
+    data = xr.DataArray(
+        np.random.rand(3, 4, 5),
+        dims=["a", "b", "c"],
+        coords={"a": [1.0, 2.0, 4.0], "b": [11.0, 12.0, 13.0, 14.0], "c": [101.0, 102.0, 103.0, 104.0, 105.0]},
+    )
+    a_coord = xr.DataArray(np.linspace(1.0, 4.0, 10), dims=["x"])
+    b_coord = xr.DataArray(np.linspace(11.0, 14.0, 8 * 6).reshape(8, 6), dims=["y", "z"])
+    if backend:
+        a_coord = a_coord.chunk({"x": 5})
+        b_coord = b_coord.chunk({"y": 4, "z": 3})
+
+    coords = xr.Dataset({"a": a_coord, "b": b_coord})
+    interpolator = Interpolator(data.to_dataset(name="dummy"), a=Linear(a_coord), b=Linear(b_coord))
+
+    if backend:
+        result = interpolator.map_blocks(coords)["dummy"]
+    else:
+        interpolator.process_block(coords)
+        result = coords["dummy"]
+
+    np.testing.assert_array_equal(result.coords["c"].values, data.coords["c"].values)
+    assert "x" in result.coords and "y" in result.coords and "z" in result.coords
+    assert "a" not in result.coords and "b" not in result.coords

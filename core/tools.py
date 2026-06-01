@@ -804,10 +804,12 @@ class Var(str):
                 shape.append(n)
                 chunks.append((n,))
 
-            if d in ds.coords:
+            if d in ds.coords and len(ds.coords[d]) == len(ds[d]):
                 coords[d] = ds.coords[d].values
             elif (d in new_dims) and hasattr(new_dims[d], "__len__"):
                 coords[d] = new_dims[d]
+            elif d in ds.dims:
+                coords[d] = np.arange(len(ds[d]))
 
         if self.dtype is None:
             if (meta is not None) and (self in meta):

@@ -138,11 +138,16 @@ class Interpolator(BlockProcessor):
             k: v(np_indexers[self.varnames[k]]) for k, v in self.indexers.items()
         }
 
-        # copy relevant dims from self.data
+        # copy relevant dims from block_sub (interpolating coords) first,
+        # then from self.data for shared non-interpolated dimensions.
         coords = xr.Dataset()
         for dim in global_out_dims:
-            if (dim not in coords) and (dim in self.data.coords):
+            if (dim not in coords) and (dim in block_sub.coords):
+                coords[dim] = block_sub.coords[dim]
+            elif (dim not in coords) and (dim in self.data.coords):
                 coords[dim] = self.data.coords[dim]
+            elif (dim not in coords) and (dim in block_sub.dims):
+                coords[dim] = np.arange(block_sub.sizes[dim])
 
         # Order of coordinate dims as they appear in the index arrays
         # (global_out_dims filtered to dims present in block_sub)
@@ -185,7 +190,7 @@ class Interpolator(BlockProcessor):
             block[var] = xr.DataArray(
                 result,
                 dims=out_dims[var],
-                coords={k: v for k, v in coords.items() if k in out_dims[var]},
+                coords={k: v for k, v in coords.coords.items() if k in out_dims[var]},
                 attrs=self.data[var].attrs,
             )
 
@@ -342,9 +347,23 @@ def interp(da: xr.DataArray, backend: str = "scipy", **kwargs) -> xr.DataArray:
     Returns:
         xr.DataArray: DataArray on the new coordinates.
     """
-    ds_coords = xr.Dataset({k: v.values for k, v in kwargs.items()})
+    # Build ds_coords from the interpolating DataArrays, preserving their coordinates
+    ds_coords_data = {}
     for k, v in kwargs.items():
         v.varname = k
+        if hasattr(v, 'values') and isinstance(v.values, xr.DataArray):
+            ds_coords_data[k] = v.values
+        else:
+            ds_coords_data[k] = v.values
+
+    ds_coords = xr.Dataset(ds_coords_data)
+
+    # Ensure dimensions of interpolating DataArrays become coordinates
+    # (use the dimension values as coordinates if not already present)
+    for var_name, var in ds_coords.data_vars.items():
+        for dim in var.dims:
+            if dim not in ds_coords.coords:
+                ds_coords = ds_coords.assign_coords({dim: np.arange(ds_coords.sizes[dim])})
 
     interpolator = Interpolator(da.to_dataset(name="dummy"), backend=backend, **kwargs)
 
