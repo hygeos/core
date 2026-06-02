@@ -124,8 +124,8 @@ class BlockProcessor(ABC):
 
         Provide Var definition: `name`, `dtype`, `dims` or `dims_like` (plus optionally
         `flags` or other attributes). Declare any new dims in `created_dims()`.
-        If `dtype` or both `dims` and `dims_like` are not specified, they will be assessed
-        by running `process_block` on mockup data.
+        If `auto_template()` returns `True` and `dtype` or `dims`/`dims_like`
+        are not specified, they will be assessed by running `process_block` on mockup data.
 
         Use `dims_like` to specify that the dimensions should match those of an existing
         variable in the dataset (e.g., `dims_like='input_var'`).
