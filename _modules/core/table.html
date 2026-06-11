@@ -1,0 +1,244 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.table &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=fc837d61"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            core
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../core.html">core package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">core.table</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for core.table</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lxml</span><span class="w"> </span><span class="kn">import</span> <span class="n">objectify</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+
+<div class="viewcode-block" id="read_xml">
+<a class="viewcode-back" href="../../core.table.html#core.table.read_xml">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_xml</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to read xml file</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str | Path): Path of xml file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_XML_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="read_csv">
+<a class="viewcode-back" href="../../core.table.html#core.table.read_csv">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="n">Path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function to read csv file without taking care of tabulation and whitespaces</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str | Path): Path of csv file</span>
+<span class="sd">        kwargs: Keyword arguments of `read_csv` function from pandas</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        DataFrame: Output table in pandas DataFrame format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># verify that the csv_file exists</span>
+    <span class="n">csv_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">csv_file</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
+    
+    <span class="c1"># open csv file</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="n">skipinitialspace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    
+    <span class="c1"># remove trailing whitespaces</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;object&#39;</span> <span class="k">else</span> <span class="n">x</span><span class="p">)</span> 
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="select">
+<a class="viewcode-back" href="../../core.table.html#core.table.select">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">select</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">cols</span><span class="p">:</span><span class="nb">str</span><span class="o">|</span><span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Selection function in a pandas DataFrame with a condition </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataframe (pd.DataFrame): Input table from which to select</span>
+<span class="sd">        where (tuple): Condition to use for the selection</span>
+<span class="sd">        cols (str | list): Name of the columns to return</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        select(df, (&#39;col_1&#39;,&#39;=&#39;,20), [&#39;col_2&#39;,&#39;col_3&#39;])</span>
+<span class="sd">    &quot;&quot;&quot;</span> 
+    <span class="n">condition</span> <span class="o">=</span> <span class="n">op_map</span><span class="p">[</span><span class="n">where</span><span class="p">[</span><span class="mi">1</span><span class="p">]](</span><span class="n">table</span><span class="p">[</span><span class="n">where</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">where</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    
+    <span class="n">result</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">condition</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="select_cell">
+<a class="viewcode-back" href="../../core.table.html#core.table.select_cell">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">select_cell</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">col</span><span class="p">:</span><span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Function for selecting a single cell value in a pandas DataFrame with a condition</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataframe (pd.DataFrame): Input table from which to select</span>
+<span class="sd">        where (tuple): Condition to use for the selection</span>
+<span class="sd">        col (str | list): Name of the column to return</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        select_cell(df, (&#39;col_1&#39;,&#39;=&#39;,20), &#39;col_2&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>  
+    <span class="n">df</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">where</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Expected to return only one values (got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+
+<span class="n">op_map</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;=&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">,</span>
+          <span class="s2">&quot;==&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">,</span>
+          <span class="s2">&quot;&gt;&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">,</span>
+          <span class="s2">&quot;&lt;&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">,</span>
+          <span class="s2">&quot;&gt;=&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&gt;=</span> <span class="n">b</span><span class="p">,</span>
+          <span class="s2">&quot;&lt;=&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span><span class="p">,</span>
+          <span class="s2">&quot;!=&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">,}</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_XML_parser</span><span class="p">:</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmlpath</span><span class="p">):</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">objectify</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">xmlpath</span><span class="p">)</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">recurse</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">attrib</span><span class="p">:</span> 
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">tag</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span> 
+                <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;{&#39;</span><span class="o">+</span><span class="n">node</span><span class="o">.</span><span class="n">nsmap</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">prefix</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;}&#39;</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">tag</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">recurse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Recursively convert an lxml.objectify tree to a dictionary&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="c1"># Handle attributes</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">attrib</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">attrib</span><span class="p">)</span>
+        
+        <span class="c1"># Handle child elements</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">getchildren</span><span class="p">():</span>
+            
+            <span class="n">tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tag</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="n">child_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recurse</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">list</span><span class="p">(</span><span class="n">child_res</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span> 
+                <span class="n">child_res</span> <span class="o">=</span> <span class="n">child_res</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span>
+            
+            <span class="c1"># If this tag already exists, we need to make it a list</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="n">tag</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child_res</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">result</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="p">[</span><span class="n">tag</span><span class="p">],</span> <span class="n">child_res</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_res</span>
+        
+        <span class="c1"># Handle text content if no children</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">getchildren</span><span class="p">()</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">pyval</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">pyval</span>
+        
+        <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
