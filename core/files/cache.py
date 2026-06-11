@@ -262,9 +262,11 @@ def cache_figure(
 
             # If exists, load image and turn it into plt.Figure
             if not overwrite and cache_file.exists():
-                fig = plt.figure()
-                plt.imshow(array(Image.open(cache_file)))
-                plt.axis('off')
+                img = array(Image.open(cache_file))
+                ratio = img.shape[0] / img.shape[1]  # rows over columns
+                fig = plt.figure(figsize=(15, int(ratio * 15)))
+                plt.imshow(img)
+                plt.axis("off")
                 fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
                 return fig
 
@@ -273,7 +275,9 @@ def cache_figure(
             fig = f(*args, **fkwargs)
             assert isinstance(fig, Figure), "Function should return a plt.Figure"
             params = dict(if_exists="overwrite", verbose=verbose)
-            filegen(**params)(lambda p: fig.savefig(p, **kwargs))(cache_file)
+            filegen(**params)(lambda p: fig.savefig(p, bbox_inches="tight", **kwargs))(
+                cache_file
+            )
             return fig
 
         return wrapper
