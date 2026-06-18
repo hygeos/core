@@ -67,6 +67,25 @@ def test_xr_filter_decorator(transparent: bool, with_xy_coords: bool):
     assert len(ds.coords) == len(res.coords)
 
 
+def test_xr_filter_transparent_preserves_dim_order():
+    """xr_filter in transparent mode should retain the order of dimensions of the initial array."""
+    # Create a dataset where a variable has dimensions in a specific order ("y", "x")
+    ds = xr.Dataset(
+        {
+            "A": (("y", "x"), np.random.rand(5, 4)),
+            "B": (("y", "x", "bands"), np.ones((5, 4, 3), dtype="int")),
+        },
+        coords={"x": [0, 1, 2, 3], "y": [0, 1, 2, 3, 4], "bands": [400, 500, 600]},
+    )
+
+    # Apply filter in transparent mode
+    sub = xr_filter(ds, ds.A < 0.5, transparent=True)
+
+    # The dimension order should be preserved from the original dataset
+    assert sub.A.dims == ds.A.dims, f"Expected {ds.A.dims}, got {sub.A.dims}"
+    assert sub.B.dims == ds.B.dims, f"Expected {ds.B.dims}, got {sub.B.dims}"
+
+
 def test_locate():
     lat_min = 0
     lat_max = 10

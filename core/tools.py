@@ -978,6 +978,7 @@ def xr_filter(
     if transparent:
         # reassign the initial dimension names to the Dataset
         sub = sub.rename({stackdim: condition.dims[0]}).expand_dims(condition.dims[1:])
+        sub = sub.transpose(*list(ds.dims))
     return sub
 
 
