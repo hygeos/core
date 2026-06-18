@@ -5,26 +5,29 @@
 Various utility functions for modifying xarray object
 '''
 
+import re
+from collections import defaultdict
 from enum import Enum
 from functools import wraps
-import re
+from heapq import heappop, heappush
 from pathlib import Path
-from typing import Callable, Union, overload, Dict, List, Tuple, Any
-import xarray as xr
-import numpy as np
-from dask import array as da
+from typing import Any, Callable, Dict, List, Tuple, Union, overload
 
+import numpy as np
+import xarray as xr
+from dask import array as da
 from numpy import arcsin as asin
 from numpy import cos, radians, sin, sqrt, where
+
 try:
     from shapely.geometry import Point, Polygon
 except ImportError:
     pass
 from collections import OrderedDict
+
 from dateutil.parser import parse
 
 from core import log
-
 
 flags          = 'flags'
 flags_dtype    = 'uint16'
@@ -34,6 +37,55 @@ flags_meanings_separator = ' '
 
 footprint_lat = 'footprint_lat'
 footprint_lon = 'footprint_lon'
+
+
+def align_lists(lists: list[list]) -> list:
+    """
+    Align items from several lists into a single list that respects the order in each sublist.
+    Raises ValueError if the lists cannot be aligned (e.g., due to cycles).
+
+    Args:
+        lists: List of lists, where each sublist defines a partial order.
+
+    Returns:
+        A single list with items aligned according to the partial orders.
+
+    Example:
+        align_lists([['x'], ['x', 'y'], ['y', 'z']]) -> ['x', 'y', 'z']
+        align_lists([['x', 'y'], ['y', 'x']]) -> ValueError
+    """
+    graph = defaultdict(list)
+    indegree = defaultdict(int)
+    all_items = set()
+
+    # Build graph and indegree
+    for lst in lists:
+        for item in lst:
+            all_items.add(item)
+        for i in range(len(lst) - 1):
+            graph[lst[i]].append(lst[i + 1])
+            indegree[lst[i + 1]] += 1
+
+    # Topological sort using Kahn's algorithm with priority queue for deterministic order
+    queue = []
+    for item in all_items:
+        if indegree[item] == 0:
+            heappush(queue, item)
+    result = []
+
+    while queue:
+        item = heappop(queue)
+        result.append(item)
+        for neighbor in graph[item]:
+            indegree[neighbor] -= 1
+            if indegree[neighbor] == 0:
+                heappush(queue, neighbor)
+
+    if len(result) != len(all_items):
+        raise ValueError("Cannot align: cycle detected in the order constraints")
+
+    return result
+
 
 def datetime(ds: xr.Dataset):
     '''
@@ -978,7 +1030,7 @@ def xr_filter(
     if transparent:
         # reassign the initial dimension names to the Dataset
         sub = sub.rename({stackdim: condition.dims[0]}).expand_dims(condition.dims[1:])
-        sub = sub.transpose(*list(ds.dims))
+        sub = sub.transpose(*align_lists([list(ds[x].dims) for x in ds]))
     return sub
 
 
@@ -1011,7 +1063,10 @@ def xr_unfilter(
     stackdim = stackdim or "_".join(str(d) for d in condition.dims)
 
     if transparent:
+        sub_dims = align_lists([list(sub[x].dims) for x in sub])
         sub = sub.rename({condition.dims[0]: stackdim}).squeeze([*condition.dims[1:]])
+    else:
+        sub_dims = []
 
     assert stackdim in sub.dims
     ok = condition.stack({stackdim: condition.dims})
@@ -1058,6 +1113,10 @@ def xr_unfilter(
 
     # reassign all required coords
     full = full.assign_coords(sub.coords).assign_coords(condition.coords)
+
+    # reorder the dimensions when in transparent mode
+    if transparent:
+        full = full.transpose(*sub_dims)
 
     return full
 

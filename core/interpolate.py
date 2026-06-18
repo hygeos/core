@@ -5,11 +5,9 @@ from typing import Any, Dict, Iterable, List, Literal, Callable
 import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
-from collections import defaultdict
-from heapq import heappop, heappush
 
 from core.process.blockwise import BlockProcessor
-from core.tools import Var, is_dask_based
+from core.tools import Var, is_dask_based, align_lists
 
 
 class Interpolator(BlockProcessor):
@@ -386,55 +384,6 @@ def product_dict(**kwargs) -> Iterable[Dict]:
     keys = kwargs.keys()
     for instance in product(*kwargs.values()):
         yield dict(zip(keys, instance))
-
-
-def align_lists(lists: list[list]) -> list:
-    """
-    Align items from several lists into a single list that respects the order in each sublist.
-    Raises ValueError if the lists cannot be aligned (e.g., due to cycles).
-
-    Args:
-        lists: List of lists, where each sublist defines a partial order.
-
-    Returns:
-        A single list with items aligned according to the partial orders.
-
-    Example:
-        align_lists([['x'], ['x', 'y'], ['y', 'z']]) -> ['x', 'y', 'z']
-        align_lists([['x', 'y'], ['y', 'x']]) -> ValueError
-    """
-    graph = defaultdict(list)
-    indegree = defaultdict(int)
-    all_items = set()
-
-    # Build graph and indegree
-    for lst in lists:
-        for item in lst:
-            all_items.add(item)
-        for i in range(len(lst) - 1):
-            graph[lst[i]].append(lst[i + 1])
-            indegree[lst[i + 1]] += 1
-
-    # Topological sort using Kahn's algorithm with priority queue for deterministic order
-    queue = []
-    for item in all_items:
-        if indegree[item] == 0:
-            heappush(queue, item)
-    result = []
-
-    while queue:
-        item = heappop(queue)
-        result.append(item)
-        for neighbor in graph[item]:
-            indegree[neighbor] -= 1
-            if indegree[neighbor] == 0:
-                heappush(queue, neighbor)
-
-    if len(result) != len(all_items):
-        raise ValueError("Cannot align: cycle detected in the order constraints")
-
-    return result
-
 
 
 class Locator:

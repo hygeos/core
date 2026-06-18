@@ -42,6 +42,27 @@ def test_xr_filter_unfilter(with_xy_coords: bool):
     assert len(ds.coords) == len(full.coords)
 
 
+@pytest.mark.parametrize("with_xy_coords", [True, False])
+def test_xr_unfilter_transparent_preserves_dim_order(with_xy_coords: bool):
+    """xr_unfilter in transparent mode should preserve the original dimension order."""
+    ds = sample_dataset(with_xy_coords)
+    ds = ds.transpose('x', 'y', 'bands')
+
+    # Create a condition with non-trivial dimension order (bands, x, y)
+    ok = ds.A > 0
+
+    # Filter with transparent mode activated
+    sub = xr_filter(ds, ok, transparent=True)
+    sub = sub * 2.0
+
+    # Unfilter should restore original dimension order
+    full = xr_unfilter(sub, ok, transparent=True)
+
+    for var in ds.data_vars:
+        if var in full.data_vars:
+            assert full[var].dims == ds[var].dims, f"Dimension order mismatch for {var}"
+
+
 @pytest.mark.parametrize("transparent", [True, False])
 @pytest.mark.parametrize("with_xy_coords", [True, False])
 def test_xr_filter_decorator(transparent: bool, with_xy_coords: bool):
