@@ -49,8 +49,7 @@ import warnings
 import pandas as pd
 import xarray as xr
 from core.ascii_table import ascii_table
-from core.tools import is_dask_based
-from core.tools import Var, raiseflag
+from core.tools import Var, raiseflag, is_dask_backed
 from xarray.core.parallel import make_meta
 
 
@@ -468,7 +467,7 @@ class BlockProcessor(ABC):
         # Warn if the dataset is not dask-backed, as map_blocks is designed for
         # chunked arrays. The user may want to use process_block() directly
         # for better performance.
-        if not is_dask_based(ds):
+        if not is_dask_backed(ds):
             warnings.warn(
                 f"Dataset passed to {self.__class__.__name__}.map_blocks() is not "
                 "dask-backed. Processing would be more efficient by using "

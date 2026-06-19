@@ -1,7 +1,15 @@
 import pytest
 import numpy as np
 import xarray as xr
-from core.tools import locate, reglob, xr_filter_decorator, xr_unfilter, xr_filter
+from dask import array as dask_arr
+from core.tools import (
+    locate,
+    reglob,
+    xr_filter_decorator,
+    xr_unfilter,
+    xr_filter,
+    is_numpy_backed,
+)
 
 
 @pytest.mark.parametrize("regexp", [".*.py", "[a-z]+.*"])
@@ -122,3 +130,38 @@ def test_locate():
     locate(lat, lon, 5.0, 5.0, dist_min_km=10)
     with pytest.raises(ValueError):
         locate(lat, lon, 15.0, 15.0, dist_min_km=10)
+
+
+@pytest.mark.parametrize(
+    "obj,expected",
+    [
+        ("numpy_da", True),
+        ("dask_da", False),
+        ("numpy_ds", True),
+        ("dask_ds", False),
+        ("mixed_ds", False),
+        ("numpy_ds_coords", True),
+    ],
+)
+def test_is_numpy_backed(obj, expected):
+    numpy_da = xr.DataArray(np.array([1, 2, 3]))
+    dask_da = xr.DataArray(dask_arr.from_array(np.array([1, 2, 3])))
+    numpy_ds = xr.Dataset({'a': (('x',), np.array([1, 2, 3]))})
+    dask_ds = xr.Dataset({'a': (('x',), dask_arr.from_array(np.array([1, 2, 3])))})
+    mixed_ds = xr.Dataset({
+        'a': (('x',), np.array([1, 2, 3])),
+        'b': (('x',), dask_arr.from_array(np.array([4, 5, 6]))),
+    })
+    numpy_ds_coords = xr.Dataset(
+        {'a': (('x',), np.array([1, 2, 3]))},
+        coords={'x': np.array([0, 1, 2])},
+    )
+    fixtures = {
+        "numpy_da": numpy_da,
+        "dask_da": dask_da,
+        "numpy_ds": numpy_ds,
+        "dask_ds": dask_ds,
+        "mixed_ds": mixed_ds,
+        "numpy_ds_coords": numpy_ds_coords,
+    }
+    assert is_numpy_backed(fixtures[obj]) is expected

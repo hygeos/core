@@ -1289,7 +1289,7 @@ def str_to_bool(value: str) -> bool:
     return value.lower() == 'true'
 
 
-def is_dask_based(data: xr.Dataset, strict: bool = False) -> bool:
+def is_dask_backed(data: xr.Dataset, strict: bool = False) -> bool:
     """Check if data variables in a Dataset are dask-backed.
 
     Returns True if all variables are dask-backed, False if all are numpy-backed.
@@ -1326,3 +1326,32 @@ def is_dask_based(data: xr.Dataset, strict: bool = False) -> bool:
         return True
 
     return bool(dask_vars)
+
+
+def is_numpy_backed(obj: xr.Dataset | xr.DataArray) -> bool:
+    """
+    Check if an xarray Dataset or DataArray is backed by numpy arrays
+    (as opposed to dask arrays or other backends).
+
+    For Datasets, recursively checks all data variables and coordinates.
+
+    Note: even when not dask-backed, DataArrays can be backed by 'xarray.core.indexing.MemoryCachedArray',
+    which may be inefficient compared to np.ndarray.
+
+    Args:
+        obj: An xarray Dataset or DataArray.
+
+    Returns:
+        True if all data variables are numpy-backed, False otherwise.
+    """
+    from xarray.core.indexing import PandasIndexingAdapter
+
+    if isinstance(obj, xr.DataArray):
+        return isinstance(obj.variable._data, (np.ndarray, PandasIndexingAdapter))
+    elif isinstance(obj, xr.Dataset):
+        return all(
+            is_numpy_backed(obj[var])
+            for var in list(obj.data_vars) + list(obj.coords)
+        )
+    else:
+        raise TypeError(f"Expected xr.Dataset or xr.DataArray, got {type(obj)}")

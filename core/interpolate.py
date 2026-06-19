@@ -7,7 +7,7 @@ import xarray as xr
 from numpy.typing import NDArray
 
 from core.process.blockwise import BlockProcessor
-from core.tools import Var, is_dask_based, align_lists
+from core.tools import Var, is_dask_backed, align_lists, is_numpy_backed
 
 
 class Interpolator(BlockProcessor):
@@ -65,8 +65,8 @@ class Interpolator(BlockProcessor):
             self.indexers[k] = v.get_indexer(data[k], backend=backend)
             self.varnames[k] = varname
 
-        # ensure data is numpy-backed, not dask
-        if is_dask_based(data):
+        # ensure data is numpy-backed
+        if not is_numpy_backed(data):
             raise TypeError(
                 "Interpolator requires numpy-backed data. Use .compute() on the input Dataset."
             )
@@ -367,7 +367,7 @@ def interp(da: xr.DataArray, backend: str = "scipy", **kwargs) -> xr.DataArray:
 
     # Use map_blocks for dask-backed coords (lazy/chunked evaluation),
     # or process_block directly for numpy-backed coords (no dask overhead).
-    if is_dask_based(ds_coords):
+    if is_dask_backed(ds_coords):
         result = interpolator.map_blocks(ds_coords)["dummy"]
     else:
         interpolator.process_block(ds_coords)
