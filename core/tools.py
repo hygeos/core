@@ -1116,7 +1116,19 @@ def xr_unfilter(
 
     # reorder the dimensions when in transparent mode
     if transparent:
-        full = full.transpose(*sub_dims)
+        # Build explicit dimension list: replace stackdim with condition.dims
+        # at the same position, then append any extra dims from coordinates
+        full_dims = []
+        for d in sub_dims:
+            if d == stackdim:
+                full_dims.extend(condition.dims)
+            else:
+                full_dims.append(d)
+        # Append any dimensions introduced by assign_coords that aren't already listed
+        for d in full.dims:
+            if d not in full_dims:
+                full_dims.append(d)
+        full = full.transpose(*full_dims)
 
     return full
 
