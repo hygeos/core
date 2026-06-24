@@ -1074,6 +1074,11 @@ def xr_unfilter(
     # Drop coordinates that are not dimensions
     sub = sub.drop_vars([c for c in sub.coords if c not in sub.dims])
 
+    # remove eventual coords for "stackdim"
+    # otherwise these coords would be re-added with "full.assign_coords(sub.coords)""
+    if stackdim in sub:
+        sub = sub.drop_vars(stackdim)
+
     stacked = xr.Dataset()
     for var in sub:
         # determine the shape of the stacked array
