@@ -45,9 +45,44 @@ def test_xr_filter_unfilter(with_xy_coords: bool):
 
     # Reformat sub to full array
     full = xr_unfilter(sub, ok)
-    
+
     # Check that the coords are preserved
     assert len(ds.coords) == len(full.coords)
+
+
+@pytest.mark.parametrize("transparent", [True, False])
+def test_xr_filter_unfilter_passthrough_preserves_original(transparent: bool):
+    """Pass-through variables (present in both sub and ds_original) should preserve
+    their original values where condition is False, instead of being overwritten
+    with fill values."""
+    ds = sample_dataset(True)
+    # Add a pass-through integer variable (e.g. flags) with known values
+    ds = ds.assign(flags=xr.DataArray(np.arange(20, dtype="uint16").reshape(4, 5), dims=("x", "y")))
+
+    ok = ds.A < 0.5
+
+    # Filter
+    sub = xr_filter(ds, ok, transparent=transparent)
+
+    # Unfilter WITHOUT ds_original: pass-through vars get fill_value_int (0)
+    full_no_orig = xr_unfilter(sub, ok, transparent=transparent)
+    # flags where ~ok should be 0 (fill_value_int)
+    assert (full_no_orig.flags.values[~ok.values] == 0).all()
+
+    # Unfilter WITH ds_original: pass-through vars preserve original values
+    full_with_orig = xr_unfilter(sub, ok, transparent=transparent, ds_original=ds)
+    # flags where ~ok should match original
+    np.testing.assert_array_equal(
+        full_with_orig.flags.values[~ok.values],
+        ds.flags.values[~ok.values],
+    )
+    # flags where ok should come from sub (which is same as original for pass-through)
+    np.testing.assert_array_equal(
+        full_with_orig.flags.values[ok.values],
+        ds.flags.values[ok.values],
+    )
+    # Dimension order should be preserved
+    assert full_with_orig.flags.dims == ds.flags.dims
 
 
 @pytest.mark.parametrize("with_xy_coords", [True, False])
@@ -94,6 +129,35 @@ def test_xr_filter_decorator(transparent: bool, with_xy_coords: bool):
 
     # Check that the coords are preserved
     assert len(ds.coords) == len(res.coords)
+
+
+@pytest.mark.parametrize("transparent", [True, False])
+def test_xr_filter_decorator_passthrough_preserves_original(transparent: bool):
+    """Pass-through variables should preserve original values where condition is False
+    when using xr_filter_decorator."""
+    ds = sample_dataset(True)
+    ds = ds.assign(flags=xr.DataArray(np.arange(20, dtype="uint16").reshape(4, 5), dims=("x", "y")))
+
+    ok = ds.A < 0.5
+    original_flags = ds.flags.values.copy()
+
+    def myfunc_inplace(ds: xr.Dataset) -> None:
+        ds["C"] = ds.A * 2
+
+    xr_filter_decorator(
+        0,
+        lambda x: x.A < 0.5,
+        fill_value_int=65535,
+        transparent=transparent,
+    )(myfunc_inplace)(ds)
+
+    # flags is a pass-through variable: original values should be preserved where ~ok
+    np.testing.assert_array_equal(
+        ds.flags.values[~ok.values],
+        original_flags[~ok.values],
+    )
+    # Dimension order should be preserved
+    assert ds.flags.dims == ("x", "y")
 
 
 def test_xr_filter_transparent_preserves_dim_order():

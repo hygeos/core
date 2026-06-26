@@ -1041,6 +1041,7 @@ def xr_unfilter(
     fill_value_float: float = np.nan,
     fill_value_int: int = 0,
     transparent: bool = False,
+    ds_original: xr.Dataset | None = None,
 ) -> xr.Dataset:
     """
     Reconstructs the original dataset from a subset dataset where the condition is True,
@@ -1056,6 +1057,11 @@ def xr_unfilter(
     fill_value_int (int, optional): The fill value for integer data types. Default is 0.
     transparent (bool, optional): whether to revert the transparent compatibility
         conversion applied in xrwhere.
+    ds_original (xr.Dataset, optional): The original dataset before filtering.
+        If provided, variables present in both `sub` and `ds_original` will preserve
+        their original values where `condition` is False, instead of being filled
+        with fill_value_float/fill_value_int. This is important for pass-through
+        variables (e.g. flags) that should not be overwritten.
 
     Returns:
     xr.DataArray: The reconstructed dataset with the specified dimensions unstacked.
@@ -1079,36 +1085,64 @@ def xr_unfilter(
     if stackdim in sub:
         sub = sub.drop_vars(stackdim)
 
+    # Determine pass-through variables (present in both sub and ds_original)
+    passthrough_vars = set()
+    if ds_original is not None:
+        passthrough_vars = set(sub.data_vars) & set(ds_original.data_vars)
+
     stacked = xr.Dataset()
     for var in sub:
-        # determine the shape of the stacked array
-        stacked_shape = tuple(
-            sub[dim].size if dim != stackdim else condition.size
-            for dim in sub[var].dims
-        )
-
-        # determine fill value
-        dtype = sub[var].dtype
-        if np.issubdtype(dtype, np.floating):
-            fill_value = fill_value_float
-        elif np.issubdtype(dtype, np.integer):
-            fill_value = fill_value_int
-        elif dtype == np.dtype(bool):
-            fill_value = False
+        # For pass-through variables, stack ds_original[var] directly
+        # so original values are preserved where condition is False
+        if var in passthrough_vars:
+            orig_var = ds_original[var]
+            # Only stack condition dims that actually exist in this variable
+            cond_dims_in_var = [d for d in condition.dims if d in orig_var.dims]
+            if cond_dims_in_var:
+                orig_stacked = orig_var.stack({stackdim: cond_dims_in_var})
+            else:
+                # Variable has no condition dims - just use as-is
+                orig_stacked = orig_var
+            # In transparent mode, squeeze extra condition dims
+            if transparent and len(condition.dims) > 1:
+                squeeze_dims = [d for d in condition.dims
+                               if d != condition.dims[0] and d in orig_stacked.dims]
+                if squeeze_dims:
+                    orig_stacked = orig_stacked.squeeze(squeeze_dims)
+            var_dims = orig_stacked.dims
+            stacked[var] = orig_stacked
         else:
-            raise ValueError(f"Undefined fill value for type {dtype}")
+            var_dims = sub[var].dims
 
-        # initialize the stacked array
-        stacked[var] = xr.DataArray(
-            np.full(stacked_shape, fill_value, dtype=dtype),
-            dims=sub[var].dims,
-            attrs=sub[var].attrs,
-        )
+            # determine the shape of the stacked array
+            stacked_shape = tuple(
+                condition.size if dim == stackdim else sub[dim].size
+                for dim in var_dims
+            )
 
-        # affect the sub values to the stacked array
+            # determine fill value
+            dtype = sub[var].dtype
+            if np.issubdtype(dtype, np.floating):
+                fill_value = fill_value_float
+            elif np.issubdtype(dtype, np.integer):
+                fill_value = fill_value_int
+            elif dtype == np.dtype(bool):
+                fill_value = False
+            else:
+                raise ValueError(f"Undefined fill value for type {dtype}")
+
+            # initialize the stacked array
+            stacked[var] = xr.DataArray(
+                np.full(stacked_shape, fill_value, dtype=dtype),
+                dims=var_dims,
+                attrs=sub[var].attrs,
+            )
+
+        # Transpose sub[var] to match var_dims order, then assign values
+        sub_var = sub[var].transpose(*var_dims)
         stacked[var].values[
-            tuple(ok if (dim == stackdim) else slice(None) for dim in sub[var].dims)
-        ] = sub[var].values
+            tuple(ok if (dim == stackdim) else slice(None) for dim in var_dims)
+        ] = sub_var.values
 
     # unstack the array
     full = stacked.assign_coords({stackdim: ok[stackdim]}).unstack(stackdim)
@@ -1197,7 +1231,7 @@ def xr_filter_decorator(
             )
             new_args = tuple(sub if i == argpos else a for i, a in enumerate(args))
             result = func(*new_args, **kwargs)
-            
+
             # unfilter the result
             # if `func` does in-place modification, then modify the input dataset `ds`
             # in-place with the unfiltered modified input `sub`.
@@ -1209,6 +1243,7 @@ def xr_filter_decorator(
                 fill_value_int=fill_value_int,
                 stackdim=stackdim,
                 transparent=transparent,
+                ds_original=ds,
             )
             if result is not None:
                 return unf
