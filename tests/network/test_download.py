@@ -1,13 +1,10 @@
-from pathlib import Path
-from tempfile import TemporaryDirectory
 from core.network.download import download_url
 
 
-def test_download_url():
+def test_download_url(tmp_path):
     """
     Test the download of a sample file
     """
-    with TemporaryDirectory() as tmpdir:
-        path = download_url('https://httpbin.org/image/png', Path(tmpdir))
-        assert path.exists()
-        assert path.name == 'png'
+    path = download_url('https://www.google.com/favicon.ico', tmp_path)
+    assert path.exists()
+    assert path.name == 'favicon.ico'
