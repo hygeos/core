@@ -18,7 +18,7 @@ def xrimshow(
     cbar_gap_vertical: float=0.2,
     cbar_label_space: float=0.5,
     title_height: float=0.4,
-    yincrease: bool = True,
+    yincrease: bool = False,
 ):
     """
     Plot a 2D DataArray using imshow with consistent absolute margins.
@@ -70,9 +70,9 @@ def xrimshow(
     title_height : float, default=0.4
         Space reserved for the title in inches (replaces margin_top
         when *title* is set).
-    yincrease : bool, default=True
-        If True, the y-axis increases upward (standard orientation).
-        If False, the y-axis increases downward (inverted orientation).
+    yincrease : bool, default=False
+        If True, the y-axis increases upward.
+        If False, the y-axis increases downward.
 
     Returns
     -------
