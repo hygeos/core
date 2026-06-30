@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>core.progressbar &mdash; core 1.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=fc837d61"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="core.pseudoinverse" href="core.pseudoinverse.html" />
+    <link rel="prev" title="core.monitor" href="core.monitor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            core
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="core.html">core package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="core.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.files.html">core.files package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.geo.html">core.geo package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.network.html">core.network package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.process.html">core.process package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.static.html">core.static package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tests.html">core.tests package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ascii_table.html">core.ascii_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.auth.html">core.auth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.cache.html">core.cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.condor.html">core.condor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.config.html">core.config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.conftest.html">core.conftest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.dates.html">core.dates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree.html">core.deptree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.deptree_prefect.html">core.deptree_prefect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.download.html">core.download</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.env.html">core.env</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fileutils.html">core.fileutils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.ftp.html">core.ftp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.fuzzy.html">core.fuzzy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.interpolate.html">core.interpolate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.lock.html">core.lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.log.html">core.log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.masks.html">core.masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.monitor.html">core.monitor</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">core.progressbar</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#core.progressbar.msg_stack"><code class="docutils literal notranslate"><span class="pre">msg_stack</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#core.progressbar.progressbar"><code class="docutils literal notranslate"><span class="pre">progressbar</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="core.pseudoinverse.html">core.pseudoinverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.pytest_utils.html">core.pytest_utils</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.save.html">core.save</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.table.html">core.table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.tools.html">core.tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.uncompress.html">core.uncompress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="core.xrtags.html">core.xrtags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">core</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="core.html">core package</a></li>
+      <li class="breadcrumb-item active">core.progressbar</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/core.progressbar.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-core.progressbar">
+<span id="core-progressbar"></span><h1>core.progressbar<a class="headerlink" href="#module-core.progressbar" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.progressbar.</span></span><span class="sig-name descname"><span class="pre">msg_stack</span></span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack.add" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.clean_above">
+<span class="sig-name descname"><span class="pre">clean_above</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack.clean_above"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack.clean_above" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack.get" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.info">
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack.info" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.reset_cursor">
+<span class="sig-name descname"><span class="pre">reset_cursor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack.reset_cursor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack.reset_cursor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.reset_screen">
+<span class="sig-name descname"><span class="pre">reset_screen</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack.reset_screen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack.reset_screen" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.stack">
+<span class="sig-name descname"><span class="pre">stack</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></span><a class="headerlink" href="#core.progressbar.msg_stack.stack" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.msg_stack.update_and_print_stack">
+<span class="sig-name descname"><span class="pre">update_and_print_stack</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#msg_stack.update_and_print_stack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.msg_stack.update_and_print_stack" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="core.progressbar.progressbar">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">core.progressbar.</span></span><span class="sig-name descname"><span class="pre">progressbar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#progressbar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.progressbar" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.progressbar.ascii_loading">
+<span class="sig-name descname"><span class="pre">ascii_loading</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'dots'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'vbar'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'moon'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'earth'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'dots'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#progressbar.ascii_loading"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.progressbar.ascii_loading" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.progressbar.ascii_pbar">
+<span class="sig-name descname"><span class="pre">ascii_pbar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nchars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="core.static.constraint.html#core.static.constraint.int" title="core.static.constraint.int"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'square_dot'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'square_void'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'block_void'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'block_dot'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'hash_dash'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'hash_void'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'equal_void'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">border_style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'brackets'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pipes'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'none'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icon_style</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'dots'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'vbar'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'moon'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'earth'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#progressbar.ascii_pbar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.progressbar.ascii_pbar" title="Link to this definition"></a></dt>
+<dd><p>Generate an ASCII progress bar string.
+- nchars: Length of the progress bar in characters.
+- bar_style: any of:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>square_dot  : [■■■···]</p></li>
+<li><p>square_void : [■■■   ]</p></li>
+<li><p>block_void  : [███░  ]</p></li>
+<li><p>block_dot   : [███···]</p></li>
+<li><p>hash_dash   : [###—]</p></li>
+<li><p>hash_void   : [###   ]</p></li>
+<li><p>equal_void  : [===   ]</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>border_style: any of:</dt><dd><ul>
+<li><p>brackets : [bar]</p></li>
+<li><p>pipes    : <a href="#id1"><span class="problematic" id="id2">|bar|</span></a></p></li>
+<li><p>none     : bar</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>loading_style: any of:</dt><dd><ul>
+<li><p>dots  : ⣠</p></li>
+<li><p>vbar  : ▁▂▃▄▅▆▇█</p></li>
+<li><p>moon  : 🌗</p></li>
+<li><p>earth : 🌍</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>fmt can contain:</dt><dd><ul>
+<li><p>%icon : loading animation</p></li>
+<li><p>%pct     : percentage completed</p></li>
+<li><p>%bar     : the progress bar itself</p></li>
+<li><p>%itr     : current iteration / total iterations</p></li>
+<li><p>%time    : elapsed time and estimated remaining time</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>if any of the style parameters is None, it will try to get it from the env var HYGEOS_PBAR_STYLE
+which is a string like “fmt|bar_style|border_style|icon_style”</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.progressbar.finish">
+<span class="sig-name descname"><span class="pre">finish</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#progressbar.finish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.progressbar.finish" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.progressbar.get_depth">
+<span class="sig-name descname"><span class="pre">get_depth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#progressbar.get_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.progressbar.get_depth" title="Link to this definition"></a></dt>
+<dd><p>Get the depth of the progress bar in the stack (ignoring finished bars)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="core.progressbar.progressbar.pbar_length">
+<span class="sig-name descname"><span class="pre">pbar_length</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">30</span></span><a class="headerlink" href="#core.progressbar.progressbar.pbar_length" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="core.progressbar.progressbar.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/progressbar.html#progressbar.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#core.progressbar.progressbar.update" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="core.monitor.html" class="btn btn-neutral float-left" title="core.monitor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="core.pseudoinverse.html" class="btn btn-neutral float-right" title="core.pseudoinverse" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
